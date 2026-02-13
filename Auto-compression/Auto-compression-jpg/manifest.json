@@ -1,0 +1,16 @@
+{
+    "id": "02bb265b-807f-4cc0-9c09-8fc92f284d3a",
+    "version": "1.2.2",
+    "platform": "all",
+    "arch": "all",
+    "name": "Auto-compression-jpg",
+    "logo": "/logo.png",
+    "keywords": [],
+    "devTools": true,
+    "main": {
+        "serviceMode": true,
+        "url": "index.html",
+        "width": 640,
+        "height": 480
+    }
+}

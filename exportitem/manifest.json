@@ -1,0 +1,15 @@
+{
+    "id": "8eba7ac1-f668-40f2-bc4c-7e2470872ec2",
+    "version": "1.2.1",
+    "platform": "all",
+    "arch": "all",
+    "name": "Eagle Data Exporter",
+    "logo": "/logo.png",
+    "keywords": ["export", "data", "json", "csv", "backup", "导出"],
+    "devTools": true,
+    "main": {
+        "url": "index.html",
+        "width": 680,
+        "height": 720
+    }
+}

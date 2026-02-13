@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(python3:*)",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(then echo \"ID $ID: OK\" else echo \"ID $ID: No response yet\" fi done kill $SSE_PID rm \"$SSE_OUTPUT\")"
+    ]
+  }
+}
