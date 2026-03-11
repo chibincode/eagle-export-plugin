@@ -36,7 +36,7 @@
 
     <div class="section">
         <label for="settingInterval">检查间隔（分钟）</label>
-        <input type="number" id="settingInterval" min="1" max="60" value="1">
+        <input type="number" id="settingInterval" min="1" max="60" value="5">
     </div>
 
     <div class="section">
@@ -54,6 +54,7 @@
             <button id="btnBatch60" onclick="batchCompress(60)">最近 60 天</button>
             <button id="btnBatch90" onclick="batchCompress(90)">最近 90 天</button>
             <button id="btnBatchAll" onclick="batchCompress(null)">所有图片</button>
+            <button id="btnBatchSelected" onclick="batchCompressSelected()">我选中的项目</button>
         </div>
     </div>
 
@@ -64,6 +65,7 @@
     <div class="section status">
         <div>上次运行：<span id="statusLastRun">—</span></div>
         <div>今日已处理：<span id="statusProcessedCount">0</span> 个文件</div>
+        <div>距下次压缩：<span id="statusCountdown">—</span></div>
     </div>
 </body>
 </html>

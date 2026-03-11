@@ -4,24 +4,26 @@ let selectedSource = 'selected';
 let selectedImageMode = 'package'; // 'none', 'base64', 'package'
 let includeThumbnails = true; // Whether to include thumbnails in export
 let allItems = [];
+let isPluginReady = false; // Guard: Eagle API only available after plugin-create
 
 // Initialize plugin
 eagle.onPluginCreate(async (plugin) => {
     console.log('Eagle Data Exporter initialized');
-    // Load initial data
     await loadItemsCount();
-    // Adjust window size for better viewing
     adjustWindowSize();
+    isPluginReady = true;
 });
 
 eagle.onPluginRun(async () => {
     console.log('Plugin running...');
+    if (!isPluginReady) return;
     await loadItemsCount();
     adjustWindowSize();
 });
 
 eagle.onPluginShow(async () => {
     console.log('Plugin shown');
+    if (!isPluginReady) return;
     await loadItemsCount();
     adjustWindowSize();
 });
@@ -46,7 +48,7 @@ function adjustWindowSize() {
 }
 
 // Load items count
-async function loadItemsCount() {
+async function loadItemsCount(retries = 2, retryDelay = 500) {
     try {
         const selectedItems = await eagle.item.getSelected();
         const infoBox = document.getElementById('itemCount');
@@ -78,7 +80,11 @@ async function loadItemsCount() {
             infoBox.style.display = 'flex';
         }
     } catch (error) {
-        console.error('Failed to load items count:', error);
+        if (retries > 0) {
+            await new Promise(r => setTimeout(r, retryDelay));
+            return loadItemsCount(retries - 1, retryDelay * 2);
+        }
+        console.error('Failed to load items count after retries:', error);
     }
 }
 
@@ -181,7 +187,7 @@ function showToast(message, type = 'success') {
 // Get selected fields
 function getSelectedFields() {
     const fields = [];
-    const checkboxes = document.querySelectorAll('.field-item input[type="checkbox"]:checked');
+    const checkboxes = document.querySelectorAll('.field-item input[type="checkbox"][id^="field_"]:checked');
     
     checkboxes.forEach(cb => {
         const fieldName = cb.id.replace('field_', '');
@@ -234,6 +240,7 @@ async function extractItemData(items, fields, includeBase64 = false) {
         // Add ID for reference
         data.id = item.id;
         
+        
         for (const field of fields) {
             switch(field) {
                 case 'name':
@@ -258,7 +265,7 @@ async function extractItemData(items, fields, includeBase64 = false) {
                     data.folders = item.folders || [];
                     break;
                 case 'mtime':
-                    data.mtime = item.mtime || '';
+                    data.capturedDate = item.importedAt ? new Date(item.importedAt).toISOString() : '';
                     break;
                 case 'filePath':
                     data.filePath = item.filePath || '';
@@ -888,6 +895,26 @@ async function groupItemsByFolderPrefix(items) {
     return groups;
 }
 
+// Update item metadata via Eagle's HTTP REST API, bypassing the buggy item.save()
+// which hangs forever for some item types (e.g. bookmarks) due to an Eagle-internal
+// logger crash inside the save() promise chain.
+async function updateItemViaHTTP(itemId, fields) {
+    const payload = { id: itemId, ...fields };
+    const response = await fetch('http://localhost:41595/api/item/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    const result = await response.json();
+    if (result.status !== 'success') {
+        throw new Error(`Eagle API returned status: ${result.status}`);
+    }
+    return result.data;
+}
+
 // Update exported items with export record and 5-star rating
 async function updateExportedItemsMetadata(items) {
     console.log('[Metadata Update] ========================================');
@@ -918,34 +945,30 @@ async function updateExportedItemsMetadata(items) {
                 }
                 console.log('[Metadata Update] ✓ Got item data:', fullItem.id);
                 
-                // Append export record to annotation
+                // Prepare new annotation (append export record)
                 const currentAnnotation = fullItem.annotation || '';
-                fullItem.annotation = currentAnnotation 
-                    ? `${currentAnnotation}\n${exportRecord}` 
+                const newAnnotation = currentAnnotation
+                    ? `${currentAnnotation}\n${exportRecord}`
                     : exportRecord;
-                console.log('[Metadata Update] ✓ Updated annotation');
-                
-                // Update tags: remove old export tags and add new one
+                console.log('[Metadata Update] ✓ Prepared annotation');
+
+                // Prepare new tags (keep existing non-export tags, add latest export tag)
                 const currentTags = fullItem.tags || [];
                 const filteredTags = currentTags.filter(tag => !tag.startsWith('- 导出于'));
-                const exportTag = exportRecord;
-                fullItem.tags = [...filteredTags, exportTag];
-                console.log('[Metadata Update] ✓ Updated tags:', fullItem.tags.length, 'tags');
-                
-                // Set 5-star rating
-                fullItem.star = 5;
-                console.log('[Metadata Update] ✓ Set 5-star rating');
-                
-                // Save changes
-                console.log('[Metadata Update] Saving item:', fullItem.id);
-                const saveResult = await fullItem.save();
-                
-                if (saveResult) {
-                    successCount++;
-                    console.log(`[Metadata Update] ✓ Successfully saved ${i+1}/${items.length}`);
-                } else {
-                    throw new Error('Save returned false');
-                }
+                const newTags = [...filteredTags, exportRecord];
+                console.log('[Metadata Update] ✓ Prepared tags:', newTags.length, 'tags');
+
+                // Write via Eagle HTTP REST API — avoids item.save() which hangs
+                // due to an Eagle-internal logger bug on certain item types (e.g. bookmarks)
+                console.log('[Metadata Update] Writing via HTTP API for item:', fullItem.id);
+                await updateItemViaHTTP(fullItem.id, {
+                    annotation: newAnnotation,
+                    tags: newTags,
+                    star: 5,
+                });
+
+                successCount++;
+                console.log(`[Metadata Update] ✓ Successfully updated ${i+1}/${items.length}`);
             } catch (error) {
                 failCount++;
                 failedItems.push({id: item.id, name: item.name, error: error.message});
@@ -960,7 +983,26 @@ async function updateExportedItemsMetadata(items) {
             console.error('[Metadata Update] Failed items:', failedItems);
         }
         console.log('[Metadata Update] ========================================');
-        
+
+        // Force Eagle UI to reload the updated items from disk (including tags).
+        // HTTP REST API updates disk only; Eagle's in-memory panel cache stays stale.
+        // Deselect-then-reselect forces Eagle to fully rebuild the info panel from disk,
+        // ensuring annotation, stars, AND tags all show the new values immediately.
+        if (successCount > 0) {
+            try {
+                const updatedIds = items
+                    .filter(item => !failedItems.find(f => f.id === item.id))
+                    .map(i => i.id);
+                if (updatedIds.length > 0) {
+                    await eagle.item.select([]);
+                    await eagle.item.select(updatedIds);
+                    console.log('[Metadata Update] ✓ Eagle UI refreshed for', updatedIds.length, 'items');
+                }
+            } catch (refreshErr) {
+                console.log('[Metadata Update] UI refresh skipped (Eagle 4.0 build12+ required):', refreshErr.message);
+            }
+        }
+
         // If any items failed, throw error with details
         if (failCount > 0) {
             throw new Error(`Failed to update ${failCount} out of ${items.length} items. Check console for details.`);
@@ -1019,7 +1061,7 @@ async function handleExport() {
             const groupNames = groupKeys.join(', ');
             showToast(`正在处理 ${groupKeys.length} 个分组: ${groupNames}`, 'success');
             
-            // Generate main ZIP filename
+            // Generate datetime string for filenames
             const now = new Date();
             const datetime = now.getFullYear() +
                 String(now.getMonth() + 1).padStart(2, '0') +
@@ -1027,13 +1069,24 @@ async function handleExport() {
                 String(now.getHours()).padStart(2, '0') +
                 String(now.getMinutes()).padStart(2, '0') +
                 String(now.getSeconds()).padStart(2, '0');
-            exportedFileName = `export-${datetime}-${items.length}.zip`;
             
-            console.log(`[Export] Creating unified package: ${exportedFileName}`);
             console.log(`[Export] Total items: ${items.length} across ${groupKeys.length} groups`);
             
-            // Create main ZIP with grouped folder structure
-            await createGroupedDataPackage(groups, groupKeys, fields, exportedFileName);
+            if (groupKeys.length === 1) {
+                // Single group: download the group ZIP directly (no outer wrapper)
+                const groupKey = groupKeys[0];
+                const groupItems = groups[groupKey];
+                const sanitizedName = groupKey.replace(/[/\\?%*:|"<>]/g, '-');
+                exportedFileName = `${sanitizedName}-${datetime}-${groupItems.length}.zip`;
+                console.log(`[Export] Single group "${groupKey}", creating direct ZIP: ${exportedFileName}`);
+                const extractedData = await extractItemData(groupItems, fields, false);
+                await createDataPackage(groupItems, extractedData, exportedFileName);
+            } else {
+                // Multiple groups: wrap all group ZIPs inside one outer export ZIP
+                exportedFileName = `export-${datetime}-${items.length}.zip`;
+                console.log(`[Export] Multiple groups, creating unified package: ${exportedFileName}`);
+                await createGroupedDataPackage(groups, groupKeys, fields, exportedFileName);
+            }
             
             showToast(`✓ 导出完成！正在更新 ${items.length} 个素材的元数据...`, 'success');
             

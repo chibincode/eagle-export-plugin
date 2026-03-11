@@ -1,12 +1,12 @@
 'use strict';
 
-const { exec, execFile } = require('child_process');
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 const PLUGIN_ID = 'auto-compression-jpg';
 const DEFAULT_APP_PATH = '/Applications/图压.app';
-const DEFAULT_INTERVAL_MINUTES = 1;
+const DEFAULT_INTERVAL_MINUTES = 5;
 
 let timerId = null;
 let config = {
@@ -15,6 +15,11 @@ let config = {
   appPath: DEFAULT_APP_PATH
 };
 let lastRunTime = null;
+let nextRunTime = null;
+let countdownId = null;
+let selectedCountWatcherId = null;
+let selectedCountRefreshInFlight = false;
+let pendingSelectedCountRefresh = false;
 
 let cachedStorageDir = null;
 
@@ -119,21 +124,10 @@ function openWithApp(filePath, appPath, callback) {
     if (callback) callback(new Error('macOS only'));
     return;
   }
-  // 图压不遵守 open -g，用 AppleScript 先记录当前前台应用，打开文件后延迟再恢复焦点
-  const script = [
-    '-e', 'on run argv',
-    '-e', 'set filePath to item 1 of argv',
-    '-e', 'set appPath to item 2 of argv',
-    '-e', 'tell application "System Events" to set frontApp to name of first process whose frontmost is true',
-    '-e', 'do shell script "open -a " & quoted form of appPath & " " & quoted form of filePath',
-    '-e', 'delay 0.5',
-    '-e', 'tell application "System Events" to set frontmost of process frontApp to true',
-    '-e', 'end run'
-  ];
-  execFile('osascript', [...script, '--', filePath, appPath], (err, stdout, stderr) => {
-    if (err) {
-      console.error('[Auto-compression] open failed:', err);
-    }
+  const quotedFile = filePath.replace(/'/g, "'\\''");
+  const quotedApp  = appPath.replace(/'/g, "'\\''");
+  exec(`open -a '${quotedApp}' '${quotedFile}'`, (err) => {
+    if (err) console.error('[Auto-compression] open failed:', err);
     if (callback) callback(err);
   });
 }
@@ -142,28 +136,11 @@ const COMPRESSION_TAG = '已图压压缩';
 
 async function addCompressionTag(item) {
   try {
-    // Get fresh item data with full properties
-    const fullItem = await eagle.item.getById(item.id);
-    if (!fullItem) {
-      console.error(`[Auto-compression] Failed to get item ${item.id}`);
-      return;
-    }
-    
-    // Ensure tags array exists
-    if (!fullItem.tags) fullItem.tags = [];
-    
-    // Check if tag already exists
-    if (!fullItem.tags.includes(COMPRESSION_TAG)) {
-      fullItem.tags = [...fullItem.tags, COMPRESSION_TAG];
-      
-      // Save changes
-      const saveResult = await fullItem.save();
-      
-      if (saveResult) {
-        console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
-      } else {
-        console.error(`[Auto-compression] ✗ Save failed for ${item.id}`);
-      }
+    if (!item.tags) item.tags = [];
+    if (!item.tags.includes(COMPRESSION_TAG)) {
+      item.tags = [...item.tags, COMPRESSION_TAG];
+      await item.save();
+      console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
     } else {
       console.log(`[Auto-compression] Tag already exists for ${item.id}`);
     }
@@ -174,6 +151,11 @@ async function addCompressionTag(item) {
 
 function hasCompressionTag(item) {
   return item.tags && item.tags.includes(COMPRESSION_TAG);
+}
+
+function isJpegItem(item) {
+  const ext = String(item.ext || '').toLowerCase();
+  return ext === 'jpg' || ext === 'jpeg';
 }
 
 function isWithinDays(timestamp, days) {
@@ -192,6 +174,56 @@ async function getAllJpgItems() {
     eagle.item.get({ ext: 'jpeg' })
   ]);
   return [].concat(jpgItems || [], jpegItems || []);
+}
+
+async function refreshSelectedButtonCount() {
+  const selectedBtn = document.getElementById('btnBatchSelected');
+  if (!selectedBtn) return;
+
+  if (selectedCountRefreshInFlight) {
+    pendingSelectedCountRefresh = true;
+    return;
+  }
+
+  selectedCountRefreshInFlight = true;
+  try {
+    let selectedCount = 0;
+    try {
+      const selectedItems = await eagle.item.getSelected();
+      selectedCount = (selectedItems || []).filter(item => {
+        if (!item || !item.filePath) return false;
+        if (!isJpegItem(item)) return false;
+        return !hasCompressionTag(item);
+      }).length;
+    } catch (err) {
+      console.warn('[Auto-compression] Failed to load selected items count:', err);
+    }
+    selectedBtn.textContent = `我选中的项目 (${selectedCount})`;
+  } finally {
+    selectedCountRefreshInFlight = false;
+    if (pendingSelectedCountRefresh) {
+      pendingSelectedCountRefresh = false;
+      setTimeout(() => {
+        refreshSelectedButtonCount();
+      }, 0);
+    }
+  }
+}
+
+function startSelectedCountWatcher() {
+  stopSelectedCountWatcher();
+  refreshSelectedButtonCount();
+  // Eagle 没有稳定的“选中变化”事件时，使用轻量轮询保持按钮计数实时。
+  selectedCountWatcherId = setInterval(() => {
+    refreshSelectedButtonCount();
+  }, 2000);
+}
+
+function stopSelectedCountWatcher() {
+  if (selectedCountWatcherId) {
+    clearInterval(selectedCountWatcherId);
+    selectedCountWatcherId = null;
+  }
 }
 
 async function refreshBatchButtonCounts() {
@@ -217,6 +249,7 @@ async function refreshBatchButtonCounts() {
       btn.textContent = `${label} (${count})`;
     }
   }
+  await refreshSelectedButtonCount();
 }
 
 async function batchCompress(days) {
@@ -256,25 +289,73 @@ async function batchCompress(days) {
     
     // 批量处理
     eagle.notification.show(`开始处理 ${toProcess.length} 个文件...`, 'info');
-    
+
     for (let i = 0; i < toProcess.length; i++) {
       const item = toProcess[i];
       openWithApp(item.filePath, config.appPath, () => {});
       await addCompressionTag(item);
       await new Promise(r => setTimeout(r, 500));
-      
+
       // 每处理 10 个显示进度
       if ((i + 1) % 10 === 0) {
         console.log(`[Auto-compression] Progress: ${i + 1}/${toProcess.length}`);
       }
     }
-    
+
     eagle.notification.show(`成功处理 ${toProcess.length} 个文件`, 'success');
     console.log(`[Auto-compression] Batch compression completed: ${toProcess.length} files`);
     await refreshBatchButtonCounts();
   } catch (err) {
     console.error('[Auto-compression] Batch compression error:', err);
     eagle.notification.show('批量压缩失败', 'error');
+  }
+}
+
+async function batchCompressSelected() {
+  try {
+    const selectedItems = await eagle.item.getSelected();
+    const selectable = (selectedItems || []).filter(item => {
+      if (!item || !item.filePath) return false;
+      return isJpegItem(item);
+    });
+    const toProcess = selectable.filter(item => !hasCompressionTag(item));
+
+    if (selectable.length === 0) {
+      eagle.notification.show('当前未选中可压缩的 JPG 图片', 'info');
+      await refreshBatchButtonCounts();
+      return;
+    }
+
+    if (toProcess.length === 0) {
+      eagle.notification.show('选中图片均已压缩，无需处理', 'info');
+      await refreshBatchButtonCounts();
+      return;
+    }
+
+    const confirmed = confirm(`选中 ${selectable.length} 个 JPG 图片，其中 ${toProcess.length} 个需要压缩，是否继续？`);
+    if (!confirmed) {
+      console.log('[Auto-compression] Selected compression cancelled by user');
+      return;
+    }
+
+    eagle.notification.show(`开始处理选中的 ${toProcess.length} 个文件...`, 'info');
+    for (let i = 0; i < toProcess.length; i++) {
+      const item = toProcess[i];
+      openWithApp(item.filePath, config.appPath, () => {});
+      await addCompressionTag(item);
+      await new Promise(r => setTimeout(r, 500));
+
+      if ((i + 1) % 10 === 0) {
+        console.log(`[Auto-compression] Selected progress: ${i + 1}/${toProcess.length}`);
+      }
+    }
+
+    eagle.notification.show(`成功处理选中的 ${toProcess.length} 个文件`, 'success');
+    console.log(`[Auto-compression] Selected compression completed: ${toProcess.length} files`);
+    await refreshBatchButtonCounts();
+  } catch (err) {
+    console.error('[Auto-compression] Selected compression error:', err);
+    eagle.notification.show('选中项压缩失败', 'error');
   }
 }
 
@@ -348,12 +429,55 @@ function updateStatusUI() {
   if (countEl) countEl.textContent = String(getTodayProcessedCount());
 }
 
+function formatCountdown(ms) {
+  if (ms <= 0) return '即将运行…';
+  const totalSec = Math.ceil(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${String(min).padStart(2, '0')} 分 ${String(sec).padStart(2, '0')} 秒`;
+}
+
+function updateCountdownUI() {
+  const el = document.getElementById('statusCountdown');
+  if (!el) return;
+  if (!config.enabled) {
+    el.textContent = '已暂停';
+    return;
+  }
+  if (!nextRunTime) {
+    el.textContent = '—';
+    return;
+  }
+  el.textContent = formatCountdown(nextRunTime - Date.now());
+}
+
+function startCountdown() {
+  stopCountdown();
+  updateCountdownUI();
+  countdownId = setInterval(updateCountdownUI, 1000);
+}
+
+function stopCountdown() {
+  if (countdownId) {
+    clearInterval(countdownId);
+    countdownId = null;
+  }
+}
+
 function startTimer() {
   stopTimer();
-  if (!config.enabled) return;
+  if (!config.enabled) {
+    nextRunTime = null;
+    updateCountdownUI();
+    return;
+  }
   const intervalMs = Math.max(60000, config.intervalMinutes * 60 * 1000);
+  nextRunTime = Date.now() + intervalMs;
   runTask();
-  timerId = setInterval(runTask, intervalMs);
+  timerId = setInterval(() => {
+    nextRunTime = Date.now() + intervalMs;
+    runTask();
+  }, intervalMs);
   console.log(`[Auto-compression] Timer started, interval: ${config.intervalMinutes} min`);
 }
 
@@ -371,7 +495,7 @@ function applySettingsFromUI() {
   if (enabledEl) config.enabled = enabledEl.checked;
   if (intervalEl) {
     const val = parseInt(intervalEl.value, 10);
-    config.intervalMinutes = isNaN(val) ? 1 : Math.max(1, Math.min(60, val));
+    config.intervalMinutes = isNaN(val) ? DEFAULT_INTERVAL_MINUTES : Math.max(1, Math.min(60, val));
   }
   if (appPathEl) config.appPath = appPathEl.value.trim() || DEFAULT_APP_PATH;
   saveConfig();
@@ -417,10 +541,14 @@ eagle.onPluginShow(() => {
   console.log('[Auto-compression] Plugin show');
   loadConfig();
   bindUI();
+  startSelectedCountWatcher();
+  startCountdown();
 });
 
 eagle.onPluginHide(() => {
   console.log('[Auto-compression] Plugin hide');
+  stopSelectedCountWatcher();
+  stopCountdown();
 });
 
 eagle.onLibraryChanged && eagle.onLibraryChanged(() => {
