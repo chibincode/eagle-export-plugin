@@ -134,18 +134,32 @@ function openWithApp(filePath, appPath, callback) {
 
 const COMPRESSION_TAG = '已图压压缩';
 
+async function updateItemViaHTTP(itemId, fields) {
+  const payload = { id: itemId, ...fields };
+  const response = await fetch('http://localhost:41595/api/item/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Eagle API error: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
 async function addCompressionTag(item) {
   try {
-    if (!item.tags) item.tags = [];
-    if (!item.tags.includes(COMPRESSION_TAG)) {
-      item.tags = [...item.tags, COMPRESSION_TAG];
-      await item.save();
-      console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
-    } else {
+    const currentTags = item.tags || [];
+    if (currentTags.includes(COMPRESSION_TAG)) {
       console.log(`[Auto-compression] Tag already exists for ${item.id}`);
+      return;
     }
+    const newTags = [...currentTags, COMPRESSION_TAG];
+    await updateItemViaHTTP(item.id, { tags: newTags });
+    console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
   } catch (err) {
     console.error('[Auto-compression] Failed to add tag:', err);
+    eagle.notification.show(`标签添加失败: ${item.id}`, 'error');
   }
 }
 
