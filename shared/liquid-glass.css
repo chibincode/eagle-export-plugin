@@ -1,0 +1,626 @@
+/*
+ * Liquid Glass Design System for Eagle Plugins
+ * Inspired by macOS 26 Tahoe "Liquid Glass"
+ *
+ * Usage: <link rel="stylesheet" href="../shared/liquid-glass.css">
+ * Then add your plugin-specific overrides after this import.
+ */
+
+/* ═══════════════════════════════════════════
+   1. Design Tokens
+   ═══════════════════════════════════════════ */
+
+:root {
+    /* Accent */
+    --lg-accent:          rgba(0, 122, 255, 0.85);
+    --lg-accent-solid:    #007aff;
+    --lg-accent-hover:    rgba(0, 122, 255, 0.95);
+    --lg-accent-subtle:   rgba(0, 122, 255, 0.06);
+    --lg-accent-border:   rgba(0, 122, 255, 0.10);
+    --lg-accent-text:     rgba(0, 80, 180, 0.80);
+
+    /* Glass Surfaces */
+    --lg-glass-bg:        rgba(255, 255, 255, 0.52);
+    --lg-glass-border:    rgba(255, 255, 255, 0.55);
+    --lg-glass-highlight: rgba(255, 255, 255, 0.65);
+    --lg-glass-field:     rgba(255, 255, 255, 0.70);
+    --lg-glass-field-h:   rgba(255, 255, 255, 1);
+    --lg-glass-blur:      blur(40px) saturate(180%);
+
+    /* Segmented Control */
+    --lg-seg-track:       rgba(0, 0, 0, 0.09);
+    --lg-seg-thumb:       rgba(255, 255, 255, 0.82);
+
+    /* Text */
+    --lg-text-1:          rgba(0, 0, 0, 0.85);
+    --lg-text-2:          rgba(0, 0, 0, 0.50);
+    --lg-text-3:          rgba(0, 0, 0, 0.35);
+
+    /* Misc */
+    --lg-divider:         rgba(0, 0, 0, 0.06);
+    --lg-radius-sm:       8px;
+    --lg-radius-md:       10px;
+    --lg-radius-lg:       12px;
+    --lg-radius-xl:       16px;
+    --lg-transition:      0.25s ease;
+}
+
+
+/* ═══════════════════════════════════════════
+   2. Reset & Base
+   ═══════════════════════════════════════════ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(160deg, #eef1f5 0%, #e4e8ee 40%, #dfe4ec 70%, #e8ecf2 100%);
+    color: var(--lg-text-1);
+    padding: 20px;
+    min-height: 100vh;
+    overflow-y: auto;
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+
+/* ═══════════════════════════════════════════
+   3. Glass Container
+   ═══════════════════════════════════════════ */
+
+.container {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--lg-glass-bg);
+    backdrop-filter: var(--lg-glass-blur);
+    -webkit-backdrop-filter: var(--lg-glass-blur);
+    border-radius: var(--lg-radius-xl);
+    padding: 28px;
+    border: 1px solid var(--lg-glass-border);
+    box-shadow:
+        0 0 0 0.5px rgba(255, 255, 255, 0.4),
+        0 8px 40px rgba(0, 0, 0, 0.08),
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 var(--lg-glass-highlight);
+}
+
+
+/* ═══════════════════════════════════════════
+   4. Typography
+   ═══════════════════════════════════════════ */
+
+h1, h2 {
+    font-weight: 700;
+    color: var(--lg-text-1);
+    letter-spacing: -0.3px;
+}
+
+h1 { font-size: 20px; margin-bottom: 4px; }
+h2 { font-size: 18px; margin-bottom: 4px; }
+
+.subtitle {
+    font-size: 13px;
+    color: var(--lg-text-2);
+    margin-bottom: 22px;
+    font-weight: 400;
+}
+
+
+/* ═══════════════════════════════════════════
+   5. Sections
+   ═══════════════════════════════════════════ */
+
+.section {
+    margin-bottom: 20px;
+}
+
+.section:last-of-type {
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lg-text-2);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.section-title::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: var(--lg-accent);
+    border-radius: 1.5px;
+    margin-right: 8px;
+}
+
+/* Section label (for simpler plugins) */
+.section label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--lg-text-2);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+
+/* ═══════════════════════════════════════════
+   6. Field Grid & Items
+   ═══════════════════════════════════════════ */
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.field-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 11px;
+    background: var(--lg-glass-field);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 9px;
+    transition: all var(--lg-transition);
+    cursor: pointer;
+}
+
+.field-item:hover {
+    background: var(--lg-glass-field-h);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.field-item label {
+    font-size: 13px;
+    color: var(--lg-text-1);
+    cursor: pointer;
+    flex: 1;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+
+/* ═══════════════════════════════════════════
+   7. Custom Checkbox
+   ═══════════════════════════════════════════ */
+
+.field-item input[type="checkbox"],
+.lg-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    margin-right: 8px;
+    cursor: pointer;
+    border-radius: 4.5px;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.5);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.field-item input[type="checkbox"]:hover,
+.lg-checkbox:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.field-item input[type="checkbox"]:checked,
+.lg-checkbox:checked {
+    background: var(--lg-accent-solid);
+    border-color: transparent;
+    box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+}
+
+.field-item input[type="checkbox"]:checked::after,
+.lg-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 1.8px 1.8px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+/* Standalone checkbox rows (not in field-item) */
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--lg-accent-solid);
+}
+
+
+/* ═══════════════════════════════════════════
+   8. Segmented Control
+   ═══════════════════════════════════════════ */
+
+.format-selector,
+.source-selector,
+.lg-segmented {
+    display: flex;
+    gap: 2px;
+    background: var(--lg-seg-track);
+    border-radius: var(--lg-radius-md);
+    padding: 3px;
+}
+
+.format-btn,
+.source-btn,
+.lg-segmented > button {
+    flex: 1;
+    padding: 8px 14px;
+    border: none;
+    background: transparent;
+    border-radius: var(--lg-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lg-text-2);
+    cursor: pointer;
+    transition: all var(--lg-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.format-btn:hover,
+.source-btn:hover,
+.lg-segmented > button:hover {
+    color: var(--lg-text-1);
+}
+
+.format-btn.active,
+.source-btn.active,
+.lg-segmented > button.active {
+    background: var(--lg-seg-thumb);
+    color: var(--lg-text-1);
+    font-weight: 600;
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.08),
+        0 0.5px 1.5px rgba(0, 0, 0, 0.06),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+}
+
+
+/* ═══════════════════════════════════════════
+   9. Buttons
+   ═══════════════════════════════════════════ */
+
+/* Primary (accent) */
+.export-btn,
+button.lg-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--lg-accent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    border: none;
+    border-radius: var(--lg-radius-lg);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--lg-transition);
+    box-shadow:
+        0 2px 12px rgba(0, 122, 255, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    letter-spacing: -0.1px;
+}
+
+.export-btn:hover,
+button.lg-primary:hover {
+    background: var(--lg-accent-hover);
+    box-shadow:
+        0 4px 16px rgba(0, 122, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.export-btn:active,
+button.lg-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 6px rgba(0, 122, 255, 0.2);
+}
+
+.export-btn:disabled,
+button.lg-primary:disabled {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--lg-text-3);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+/* Secondary (glass) */
+button.lg-secondary {
+    padding: 10px 20px;
+    background: var(--lg-glass-field);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--lg-radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--lg-text-1);
+    cursor: pointer;
+    transition: all var(--lg-transition);
+}
+
+button.lg-secondary:hover {
+    background: var(--lg-glass-field-h);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+button.lg-secondary:active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Button Grid */
+.button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.button-grid button {
+    padding: 10px 16px;
+    background: var(--lg-glass-field);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--lg-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lg-text-1);
+    cursor: pointer;
+    transition: all var(--lg-transition);
+}
+
+.button-grid button:hover {
+    background: var(--lg-glass-field-h);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.button-grid button:active {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+
+/* ═══════════════════════════════════════════
+   10. Form Inputs
+   ═══════════════════════════════════════════ */
+
+input[type="number"],
+input[type="text"],
+input[type="email"],
+input[type="url"],
+textarea,
+select {
+    padding: 8px 12px;
+    background: var(--lg-glass-field);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--lg-radius-sm);
+    font-size: 13px;
+    color: var(--lg-text-1);
+    font-family: inherit;
+    transition: all var(--lg-transition);
+    outline: none;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--lg-accent);
+    background: var(--lg-glass-field-h);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+}
+
+input[type="text"] { width: 100%; }
+input[type="number"] { width: 80px; }
+
+
+/* ═══════════════════════════════════════════
+   11. Info Box
+   ═══════════════════════════════════════════ */
+
+.info-box {
+    background: var(--lg-accent-subtle);
+    border: 1px solid var(--lg-accent-border);
+    border-radius: var(--lg-radius-md);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--lg-accent-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400;
+}
+
+.info-box::before { display: none; }
+
+/* Status box (for dashboard-style plugins) */
+.status {
+    background: var(--lg-glass-field);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 14px 16px;
+    border-radius: var(--lg-radius-md);
+    font-size: 13px;
+    color: var(--lg-text-2);
+    line-height: 1.8;
+}
+
+.status span {
+    font-weight: 600;
+    color: var(--lg-text-1);
+}
+
+
+/* ═══════════════════════════════════════════
+   12. Toast
+   ═══════════════════════════════════════════ */
+
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: rgba(30, 30, 30, 0.78);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast.success { background: rgba(16, 185, 129, 0.82); }
+.toast.error   { background: rgba(239, 68, 68, 0.82); }
+
+
+/* ═══════════════════════════════════════════
+   13. Loading Spinner
+   ═══════════════════════════════════════════ */
+
+.loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: lg-spin 0.6s linear infinite;
+}
+
+@keyframes lg-spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* ═══════════════════════════════════════════
+   14. Toggle / Expand
+   ═══════════════════════════════════════════ */
+
+.field-toggle {
+    font-size: 12px;
+    color: var(--lg-accent-solid);
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+}
+
+.field-toggle:hover {
+    opacity: 0.7;
+    text-decoration: none;
+}
+
+.field-toggle-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 10px;
+}
+
+.field-toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
+.more-fields {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.more-fields.expanded {
+    max-height: 500px;
+}
+
+
+/* ═══════════════════════════════════════════
+   15. Custom tooltips (data-lg-tip)
+   ═══════════════════════════════════════════
+   Use data-lg-tip="…" on any element; init via initLgTooltips() in plugin JS.
+   Native title="" is avoided — it fights OS chrome and looks inconsistent. */
+
+#lg-tooltip {
+    position: fixed;
+    z-index: 2147483646;
+    left: 0;
+    top: 0;
+    max-width: min(280px, calc(100vw - 24px));
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    color: var(--lg-text-1);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--lg-radius-md);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 0 0 0.5px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate3d(0, 6px, 0) scale(0.98);
+    transform-origin: 50% 0;
+    transition:
+        opacity 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    visibility: hidden;
+}
+
+#lg-tooltip.lg-tooltip--visible {
+    visibility: visible;
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
+
+/* ═══════════════════════════════════════════
+   16. Row Layout Helper
+   ═══════════════════════════════════════════ */
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.row label {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: 13px;
+    color: var(--lg-text-1);
+    font-weight: 400;
+}

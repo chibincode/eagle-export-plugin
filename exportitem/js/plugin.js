@@ -66,18 +66,18 @@ async function loadItemsCount(retries = 2, retryDelay = 500) {
         
         if (selectedItems && selectedItems.length > 0) {
             if (libraryInfo && libraryInfo.allItems) {
-                countText.textContent = `已选中 ${selectedItems.length} 个素材，资料库共 ${libraryInfo.allItems} 个素材`;
+                countText.textContent = `已选 ${selectedItems.length} 项 · 库内共 ${libraryInfo.allItems} 项`;
             } else {
-                countText.textContent = `已选中 ${selectedItems.length} 个素材`;
+                countText.textContent = `已选 ${selectedItems.length} 项`;
             }
+            infoBox.style.display = 'flex';
+        } else if (libraryInfo && libraryInfo.allItems) {
+            countText.textContent = `库内共 ${libraryInfo.allItems} 项`;
             infoBox.style.display = 'flex';
         } else {
-            if (libraryInfo && libraryInfo.allItems) {
-                countText.textContent = `资料库共 ${libraryInfo.allItems} 个素材`;
-            } else {
-                countText.textContent = `准备就绪`;
-            }
-            infoBox.style.display = 'flex';
+            /* 无选中且无库规模信息时不占版面 */
+            countText.textContent = '';
+            infoBox.style.display = 'none';
         }
     } catch (error) {
         if (retries > 0) {
@@ -106,11 +106,11 @@ function toggleMoreFields() {
     if (isExpanded) {
         container.classList.remove('expanded');
         icon.classList.remove('expanded');
-        text.textContent = '显示更多字段 (8)';
+        text.textContent = '更多字段';
     } else {
         container.classList.add('expanded');
         icon.classList.add('expanded');
-        text.textContent = '收起更多字段';
+        text.textContent = '收起';
     }
 }
 
@@ -139,21 +139,6 @@ function selectImageMode(mode) {
     document.getElementById('image_none').classList.toggle('active', mode === 'none');
     document.getElementById('image_base64').classList.toggle('active', mode === 'base64');
     document.getElementById('image_package').classList.toggle('active', mode === 'package');
-    
-    // Update hint
-    const hint = document.getElementById('imageModeHint');
-    if (mode === 'base64') {
-        hint.style.display = 'flex';
-        hint.innerHTML = '⚠️ Base64 模式会大幅增加文件大小，建议只用于少量小图片';
-    } else if (mode === 'package') {
-        hint.style.display = 'flex';
-        hint.innerHTML = '📦 将导出 ZIP 包，包含所有图片文件和 JSON 元数据';
-        hint.style.background = '#f0f7ff';
-        hint.style.borderColor = '#b3d9ff';
-        hint.style.color = '#0052cc';
-    } else {
-        hint.style.display = 'none';
-    }
 }
 
 // Select export source
@@ -945,11 +930,13 @@ async function updateExportedItemsMetadata(items) {
                 }
                 console.log('[Metadata Update] ✓ Got item data:', fullItem.id);
                 
-                // Prepare new annotation (append export record)
+                // Prepare new annotation (replace existing uibook export line, or append)
                 const currentAnnotation = fullItem.annotation || '';
-                const newAnnotation = currentAnnotation
-                    ? `${currentAnnotation}\n${exportRecord}`
-                    : exportRecord;
+                const lines = currentAnnotation.split('\n');
+                const filteredLines = lines.filter(line => !line.match(/^- 导出于 .+ \(uibook\)$/));
+                const newAnnotation = [...filteredLines, exportRecord]
+                    .filter(line => line.trim() !== '')
+                    .join('\n');
                 console.log('[Metadata Update] ✓ Prepared annotation');
 
                 // Prepare new tags (keep existing non-export tags, add latest export tag)
@@ -1037,7 +1024,7 @@ async function handleExport() {
             if (!items || items.length === 0) {
                 showToast('请先在 Eagle 中选择要导出的素材', 'error');
                 btn.disabled = false;
-                btnText.textContent = '开始导出';
+                btnText.textContent = '导出';
                 return;
             }
         } else {
@@ -1147,6 +1134,124 @@ async function handleExport() {
         const btn = document.querySelector('.export-btn');
         const btnText = document.getElementById('exportBtnText');
         btn.disabled = false;
-        btnText.textContent = '开始导出';
+        btnText.textContent = '导出';
     }
 }
+
+/**
+ * Liquid Glass 自定义气泡：带 data-lg-tip 的元素悬停/聚焦时显示，替代原生 title。
+ */
+function initLgTooltips() {
+    const tip = document.getElementById('lg-tooltip');
+    if (!tip) return;
+
+    let showTimer = null;
+    let hideTimer = null;
+
+    function clearTimers() {
+        if (showTimer) {
+            clearTimeout(showTimer);
+            showTimer = null;
+        }
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+    }
+
+    function hideNow() {
+        clearTimers();
+        tip.classList.remove('lg-tooltip--visible');
+        tip.textContent = '';
+    }
+
+    function place(trigger) {
+        const msg = trigger.getAttribute('data-lg-tip');
+        if (!msg) return;
+
+        tip.textContent = msg;
+        tip.classList.add('lg-tooltip--visible');
+
+        const margin = 10;
+        const gap = 8;
+        const tr = trigger.getBoundingClientRect();
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+
+        if (tw < 8) {
+            requestAnimationFrame(() => place(trigger));
+            return;
+        }
+
+        let top = tr.bottom + gap;
+        if (top + th > window.innerHeight - margin) {
+            top = tr.top - th - gap;
+        }
+        if (top < margin) {
+            top = Math.min(tr.bottom + gap, window.innerHeight - th - margin);
+        }
+
+        let left = tr.left + tr.width / 2 - tw / 2;
+        left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+
+        tip.style.left = `${Math.round(left)}px`;
+        tip.style.top = `${Math.round(top)}px`;
+    }
+
+    function scheduleShow(trigger) {
+        clearTimeout(showTimer);
+        showTimer = setTimeout(() => {
+            showTimer = null;
+            place(trigger);
+            requestAnimationFrame(() => place(trigger));
+        }, 500);
+    }
+
+    function scheduleHide() {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            hideTimer = null;
+            hideNow();
+        }, 100);
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const el = e.target.closest('[data-lg-tip]');
+        if (!el || !el.getAttribute('data-lg-tip')) return;
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+        scheduleShow(el);
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const fromEl = e.target.closest('[data-lg-tip]');
+        if (!fromEl) return;
+        const to = e.relatedTarget;
+        if (to && fromEl.contains(to)) return;
+        scheduleHide();
+    });
+
+    document.addEventListener('focusin', (e) => {
+        const el = e.target.closest('[data-lg-tip]');
+        if (!el || !el.getAttribute('data-lg-tip')) return;
+        if (!el.matches('button, a[href], input, select, textarea')) return;
+        clearTimers();
+        place(el);
+        requestAnimationFrame(() => place(el));
+    });
+
+    document.addEventListener('focusout', (e) => {
+        const to = e.relatedTarget;
+        if (to && e.target.closest('[data-lg-tip]') && to.closest && to.closest('[data-lg-tip]')) {
+            return;
+        }
+        scheduleHide();
+    });
+
+    window.addEventListener('scroll', hideNow, true);
+    window.addEventListener('resize', hideNow);
+}
+
+initLgTooltips();

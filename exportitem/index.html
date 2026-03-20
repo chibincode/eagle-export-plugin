@@ -1,421 +1,149 @@
-. <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-Hans">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>Eagle Data Exporter</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <link rel="stylesheet" href="../shared/liquid-glass.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Plugin-specific: remap shared tokens to short aliases */
+        :root {
+            --accent: var(--lg-accent);
+            --accent-solid: var(--lg-accent-solid);
+            --accent-hover: var(--lg-accent-hover);
         }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f6f8;
-            padding: 20px;
-            color: #1a1a1a;
-            min-height: 100vh;
-            overflow-y: auto;
-        }
-        
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        
-        h1 {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #1a1a1a;
-        }
-        
-        .subtitle {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
-        .section {
-            margin-bottom: 20px;
-        }
-        
-        .section-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .section-title::before {
-            content: '';
-            width: 3px;
-            height: 12px;
-            background: #0066ff;
-            border-radius: 2px;
-            margin-right: 8px;
-        }
-        
-        .field-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .field-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .field-item:hover {
-            background: #e9ecef;
-        }
-        
-        .field-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-            cursor: pointer;
-            accent-color: #0066ff;
-        }
-        
-        .field-item label {
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-            flex: 1;
-        }
-        
-        .format-selector {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .format-btn {
-            flex: 1;
-            padding: 10px 16px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        
-        .format-btn:hover {
-            border-color: #0066ff;
-            color: #0066ff;
-        }
-        
-        .format-btn.active {
-            border-color: #0066ff;
-            background: #0066ff;
-            color: white;
-        }
-        
-        .source-selector {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .source-btn {
-            flex: 1;
-            padding: 10px 16px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .source-btn:hover {
-            border-color: #0066ff;
-            color: #0066ff;
-        }
-        
-        .source-btn.active {
-            border-color: #0066ff;
-            background: #0066ff;
-            color: white;
-        }
-        
-        .export-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
-        }
-        
-        .export-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4);
-        }
-        
-        .export-btn:active {
-            transform: translateY(0);
-        }
-        
-        .export-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .info-box {
-            background: #f0f7ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 16px;
-            font-size: 12px;
-            color: #0052cc;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .info-box::before {
-            content: 'ℹ️';
-            font-size: 14px;
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: #1a1a1a;
-            color: white;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-        
-        .toast.success {
-            background: #10b981;
-        }
-        
-        .toast.error {
-            background: #ef4444;
-        }
-        
-        .loading {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .field-toggle {
-            font-size: 12px;
-            color: #0066ff;
-            cursor: pointer;
-            margin-bottom: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .field-toggle:hover {
-            text-decoration: underline;
-        }
-        
-        .field-toggle-icon {
-            transition: transform 0.2s;
-        }
-        
-        .field-toggle-icon.expanded {
-            transform: rotate(90deg);
-        }
-        
-        .more-fields {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        
-        .more-fields.expanded {
-            max-height: 500px;
+        .page-title {
+            margin-bottom: 14px;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>📦 Eagle Data Exporter</h1>
-        <p class="subtitle">导出素材数据到结构化文件，支持 JSON 和 CSV 格式</p>
+        <h1 class="page-title" data-lg-tip="将选中或全部素材导出为 JSON / CSV；JSON 下可打包图片为 ZIP 或 Base64。">Eagle Data Exporter</h1>
         
-        <div id="itemCount" class="info-box" style="display: none;">
+        <div id="itemCount" class="info-box" style="display: none;" role="status" data-lg-tip="当前选择范围与资料库规模">
             <span id="countText"></span>
         </div>
         
         <div class="section">
-            <div class="section-title">导出字段</div>
+            <div class="section-title" data-lg-tip="勾选要写入导出文件的字段">字段</div>
             <div class="field-grid">
-                <div class="field-item" onclick="toggleField('name')">
+                <div class="field-item" data-lg-tip="Name · 素材标题" onclick="toggleField('name')">
                     <input type="checkbox" id="field_name" checked>
-                    <label for="field_name">名称 (Name)</label>
+                    <label for="field_name">名称</label>
                 </div>
-                <div class="field-item" onclick="toggleField('url')">
+                <div class="field-item" data-lg-tip="原始链接或来源地址" onclick="toggleField('url')">
                     <input type="checkbox" id="field_url" checked>
                     <label for="field_url">URL</label>
                 </div>
-                <div class="field-item" onclick="toggleField('mtime')">
+                <div class="field-item" data-lg-tip="Modified · 最近修改时间" onclick="toggleField('mtime')">
                     <input type="checkbox" id="field_mtime" checked>
-                    <label for="field_mtime">修改时间 (Modified)</label>
+                    <label for="field_mtime">修改时间</label>
                 </div>
-                <div class="field-item" onclick="toggleField('annotation')">
+                <div class="field-item" data-lg-tip="Annotation · 备注与说明" onclick="toggleField('annotation')">
                     <input type="checkbox" id="field_annotation">
-                    <label for="field_annotation">注释 (Annotation)</label>
+                    <label for="field_annotation">注释</label>
                 </div>
             </div>
             
-            <a class="field-toggle" onclick="toggleMoreFields()">
+            <a class="field-toggle" href="#" onclick="toggleMoreFields(); return false;" data-lg-tip="大小、扩展名、文件夹、标签、路径、宽高、色板等 8 项">
                 <span class="field-toggle-icon" id="moreFieldsIcon">▶</span>
-                <span id="moreFieldsText">显示更多字段 (8)</span>
+                <span id="moreFieldsText">更多字段</span>
             </a>
             
             <div class="more-fields" id="moreFieldsContainer">
                 <div class="field-grid" style="margin-top: 10px;">
-                    <div class="field-item" onclick="toggleField('size')">
+                    <div class="field-item" data-lg-tip="Size" onclick="toggleField('size')">
                         <input type="checkbox" id="field_size">
-                        <label for="field_size">文件大小 (Size)</label>
+                        <label for="field_size">大小</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('ext')">
+                    <div class="field-item" data-lg-tip="Extension" onclick="toggleField('ext')">
                         <input type="checkbox" id="field_ext">
-                        <label for="field_ext">扩展名 (Extension)</label>
+                        <label for="field_ext">扩展名</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('folders')">
+                    <div class="field-item" data-lg-tip="Folders" onclick="toggleField('folders')">
                         <input type="checkbox" id="field_folders">
-                        <label for="field_folders">文件夹 (Folders)</label>
+                        <label for="field_folders">文件夹</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('tags')">
+                    <div class="field-item" data-lg-tip="Tags" onclick="toggleField('tags')">
                         <input type="checkbox" id="field_tags">
-                        <label for="field_tags">标签 (Tags)</label>
+                        <label for="field_tags">标签</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('filePath')">
+                    <div class="field-item" data-lg-tip="File Path" onclick="toggleField('filePath')">
                         <input type="checkbox" id="field_filePath">
-                        <label for="field_filePath">文件路径 (File Path)</label>
+                        <label for="field_filePath">文件路径</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('width')">
+                    <div class="field-item" data-lg-tip="Width" onclick="toggleField('width')">
                         <input type="checkbox" id="field_width">
-                        <label for="field_width">宽度 (Width)</label>
+                        <label for="field_width">宽度</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('height')">
+                    <div class="field-item" data-lg-tip="Height" onclick="toggleField('height')">
                         <input type="checkbox" id="field_height">
-                        <label for="field_height">高度 (Height)</label>
+                        <label for="field_height">高度</label>
                     </div>
-                    <div class="field-item" onclick="toggleField('palettes')">
+                    <div class="field-item" data-lg-tip="Color Palette" onclick="toggleField('palettes')">
                         <input type="checkbox" id="field_palettes">
-                        <label for="field_palettes">色板 (Color Palette)</label>
+                        <label for="field_palettes">色板</label>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="section">
-            <div class="section-title">导出来源</div>
+            <div class="section-title" data-lg-tip="导出当前选中项，或资料库内全部素材">来源</div>
             <div class="source-selector">
-                <button class="source-btn active" id="source_selected" onclick="selectSource('selected')">
-                    选中的素材
+                <button type="button" class="source-btn active" id="source_selected" onclick="selectSource('selected')" data-lg-tip="仅导出当前在 Eagle 中选中的素材">
+                    已选
                 </button>
-                <button class="source-btn" id="source_all" onclick="selectSource('all')">
-                    全部素材
+                <button type="button" class="source-btn" id="source_all" onclick="selectSource('all')" data-lg-tip="导出资料库中全部素材（数据量大时请谨慎）">
+                    全部
                 </button>
             </div>
         </div>
         
         <div class="section">
-            <div class="section-title">导出格式</div>
+            <div class="section-title" data-lg-tip="JSON 适合程序处理；CSV 适合表格软件">格式</div>
             <div class="format-selector">
-                <button class="format-btn active" id="format_json" onclick="selectFormat('json')">
-                    📄 JSON
+                <button type="button" class="format-btn active" id="format_json" onclick="selectFormat('json')" data-lg-tip="结构化数据，可附带图片（ZIP / Base64）">
+                    JSON
                 </button>
-                <button class="format-btn" id="format_csv" onclick="selectFormat('csv')">
-                    📊 CSV
+                <button type="button" class="format-btn" id="format_csv" onclick="selectFormat('csv')" data-lg-tip="表格友好，不含嵌套图片">
+                    CSV
                 </button>
             </div>
         </div>
         
         <div class="section" id="imageExportSection">
-            <div class="section-title">图片处理</div>
+            <div class="section-title" data-lg-tip="仅 JSON 导出时有效">图片</div>
             <div class="format-selector">
-                <button class="format-btn" id="image_none" onclick="selectImageMode('none')">
-                    🚫 不包含图片
+                <button type="button" class="format-btn" id="image_none" onclick="selectImageMode('none')" data-lg-tip="JSON 中不包含图片二进制或文件">
+                    不含图
                 </button>
-                <button class="format-btn" id="image_base64" onclick="selectImageMode('base64')">
-                    📷 Base64 编码
+                <button type="button" class="format-btn" id="image_base64" onclick="selectImageMode('base64')" data-lg-tip="将图片以 Base64 写入 JSON，体积会明显增大，仅建议少量小图">
+                    Base64
                 </button>
-                <button class="format-btn active" id="image_package" onclick="selectImageMode('package')">
-                    📦 完整数据包
+                <button type="button" class="format-btn active" id="image_package" onclick="selectImageMode('package')" data-lg-tip="导出 ZIP，内含图片文件与 JSON 元数据">
+                    ZIP 包
                 </button>
-            </div>
-            <div id="imageModeHint" class="info-box" style="margin-top: 12px; background: #f0f7ff; border-color: #b3d9ff; color: #0052cc; display: flex;">
-                📦 将导出 ZIP 包，包含所有图片文件和 JSON 元数据
             </div>
             
             <div id="thumbnailOption" style="margin-top: 12px; display: flex;">
-                <div class="field-item" onclick="toggleThumbnailExport()" style="width: 100%;">
+                <div class="field-item" data-lg-tip="在 ZIP 中额外包含 Eagle 生成的缩略图" onclick="toggleThumbnailExport()" style="width: 100%;">
                     <input type="checkbox" id="export_thumbnail" checked>
-                    <label for="export_thumbnail">同时导出缩略图 (Thumbnails)</label>
+                    <label for="export_thumbnail">含缩略图</label>
                 </div>
             </div>
         </div>
         
-        <button class="export-btn" onclick="handleExport()">
-            <span id="exportBtnText">开始导出</span>
+        <button type="button" class="export-btn" onclick="handleExport()" data-lg-tip="按当前选项开始导出">
+            <span id="exportBtnText">导出</span>
         </button>
     </div>
     
     <div class="toast" id="toast"></div>
+    <div id="lg-tooltip" role="tooltip"></div>
     
     <script type="text/javascript" src="js/plugin.js"></script>
 </body>

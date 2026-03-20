@@ -1,71 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hans">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; margin: 0; font-size: 14px; }
-        h2 { margin: 0 0 16px; font-size: 18px; }
-        .section { margin-bottom: 20px; }
-        .section label { display: block; margin-bottom: 6px; color: #666; }
-        .row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .row label { margin: 0; flex: 0 0 auto; }
-        input[type="checkbox"] { width: 18px; height: 18px; }
-        input[type="number"] { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
-        input[type="text"] { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
-        button { padding: 10px 20px; background: #007aff; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-        button:hover { background: #0066cc; }
-        button:active { background: #0055aa; }
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .status { background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666; }
-        .status span { font-weight: 500; color: #333; }
-    </style>
+    <link rel="stylesheet" href="../../shared/liquid-glass.css">
     <script type="text/javascript" src="js/plugin.js"></script>
 </head>
 <body>
-    <h2>图压自动压缩</h2>
-    <p style="color:#666; margin-bottom:20px;">定时将今天添加的 JPG 文件用图压打开，自动压缩。每个文件只打开一次。</p>
+    <div class="container">
+        <h2 data-lg-tip="定时将今天添加的 JPG 文件用图压打开，自动压缩。每个文件只打开一次。">图压自动压缩</h2>
 
-    <div class="section">
-        <div class="row">
-            <input type="checkbox" id="settingEnabled" checked>
-            <label for="settingEnabled">启用自动压缩</label>
+        <div class="section">
+            <div class="field-item" style="width: 100%;">
+                <input type="checkbox" id="settingEnabled" checked>
+                <label for="settingEnabled">启用自动压缩</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <label for="settingInterval">检查间隔（分钟）</label>
+            <input type="number" id="settingInterval" min="1" max="60" value="5">
+        </div>
+
+        <div class="section">
+            <label for="settingAppPath">图压应用路径</label>
+            <input type="text" id="settingAppPath" placeholder="/Applications/图压.app" value="/Applications/图压.app">
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="仅处理未标记「已图压压缩」的图片">手动批量压缩</div>
+            <div class="button-grid">
+                <button type="button" id="btnBatch7" onclick="batchCompress(7)">最近 7 天</button>
+                <button type="button" id="btnBatch14" onclick="batchCompress(14)">最近 14 天</button>
+                <button type="button" id="btnBatch30" onclick="batchCompress(30)">最近 30 天</button>
+                <button type="button" id="btnBatch60" onclick="batchCompress(60)">最近 60 天</button>
+                <button type="button" id="btnBatch90" onclick="batchCompress(90)">最近 90 天</button>
+                <button type="button" id="btnBatchAll" onclick="batchCompress(null)">所有图片</button>
+                <button type="button" id="btnBatchSelected" onclick="batchCompressSelected()">我选中的项目</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <button type="button" class="lg-primary" id="btnSave">保存设置</button>
+        </div>
+
+        <div class="section status">
+            <div>上次运行：<span id="statusLastRun">—</span></div>
+            <div>今日已处理：<span id="statusProcessedCount">0</span> 个文件</div>
+            <div>距下次压缩：<span id="statusCountdown">—</span></div>
         </div>
     </div>
 
-    <div class="section">
-        <label for="settingInterval">检查间隔（分钟）</label>
-        <input type="number" id="settingInterval" min="1" max="60" value="5">
-    </div>
+    <div id="lg-tooltip" role="tooltip"></div>
 
-    <div class="section">
-        <label for="settingAppPath">图压应用路径</label>
-        <input type="text" id="settingAppPath" placeholder="/Applications/图压.app" value="/Applications/图压.app">
-    </div>
-
-    <div class="section">
-        <label>手动批量压缩</label>
-        <p style="color:#999; font-size:12px; margin:8px 0;">仅处理未标记"已图压压缩"的图片</p>
-        <div class="button-grid">
-            <button id="btnBatch7" onclick="batchCompress(7)">最近 7 天</button>
-            <button id="btnBatch14" onclick="batchCompress(14)">最近 14 天</button>
-            <button id="btnBatch30" onclick="batchCompress(30)">最近 30 天</button>
-            <button id="btnBatch60" onclick="batchCompress(60)">最近 60 天</button>
-            <button id="btnBatch90" onclick="batchCompress(90)">最近 90 天</button>
-            <button id="btnBatchAll" onclick="batchCompress(null)">所有图片</button>
-            <button id="btnBatchSelected" onclick="batchCompressSelected()">我选中的项目</button>
-        </div>
-    </div>
-
-    <div class="section">
-        <button id="btnSave">保存设置</button>
-    </div>
-
-    <div class="section status">
-        <div>上次运行：<span id="statusLastRun">—</span></div>
-        <div>今日已处理：<span id="statusProcessedCount">0</span> 个文件</div>
-        <div>距下次压缩：<span id="statusCountdown">—</span></div>
-    </div>
+    <script>
+    (function () {
+        var tip = document.getElementById('lg-tooltip');
+        if (!tip) return;
+        var showTimer = null, hideTimer = null;
+        function clear() { clearTimeout(showTimer); clearTimeout(hideTimer); showTimer = hideTimer = null; }
+        function hide() { clear(); tip.classList.remove('lg-tooltip--visible'); tip.textContent = ''; }
+        function place(el) {
+            var msg = el.getAttribute('data-lg-tip');
+            if (!msg) return;
+            tip.textContent = msg;
+            tip.classList.add('lg-tooltip--visible');
+            var m = 10, g = 8, r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+            if (tw < 8) { requestAnimationFrame(function () { place(el); }); return; }
+            var top = r.bottom + g;
+            if (top + th > window.innerHeight - m) top = r.top - th - g;
+            if (top < m) top = Math.min(r.bottom + g, window.innerHeight - th - m);
+            var left = r.left + r.width / 2 - tw / 2;
+            left = Math.max(m, Math.min(left, window.innerWidth - tw - m));
+            tip.style.left = Math.round(left) + 'px';
+            tip.style.top = Math.round(top) + 'px';
+        }
+        document.addEventListener('mouseover', function (e) {
+            var el = e.target.closest('[data-lg-tip]');
+            if (!el) return;
+            clearTimeout(hideTimer); hideTimer = null;
+            clearTimeout(showTimer);
+            showTimer = setTimeout(function () { showTimer = null; place(el); requestAnimationFrame(function () { place(el); }); }, 500);
+        });
+        document.addEventListener('mouseout', function (e) {
+            var from = e.target.closest('[data-lg-tip]');
+            if (!from) return;
+            if (e.relatedTarget && from.contains(e.relatedTarget)) return;
+            clearTimeout(showTimer); showTimer = null;
+            hideTimer = setTimeout(hide, 100);
+        });
+        window.addEventListener('scroll', hide, true);
+        window.addEventListener('resize', hide);
+    })();
+    </script>
 </body>
 </html>
