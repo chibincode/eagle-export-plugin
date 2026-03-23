@@ -11,6 +11,8 @@ const LOG_BATCH_SIZE = 100;
 const DEFAULT_TIMEOUT_MS = 60000;
 const DEFAULT_COOLDOWN_MS = 60 * 60 * 1000;
 const DEFAULT_ENDPOINT = 'https://iefgqzcdpuvsjhwtxsyz.supabase.co/functions/v1/eagle-sync';
+const FILE_STABILITY_DELAY_MS = 400;
+const INFLIGHT_TTL_MS = 15 * 60 * 1000;
 
 const DEFAULT_CONFIG = {
     endpointUrl: DEFAULT_ENDPOINT,
@@ -33,7 +35,9 @@ const DEFAULT_CONFIG = {
 const DEFAULT_STATE = {
     logs: [],
     cooldowns: {},
-    lastAutoScanAt: null
+    lastAutoScanAt: null,
+    inflightItems: {},
+    syncedItems: {}
 };
 
 let config = normalizeConfig(DEFAULT_CONFIG);
@@ -97,6 +101,33 @@ function normalizeConfig(raw) {
     };
 }
 
+function normalizeInflightItems(value) {
+    if (!value || typeof value !== 'object') return {};
+    const normalized = {};
+    Object.entries(value).forEach(([itemId, entry]) => {
+        if (!itemId || !entry || typeof entry !== 'object') return;
+        normalized[itemId] = {
+            startedAt: entry.startedAt || null,
+            entityType: entry.entityType || null
+        };
+    });
+    return normalized;
+}
+
+function normalizeSyncedItems(value) {
+    if (!value || typeof value !== 'object') return {};
+    const normalized = {};
+    Object.entries(value).forEach(([itemId, entry]) => {
+        if (!itemId || !entry || typeof entry !== 'object') return;
+        normalized[itemId] = {
+            remoteId: entry.remoteId || null,
+            entityType: entry.entityType || null,
+            syncedAt: entry.syncedAt || null
+        };
+    });
+    return normalized;
+}
+
 function normalizeState(raw) {
     const merged = {
         ...DEFAULT_STATE,
@@ -106,7 +137,9 @@ function normalizeState(raw) {
     return {
         logs: Array.isArray(merged.logs) ? merged.logs.slice(0, MAX_LOGS) : [],
         cooldowns: merged.cooldowns && typeof merged.cooldowns === 'object' ? merged.cooldowns : {},
-        lastAutoScanAt: merged.lastAutoScanAt || null
+        lastAutoScanAt: merged.lastAutoScanAt || null,
+        inflightItems: normalizeInflightItems(merged.inflightItems),
+        syncedItems: normalizeSyncedItems(merged.syncedItems)
     };
 }
 
@@ -182,12 +215,14 @@ function loadState() {
         state = normalizeState(DEFAULT_STATE);
     }
     pruneCooldowns();
+    pruneInflightItems();
     return state;
 }
 
 function saveState() {
     ensureStorageDir();
     pruneCooldowns();
+    pruneInflightItems();
     fs.writeFileSync(getStatePath(), JSON.stringify(state, null, 2), 'utf8');
 }
 
@@ -197,6 +232,17 @@ function pruneCooldowns() {
         const record = state.cooldowns[itemId];
         if (!record || !record.until || record.until <= now) {
             delete state.cooldowns[itemId];
+        }
+    });
+}
+
+function pruneInflightItems() {
+    const now = Date.now();
+    Object.keys(state.inflightItems || {}).forEach(itemId => {
+        const record = state.inflightItems[itemId];
+        const startedAt = record && record.startedAt ? new Date(record.startedAt).getTime() : NaN;
+        if (!record || Number.isNaN(startedAt) || now - startedAt >= INFLIGHT_TTL_MS) {
+            delete state.inflightItems[itemId];
         }
     });
 }
@@ -251,6 +297,101 @@ function cleanURL(url) {
     } catch (error) {
         return String(url).split('?')[0];
     }
+}
+
+function parseSyncAnnotationLine(line) {
+    const trimmed = String(line || '').trim();
+    if (!trimmed.startsWith('- 同步于 ') || !trimmed.includes('(uibook,')) return null;
+    const match = trimmed.match(/\(uibook,\s*([^,]+),\s*([^,)]+)(?:,\s*sourceItemId=([^)]+))?\)$/);
+    if (!match) return null;
+    return {
+        entityType: String(match[1] || '').trim() || null,
+        remoteId: String(match[2] || '').trim() || null,
+        sourceItemId: String(match[3] || '').trim() || null
+    };
+}
+
+function getSyncAnnotationRecord(item) {
+    const lines = String(item && item.annotation ? item.annotation : '')
+        .split('\n')
+        .map(line => parseSyncAnnotationLine(line))
+        .filter(Boolean);
+    if (!lines.length) return null;
+
+    const exactMatch = lines.find(record => record.sourceItemId && record.sourceItemId === item.id);
+    if (exactMatch) return exactMatch;
+
+    const legacyMatch = lines.find(record => !record.sourceItemId);
+    if (legacyMatch) {
+        return {
+            ...legacyMatch,
+            sourceItemId: item.id
+        };
+    }
+
+    return null;
+}
+
+function getInflightRecord(itemId) {
+    pruneInflightItems();
+    return state.inflightItems[itemId] || null;
+}
+
+function getSyncedRecord(itemId) {
+    return state.syncedItems[itemId] || null;
+}
+
+function markItemInflight(itemId, entityType) {
+    state.inflightItems[itemId] = {
+        startedAt: new Date().toISOString(),
+        entityType: entityType || null
+    };
+    saveState();
+}
+
+function clearItemInflight(itemId) {
+    if (state.inflightItems[itemId]) {
+        delete state.inflightItems[itemId];
+        saveState();
+    }
+}
+
+function rememberSyncedItem(item, remoteId, entityType, syncedAt) {
+    state.syncedItems[item.id] = {
+        remoteId: remoteId || null,
+        entityType: entityType || null,
+        syncedAt: syncedAt || new Date().toISOString()
+    };
+    if (state.inflightItems[item.id]) {
+        delete state.inflightItems[item.id];
+    }
+    saveState();
+}
+
+function maybeBackfillSyncedItem(item) {
+    if (!item || !item.id) return false;
+    if (getSyncedRecord(item.id)) return false;
+
+    const annotationRecord = getSyncAnnotationRecord(item);
+    if (annotationRecord) {
+        rememberSyncedItem(item, annotationRecord.remoteId, annotationRecord.entityType, new Date().toISOString());
+        return true;
+    }
+
+    if (itemHasTag(item, config.successTag)) {
+        rememberSyncedItem(item, null, null, new Date().toISOString());
+        return true;
+    }
+
+    return false;
+}
+
+function backfillSyncedItems(items) {
+    let changed = false;
+    (items || []).forEach(item => {
+        changed = maybeBackfillSyncedItem(item) || changed;
+    });
+    return changed;
 }
 
 function escapeHtml(value) {
@@ -630,6 +771,88 @@ async function readBlobFromFile(filePath, fallbackExt) {
     return new Blob([buffer], { type: getMimeTypeForPath(filePath, fallbackExt) });
 }
 
+function createFileSnapshot(stats, width, height) {
+    return {
+        size: stats.size,
+        mtimeMs: Math.round(stats.mtimeMs),
+        width,
+        height
+    };
+}
+
+function areSnapshotsEqual(a, b) {
+    if (!a || !b) return false;
+    return Number(a.size) === Number(b.size) &&
+        Math.round(Number(a.mtimeMs || 0)) === Math.round(Number(b.mtimeMs || 0));
+}
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function inspectSourceImage(filePath, fallbackExt) {
+    try {
+        await fsp.access(filePath, fs.constants.R_OK);
+    } catch (error) {
+        return { ok: false, reason: 'file_not_stable' };
+    }
+
+    let firstStat;
+    let secondStat;
+    try {
+        firstStat = await fsp.stat(filePath);
+        await wait(FILE_STABILITY_DELAY_MS);
+        secondStat = await fsp.stat(filePath);
+    } catch (error) {
+        return { ok: false, reason: 'file_not_stable' };
+    }
+
+    if (!firstStat.isFile() || !secondStat.isFile() || firstStat.size <= 0 || secondStat.size <= 0 || !areSnapshotsEqual(firstStat, secondStat)) {
+        return {
+            ok: false,
+            reason: 'file_not_stable',
+            snapshot: createFileSnapshot(secondStat || firstStat, null, null)
+        };
+    }
+
+    let buffer;
+    try {
+        buffer = await fsp.readFile(filePath);
+    } catch (error) {
+        return { ok: false, reason: 'file_not_stable' };
+    }
+
+    const blob = new Blob([buffer], { type: getMimeTypeForPath(filePath, fallbackExt) });
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(blob);
+    } catch (error) {
+        return {
+            ok: false,
+            reason: 'decode_failed',
+            snapshot: createFileSnapshot(secondStat, null, null)
+        };
+    }
+
+    const width = bitmap.width;
+    const height = bitmap.height;
+    if (typeof bitmap.close === 'function') bitmap.close();
+
+    if (width <= 1 || height <= 1) {
+        return {
+            ok: false,
+            reason: 'invalid_dimensions',
+            snapshot: createFileSnapshot(secondStat, width, height)
+        };
+    }
+
+    return {
+        ok: true,
+        blob,
+        snapshot: createFileSnapshot(secondStat, width, height)
+    };
+}
+
 async function loadImageBitmapFromPath(filePath) {
     const blob = await readBlobFromFile(filePath);
     return createImageBitmap(blob);
@@ -831,6 +1054,10 @@ function itemHasTag(item, tag) {
 
 function getSkipReason(reason) {
     switch (reason) {
+        case 'sync_in_progress':
+            return '该素材正在同步中';
+        case 'already_synced_local':
+            return '该素材已在本机登记为已同步';
         case 'already_synced':
             return '素材已带同步成功标签';
         case 'unsupported_ext':
@@ -843,6 +1070,12 @@ function getSkipReason(reason) {
             return '未命中 website / section 规则';
         case 'missing_file':
             return '素材缺少原图文件路径';
+        case 'file_not_stable':
+            return '原图仍在同步或写入中';
+        case 'decode_failed':
+            return '原图暂时无法解码';
+        case 'invalid_dimensions':
+            return '原图尺寸异常（<= 1x1）';
         case 'cooldown':
             return '处于失败冷却期';
         default:
@@ -853,6 +1086,16 @@ function getSkipReason(reason) {
 function evaluateEligibility(item, mode, folderMap) {
     if (!item || !item.filePath) {
         return { eligible: false, reason: 'missing_file' };
+    }
+
+    maybeBackfillSyncedItem(item);
+
+    if (getInflightRecord(item.id)) {
+        return { eligible: false, reason: 'sync_in_progress' };
+    }
+
+    if (getSyncedRecord(item.id)) {
+        return { eligible: false, reason: 'already_synced_local' };
     }
 
     const successTag = config.successTag;
@@ -925,7 +1168,7 @@ async function applySyncSuccessMarker(item, result, entityType) {
         ? currentTags
         : [...currentTags, config.successTag];
 
-    const line = `- 同步于 ${formatDateTime(new Date())} (uibook, ${entityType}, ${result.id || result.existingId || 'unknown'})`;
+    const line = `- 同步于 ${formatDateTime(new Date())} (uibook, ${entityType}, ${result.id || result.existingId || 'unknown'}, sourceItemId=${item.id})`;
     const currentAnnotation = fullItem.annotation || '';
     const filteredLines = currentAnnotation
         .split('\n')
@@ -972,10 +1215,12 @@ async function safeParseJson(response) {
     }
 }
 
-async function sendItemToUiBook(item, prepared) {
+async function sendItemToUiBook(item, prepared, inspectedFile) {
     const mainFilename = getStableMainFilename(item);
     const baseName = getBaseName(mainFilename);
-    const mainBlob = await readBlobFromFile(item.filePath, item.ext);
+    const mainBlob = inspectedFile && inspectedFile.blob
+        ? inspectedFile.blob
+        : await readBlobFromFile(item.filePath, item.ext);
     const thumbnailAsset = await buildThumbnailAsset(item, baseName);
     const adminAsset = await buildAdminThumbAsset(item, baseName, thumbnailAsset);
 
@@ -1045,9 +1290,36 @@ async function syncSingleItem(item, mode, folderMap) {
         };
     }
 
+    const inspectedFile = await inspectSourceImage(item.filePath, item.ext);
+    if (!inspectedFile.ok) {
+        const reason = getSkipReason(inspectedFile.reason);
+        if (mode === 'manual') {
+            addLog({
+                itemId: item.id,
+                itemName: item.name,
+                mode,
+                status: 'skipped',
+                entityType: prepared.entityType,
+                message: reason
+            });
+        }
+        return {
+            status: 'skipped',
+            itemId: item.id,
+            reason
+        };
+    }
+
+    markItemInflight(item.id, prepared.entityType);
+
     try {
-        const result = await sendItemToUiBook(item, prepared);
-        await applySyncSuccessMarker(item, result, prepared.entityType);
+        const result = await sendItemToUiBook(item, prepared, inspectedFile);
+        rememberSyncedItem(item, result.id || null, prepared.entityType, new Date().toISOString());
+        try {
+            await applySyncSuccessMarker(item, result, prepared.entityType);
+        } catch (markerError) {
+            console.warn('[UIBook Sync] Local marker write failed after remote sync:', markerError);
+        }
         clearCooldown(item.id);
         addLog({
             itemId: item.id,
@@ -1064,6 +1336,7 @@ async function syncSingleItem(item, mode, folderMap) {
             remoteId: result.id || null
         };
     } catch (error) {
+        clearItemInflight(item.id);
         recordCooldown(item.id, error.message);
         addLog({
             itemId: item.id,
@@ -1150,6 +1423,7 @@ async function handleManualSync() {
             showToast('请先在 Eagle 中选择素材', 'error');
             return;
         }
+        backfillSyncedItems(selectedItems);
 
         const results = await processItemsWithConcurrency(selectedItems, 'manual', 2);
         const summary = summarizeResults(results);
@@ -1176,7 +1450,9 @@ async function loadItemsForAutoSync() {
             if (!unique.has(item.id)) unique.set(item.id, item);
         });
     });
-    return Array.from(unique.values()).filter(item => {
+    const values = Array.from(unique.values());
+    backfillSyncedItems(values);
+    return values.filter(item => {
         const timestamp = getItemTimestamp(item);
         return timestamp && isSameDay(timestamp);
     });

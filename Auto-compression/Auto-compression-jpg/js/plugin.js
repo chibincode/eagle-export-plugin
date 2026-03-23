@@ -4,9 +4,18 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const fsp = fs.promises;
+
 const PLUGIN_ID = 'auto-compression-jpg';
 const DEFAULT_APP_PATH = '/Applications/图压.app';
 const DEFAULT_INTERVAL_MINUTES = 5;
+const FILE_STABILITY_DELAY_MS = 400;
+const WAITING_FOR_WRITE_REASON = 'waiting_for_write';
+
+const DEFAULT_STATE = {
+  pendingItems: {},
+  lastIssue: null
+};
 
 let timerId = null;
 let config = {
@@ -14,12 +23,14 @@ let config = {
   intervalMinutes: DEFAULT_INTERVAL_MINUTES,
   appPath: DEFAULT_APP_PATH
 };
+let state = normalizeState(DEFAULT_STATE);
 let lastRunTime = null;
 let nextRunTime = null;
 let countdownId = null;
 let selectedCountWatcherId = null;
 let selectedCountRefreshInFlight = false;
 let pendingSelectedCountRefresh = false;
+let compressionJobInProgress = false;
 
 let cachedStorageDir = null;
 
@@ -42,12 +53,60 @@ function getProcessedPath() {
   return path.join(getStorageDir(), 'processed.json');
 }
 
+function getStatePath() {
+  return path.join(getStorageDir(), 'state.json');
+}
+
 function ensureStorageDir() {
   const dir = getStorageDir();
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
   return dir;
+}
+
+function normalizePendingItem(raw, itemId) {
+  if (!raw || typeof raw !== 'object') return null;
+  return {
+    itemId: String(raw.itemId || itemId || '').trim(),
+    itemName: String(raw.itemName || '').trim(),
+    filePath: String(raw.filePath || '').trim(),
+    snapshot: raw.snapshot && typeof raw.snapshot === 'object' ? raw.snapshot : null,
+    attempts: Number.isFinite(raw.attempts) ? raw.attempts : 0,
+    nextRetryAt: raw.nextRetryAt || null,
+    lastReason: String(raw.lastReason || '').trim(),
+    openedAt: raw.openedAt || null,
+    status: String(raw.status || 'pending').trim() || 'pending',
+    updatedAt: raw.updatedAt || null
+  };
+}
+
+function normalizeState(raw) {
+  const merged = {
+    ...DEFAULT_STATE,
+    ...(raw && typeof raw === 'object' ? raw : {})
+  };
+  const pendingItems = {};
+  Object.entries(merged.pendingItems || {}).forEach(([itemId, entry]) => {
+    const normalized = normalizePendingItem(entry, itemId);
+    if (normalized && normalized.itemId) {
+      pendingItems[normalized.itemId] = normalized;
+    }
+  });
+
+  const lastIssue = merged.lastIssue && typeof merged.lastIssue === 'object'
+    ? {
+        at: merged.lastIssue.at || null,
+        itemId: merged.lastIssue.itemId || null,
+        itemName: merged.lastIssue.itemName || '',
+        message: String(merged.lastIssue.message || '').trim()
+      }
+    : null;
+
+  return {
+    pendingItems,
+    lastIssue: lastIssue && lastIssue.message ? lastIssue : null
+  };
 }
 
 function loadConfig() {
@@ -103,6 +162,31 @@ function saveProcessed(processedIds) {
   }
 }
 
+function loadState() {
+  try {
+    ensureStorageDir();
+    const statePath = getStatePath();
+    if (fs.existsSync(statePath)) {
+      state = normalizeState(JSON.parse(fs.readFileSync(statePath, 'utf8')));
+    } else {
+      state = normalizeState(DEFAULT_STATE);
+    }
+  } catch (err) {
+    console.warn('[Auto-compression] Failed to load state:', err);
+    state = normalizeState(DEFAULT_STATE);
+  }
+  return state;
+}
+
+function saveState() {
+  try {
+    ensureStorageDir();
+    fs.writeFileSync(getStatePath(), JSON.stringify(state, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[Auto-compression] Failed to save state:', err);
+  }
+}
+
 function getTodayStr() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -118,17 +202,159 @@ function isToday(timestamp) {
     itemDate.getDate() === today.getDate();
 }
 
-function openWithApp(filePath, appPath, callback) {
-  if (!eagle.app.isMac) {
-    console.warn('[Auto-compression] open -a only supported on macOS');
-    if (callback) callback(new Error('macOS only'));
-    return;
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getMimeTypeForPath(filePath) {
+  const ext = String(path.extname(filePath || '')).toLowerCase().replace(/^\./, '');
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'avif') return 'image/avif';
+  return 'application/octet-stream';
+}
+
+function getHealthReasonMessage(reason) {
+  switch (reason) {
+    case 'file_missing':
+      return '原图文件不存在';
+    case 'file_not_readable':
+      return '原图文件暂时不可读';
+    case 'file_not_stable':
+      return '文件仍在同步或写入中';
+    case 'decode_failed':
+      return '图片暂时无法解码';
+    case 'invalid_dimensions':
+      return '图片尺寸异常（<= 1x1）';
+    case 'open_failed':
+      return '无法打开图压应用';
+    case WAITING_FOR_WRITE_REASON:
+      return '等待图压写回文件';
+    case 'item_missing':
+      return '素材已不存在';
+    case 'tag_failed':
+      return '写入压缩标签失败';
+    default:
+      return reason || '等待重试';
   }
-  const quotedFile = filePath.replace(/'/g, "'\\''");
-  const quotedApp  = appPath.replace(/'/g, "'\\''");
-  exec(`open -a '${quotedApp}' '${quotedFile}'`, (err) => {
-    if (err) console.error('[Auto-compression] open failed:', err);
-    if (callback) callback(err);
+}
+
+function createFileSnapshot(stats, width, height) {
+  return {
+    size: stats.size,
+    mtimeMs: Math.round(stats.mtimeMs),
+    width,
+    height
+  };
+}
+
+function areSnapshotsEqual(a, b) {
+  if (!a || !b) return false;
+  return Number(a.size) === Number(b.size) &&
+    Math.round(Number(a.mtimeMs || 0)) === Math.round(Number(b.mtimeMs || 0));
+}
+
+function hasPendingValidation(itemId) {
+  return Boolean(state.pendingItems && state.pendingItems[itemId]);
+}
+
+function getPendingCount() {
+  return Object.keys(state.pendingItems || {}).length;
+}
+
+function getRetryDelayMs() {
+  return Math.max(60000, config.intervalMinutes * 60 * 1000);
+}
+
+function setLastIssue(message, item) {
+  state.lastIssue = {
+    at: new Date().toISOString(),
+    itemId: item && (item.id || item.itemId) ? (item.id || item.itemId) : null,
+    itemName: item && (item.name || item.itemName) ? (item.name || item.itemName) : '',
+    message: String(message || '').trim()
+  };
+  saveState();
+}
+
+function removePendingItem(itemId) {
+  if (state.pendingItems[itemId]) {
+    delete state.pendingItems[itemId];
+    saveState();
+  }
+}
+
+function rememberPendingItem(item, updates = {}) {
+  const itemId = item && item.id ? item.id : updates.itemId;
+  if (!itemId) return null;
+  const existing = state.pendingItems[itemId] || {};
+  const snapshot = Object.prototype.hasOwnProperty.call(updates, 'snapshot')
+    ? updates.snapshot
+    : (existing.snapshot || null);
+  const pending = {
+    itemId,
+    itemName: item && item.name ? item.name : (updates.itemName || existing.itemName || itemId),
+    filePath: item && item.filePath ? item.filePath : (updates.filePath || existing.filePath || ''),
+    snapshot,
+    attempts: Number.isFinite(updates.attempts) ? updates.attempts : (existing.attempts || 0),
+    nextRetryAt: Object.prototype.hasOwnProperty.call(updates, 'nextRetryAt') ? updates.nextRetryAt : (existing.nextRetryAt || null),
+    lastReason: Object.prototype.hasOwnProperty.call(updates, 'lastReason') ? updates.lastReason : (existing.lastReason || ''),
+    openedAt: Object.prototype.hasOwnProperty.call(updates, 'openedAt') ? updates.openedAt : (existing.openedAt || null),
+    status: updates.status || existing.status || 'pending',
+    updatedAt: new Date().toISOString()
+  };
+  state.pendingItems[itemId] = pending;
+  saveState();
+  return pending;
+}
+
+function queuePendingRetry(item, reason, snapshot, existing, extraMessage, status = 'pending') {
+  const attempts = (existing && existing.attempts ? existing.attempts : 0) + 1;
+  const entry = rememberPendingItem(item, {
+    snapshot: snapshot || (existing ? existing.snapshot : null),
+    attempts,
+    nextRetryAt: Date.now() + getRetryDelayMs(),
+    lastReason: reason,
+    status
+  });
+  const message = extraMessage ? `${getHealthReasonMessage(reason)}：${extraMessage}` : getHealthReasonMessage(reason);
+  setLastIssue(message, item || entry);
+  return entry;
+}
+
+function beginCompressionJob(source) {
+  if (compressionJobInProgress) {
+    console.log(`[Auto-compression] Skip ${source}, another job is still running`);
+    if (source !== 'auto') {
+      eagle.notification.show('上一轮压缩尚未结束', 'info');
+    }
+    return false;
+  }
+  compressionJobInProgress = true;
+  return true;
+}
+
+function endCompressionJob() {
+  compressionJobInProgress = false;
+}
+
+function openWithApp(filePath, appPath) {
+  return new Promise((resolve, reject) => {
+    if (!eagle.app.isMac) {
+      reject(new Error('macOS only'));
+      return;
+    }
+    const quotedFile = filePath.replace(/'/g, "'\\''");
+    const quotedApp = appPath.replace(/'/g, "'\\''");
+    exec(`open -a '${quotedApp}' '${quotedFile}'`, err => {
+      if (err) {
+        console.error('[Auto-compression] open failed:', err);
+        reject(err);
+        return;
+      }
+      resolve();
+    });
   });
 }
 
@@ -144,27 +370,32 @@ async function updateItemViaHTTP(itemId, fields) {
   if (!response.ok) {
     throw new Error(`Eagle API error: ${response.status} ${response.statusText}`);
   }
-  return response.json();
+  const result = await response.json();
+  if (result.status !== 'success') {
+    throw new Error(result.message || `Eagle API returned ${result.status}`);
+  }
+  return result.data;
 }
 
-async function addCompressionTag(item) {
-  try {
-    const currentTags = item.tags || [];
-    if (currentTags.includes(COMPRESSION_TAG)) {
-      console.log(`[Auto-compression] Tag already exists for ${item.id}`);
-      return;
-    }
-    const newTags = [...currentTags, COMPRESSION_TAG];
-    await updateItemViaHTTP(item.id, { tags: newTags });
-    console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
-  } catch (err) {
-    console.error('[Auto-compression] Failed to add tag:', err);
-    eagle.notification.show(`标签添加失败: ${item.id}`, 'error');
+async function addCompressionTag(itemOrId) {
+  const item = typeof itemOrId === 'string'
+    ? await eagle.item.getById(itemOrId)
+    : itemOrId;
+  if (!item) {
+    throw new Error('素材不存在');
   }
+  const currentTags = item.tags || [];
+  if (currentTags.includes(COMPRESSION_TAG)) {
+    console.log(`[Auto-compression] Tag already exists for ${item.id}`);
+    return;
+  }
+  const newTags = [...currentTags, COMPRESSION_TAG];
+  await updateItemViaHTTP(item.id, { tags: newTags });
+  console.log(`[Auto-compression] ✓ Added tag to ${item.id}`);
 }
 
 function hasCompressionTag(item) {
-  return item.tags && item.tags.includes(COMPRESSION_TAG);
+  return Boolean(item && item.tags && item.tags.includes(COMPRESSION_TAG));
 }
 
 function isJpegItem(item) {
@@ -174,12 +405,84 @@ function isJpegItem(item) {
 
 function isWithinDays(timestamp, days) {
   if (!timestamp) return false;
-  if (days === null) return true; // "所有" 选项
-  
+  if (days === null) return true;
+
   const now = Date.now();
   const itemDate = new Date(timestamp).getTime();
   const dayMs = days * 24 * 60 * 60 * 1000;
   return (now - itemDate) <= dayMs;
+}
+
+async function inspectImageHealth(filePath) {
+  try {
+    await fsp.access(filePath, fs.constants.R_OK);
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err && err.code === 'ENOENT' ? 'file_missing' : 'file_not_readable'
+    };
+  }
+
+  let firstStat;
+  let secondStat;
+  try {
+    firstStat = await fsp.stat(filePath);
+    await wait(FILE_STABILITY_DELAY_MS);
+    secondStat = await fsp.stat(filePath);
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err && err.code === 'ENOENT' ? 'file_missing' : 'file_not_readable'
+    };
+  }
+
+  if (!firstStat.isFile() || !secondStat.isFile()) {
+    return { ok: false, reason: 'file_missing' };
+  }
+
+  if (firstStat.size <= 0 || secondStat.size <= 0 || !areSnapshotsEqual(firstStat, secondStat)) {
+    return {
+      ok: false,
+      reason: 'file_not_stable',
+      snapshot: createFileSnapshot(secondStat, null, null)
+    };
+  }
+
+  let buffer;
+  try {
+    buffer = await fsp.readFile(filePath);
+  } catch (err) {
+    return { ok: false, reason: 'file_not_readable' };
+  }
+
+  const blob = new Blob([buffer], { type: getMimeTypeForPath(filePath) });
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(blob);
+  } catch (err) {
+    return {
+      ok: false,
+      reason: 'decode_failed',
+      snapshot: createFileSnapshot(secondStat, null, null)
+    };
+  }
+
+  const width = bitmap.width;
+  const height = bitmap.height;
+  if (typeof bitmap.close === 'function') bitmap.close();
+
+  if (width <= 1 || height <= 1) {
+    return {
+      ok: false,
+      reason: 'invalid_dimensions',
+      snapshot: createFileSnapshot(secondStat, width, height)
+    };
+  }
+
+  return {
+    ok: true,
+    snapshot: createFileSnapshot(secondStat, width, height)
+  };
 }
 
 async function getAllJpgItems() {
@@ -203,11 +506,12 @@ async function refreshSelectedButtonCount() {
   try {
     let selectedCount = 0;
     try {
+      loadState();
       const selectedItems = await eagle.item.getSelected();
       selectedCount = (selectedItems || []).filter(item => {
         if (!item || !item.filePath) return false;
         if (!isJpegItem(item)) return false;
-        return !hasCompressionTag(item);
+        return !hasCompressionTag(item) && !hasPendingValidation(item.id);
       }).length;
     } catch (err) {
       console.warn('[Auto-compression] Failed to load selected items count:', err);
@@ -227,7 +531,6 @@ async function refreshSelectedButtonCount() {
 function startSelectedCountWatcher() {
   stopSelectedCountWatcher();
   refreshSelectedButtonCount();
-  // Eagle 没有稳定的“选中变化”事件时，使用轻量轮询保持按钮计数实时。
   selectedCountWatcherId = setInterval(() => {
     refreshSelectedButtonCount();
   }, 2000);
@@ -241,6 +544,7 @@ function stopSelectedCountWatcher() {
 }
 
 async function refreshBatchButtonCounts() {
+  loadState();
   const items = await getAllJpgItems();
   const RANGES = [
     [7, 'btnBatch7'],
@@ -255,7 +559,7 @@ async function refreshBatchButtonCounts() {
       if (!item.filePath) return false;
       const ts = item.importedAt || item.modifiedAt;
       if (!ts) return false;
-      return isWithinDays(ts, days) && !hasCompressionTag(item);
+      return isWithinDays(ts, days) && !hasCompressionTag(item) && !hasPendingValidation(item.id);
     }).length;
     const btn = document.getElementById(btnId);
     if (btn) {
@@ -266,73 +570,190 @@ async function refreshBatchButtonCounts() {
   await refreshSelectedButtonCount();
 }
 
+async function queueCompressionAttempt(item) {
+  const existing = state.pendingItems[item.id] || null;
+  const health = await inspectImageHealth(item.filePath);
+  if (!health.ok) {
+    queuePendingRetry(item, health.reason, health.snapshot || (existing && existing.snapshot) || null, existing, '', 'awaiting_open');
+    return { status: 'retry', reason: health.reason };
+  }
+
+  try {
+    await openWithApp(item.filePath, config.appPath);
+  } catch (err) {
+    queuePendingRetry(item, 'open_failed', health.snapshot, existing, err.message, 'awaiting_open');
+    return { status: 'retry', reason: 'open_failed' };
+  }
+
+  const attempts = (existing && existing.attempts ? existing.attempts : 0) + 1;
+  rememberPendingItem(item, {
+    snapshot: health.snapshot,
+    attempts,
+    nextRetryAt: Date.now() + getRetryDelayMs(),
+    lastReason: WAITING_FOR_WRITE_REASON,
+    openedAt: new Date().toISOString(),
+    status: 'pending'
+  });
+  return { status: 'queued' };
+}
+
+async function processPendingItems(processed) {
+  loadState();
+  const dueEntries = Object.values(state.pendingItems || {}).filter(entry => !entry.nextRetryAt || entry.nextRetryAt <= Date.now());
+  if (!dueEntries.length) {
+    return { confirmed: 0, pending: getPendingCount() };
+  }
+
+  let confirmed = 0;
+  for (const entry of dueEntries) {
+    let item;
+    try {
+      item = await eagle.item.getById(entry.itemId);
+    } catch (err) {
+      item = null;
+    }
+
+    if (!item || !item.filePath) {
+      removePendingItem(entry.itemId);
+      setLastIssue(getHealthReasonMessage('item_missing'), entry);
+      continue;
+    }
+
+    if (hasCompressionTag(item)) {
+      processed.add(item.id);
+      removePendingItem(item.id);
+      confirmed += 1;
+      continue;
+    }
+
+    if (entry.status === 'awaiting_open') {
+      await queueCompressionAttempt(item);
+      continue;
+    }
+
+    const health = await inspectImageHealth(item.filePath);
+    if (!health.ok) {
+      queuePendingRetry(item, health.reason, health.snapshot || entry.snapshot || null, entry);
+      continue;
+    }
+
+    if (entry.snapshot && areSnapshotsEqual(entry.snapshot, health.snapshot)) {
+      rememberPendingItem(item, {
+        snapshot: entry.snapshot,
+        attempts: (entry.attempts || 0) + 1,
+        nextRetryAt: Date.now() + getRetryDelayMs(),
+        lastReason: WAITING_FOR_WRITE_REASON,
+        openedAt: entry.openedAt || null,
+        status: 'pending'
+      });
+      continue;
+    }
+
+    try {
+      await addCompressionTag(item.id);
+      processed.add(item.id);
+      removePendingItem(item.id);
+      confirmed += 1;
+    } catch (err) {
+      queuePendingRetry(item, 'tag_failed', health.snapshot, entry, err.message);
+    }
+  }
+
+  if (confirmed > 0) {
+    saveProcessed(processed);
+  }
+  return { confirmed, pending: getPendingCount() };
+}
+
+function summarizeQueueResult(summary, result) {
+  if (result.status === 'queued') {
+    summary.queued += 1;
+  } else if (result.status === 'retry') {
+    summary.retry += 1;
+  } else {
+    summary.skipped += 1;
+  }
+  return summary;
+}
+
+async function queueCompressionItems(items, progressLabel) {
+  loadState();
+  const summary = { queued: 0, retry: 0, skipped: 0 };
+  for (let i = 0; i < items.length; i++) {
+    const result = await queueCompressionAttempt(items[i]);
+    summarizeQueueResult(summary, result);
+    if ((i + 1) % 10 === 0) {
+      console.log(`[Auto-compression] ${progressLabel}: ${i + 1}/${items.length}`);
+    }
+  }
+  return summary;
+}
+
+function getManualSummaryMessage(summary) {
+  const parts = [];
+  if (summary.queued > 0) parts.push(`已提交 ${summary.queued} 个文件到图压`);
+  if (summary.retry > 0) parts.push(`待重试 ${summary.retry} 个`);
+  if (!parts.length) parts.push('没有新的文件被提交');
+  parts.push(`待验证 ${getPendingCount()} 项`);
+  return parts.join('，');
+}
+
 async function batchCompress(days) {
+  if (!beginCompressionJob('manual-batch')) return;
+
   try {
     const daysLabel = days === null ? '所有' : `最近${days}天`;
     console.log(`[Auto-compression] Starting batch compression: ${daysLabel}`);
-    
-    // 获取所有 JPG 文件
+
     const items = await getAllJpgItems();
-    
-    // 筛选符合时间条件的文件
     const filtered = items.filter(item => {
       if (!item.filePath) return false;
       const ts = item.importedAt || item.modifiedAt;
       if (!ts) return false;
       return isWithinDays(ts, days);
     });
-    
-    // 排除已有标签的文件
-    const toProcess = filtered.filter(item => !hasCompressionTag(item));
-    
+    loadState();
+    const toProcess = filtered.filter(item => !hasCompressionTag(item) && !hasPendingValidation(item.id));
+
     console.log(`[Auto-compression] Found ${filtered.length} items, ${toProcess.length} need processing`);
-    
-    // 显示确认对话框
+
     if (toProcess.length === 0) {
       eagle.notification.show(`${daysLabel}没有需要压缩的图片`, 'info');
       return;
     }
-    
+
     const confirmMsg = `找到 ${toProcess.length} 个${daysLabel}的 JPG 图片需要压缩，是否继续？`;
     const confirmed = confirm(confirmMsg);
-    
     if (!confirmed) {
       console.log('[Auto-compression] Batch compression cancelled by user');
       return;
     }
-    
-    // 批量处理
+
     eagle.notification.show(`开始处理 ${toProcess.length} 个文件...`, 'info');
-
-    for (let i = 0; i < toProcess.length; i++) {
-      const item = toProcess[i];
-      openWithApp(item.filePath, config.appPath, () => {});
-      await addCompressionTag(item);
-      await new Promise(r => setTimeout(r, 500));
-
-      // 每处理 10 个显示进度
-      if ((i + 1) % 10 === 0) {
-        console.log(`[Auto-compression] Progress: ${i + 1}/${toProcess.length}`);
-      }
-    }
-
-    eagle.notification.show(`成功处理 ${toProcess.length} 个文件`, 'success');
-    console.log(`[Auto-compression] Batch compression completed: ${toProcess.length} files`);
+    const summary = await queueCompressionItems(toProcess, 'Batch progress');
+    eagle.notification.show(getManualSummaryMessage(summary), summary.retry > 0 ? 'info' : 'success');
+    console.log(`[Auto-compression] Batch compression queued: ${JSON.stringify(summary)}`);
+    updateStatusUI();
     await refreshBatchButtonCounts();
   } catch (err) {
     console.error('[Auto-compression] Batch compression error:', err);
     eagle.notification.show('批量压缩失败', 'error');
+  } finally {
+    endCompressionJob();
   }
 }
 
 async function batchCompressSelected() {
+  if (!beginCompressionJob('manual-selected')) return;
+
   try {
+    loadState();
     const selectedItems = await eagle.item.getSelected();
     const selectable = (selectedItems || []).filter(item => {
       if (!item || !item.filePath) return false;
       return isJpegItem(item);
     });
-    const toProcess = selectable.filter(item => !hasCompressionTag(item));
+    const toProcess = selectable.filter(item => !hasCompressionTag(item) && !hasPendingValidation(item.id));
 
     if (selectable.length === 0) {
       eagle.notification.show('当前未选中可压缩的 JPG 图片', 'info');
@@ -341,7 +762,7 @@ async function batchCompressSelected() {
     }
 
     if (toProcess.length === 0) {
-      eagle.notification.show('选中图片均已压缩，无需处理', 'info');
+      eagle.notification.show('选中图片均已压缩或正在等待验证', 'info');
       await refreshBatchButtonCounts();
       return;
     }
@@ -353,23 +774,16 @@ async function batchCompressSelected() {
     }
 
     eagle.notification.show(`开始处理选中的 ${toProcess.length} 个文件...`, 'info');
-    for (let i = 0; i < toProcess.length; i++) {
-      const item = toProcess[i];
-      openWithApp(item.filePath, config.appPath, () => {});
-      await addCompressionTag(item);
-      await new Promise(r => setTimeout(r, 500));
-
-      if ((i + 1) % 10 === 0) {
-        console.log(`[Auto-compression] Selected progress: ${i + 1}/${toProcess.length}`);
-      }
-    }
-
-    eagle.notification.show(`成功处理选中的 ${toProcess.length} 个文件`, 'success');
-    console.log(`[Auto-compression] Selected compression completed: ${toProcess.length} files`);
+    const summary = await queueCompressionItems(toProcess, 'Selected progress');
+    eagle.notification.show(getManualSummaryMessage(summary), summary.retry > 0 ? 'info' : 'success');
+    console.log(`[Auto-compression] Selected compression queued: ${JSON.stringify(summary)}`);
+    updateStatusUI();
     await refreshBatchButtonCounts();
   } catch (err) {
     console.error('[Auto-compression] Selected compression error:', err);
     eagle.notification.show('选中项压缩失败', 'error');
+  } finally {
+    endCompressionJob();
   }
 }
 
@@ -378,48 +792,45 @@ async function runTask() {
     console.log('[Auto-compression] Task skipped: disabled');
     return;
   }
+  if (!beginCompressionJob('auto')) return;
 
   try {
     console.log('[Auto-compression] Running task...');
-    const [jpgItems, jpegItems] = await Promise.all([
-      eagle.item.get({ ext: 'jpg' }),
-      eagle.item.get({ ext: 'jpeg' })
-    ]);
-    const items = [].concat(jpgItems || [], jpegItems || []);
+    loadState();
+    const processed = loadProcessed();
+
+    const pendingResult = await processPendingItems(processed);
+    const items = await getAllJpgItems();
     console.log(`[Auto-compression] Found ${items.length} JPG/JPEG items in total`);
 
-    const processed = loadProcessed();
     const toProcess = [];
-    const todayStr = getTodayStr();
-
     for (const item of items) {
       if (!item.filePath) continue;
       const ts = item.importedAt || item.modifiedAt;
       if (!ts) continue;
       if (!isToday(ts)) continue;
       if (processed.has(item.id)) continue;
+      if (hasCompressionTag(item)) continue;
+      if (hasPendingValidation(item.id)) continue;
       toProcess.push(item);
     }
 
     console.log(`[Auto-compression] Found ${toProcess.length} new JPG/JPEG file(s) added today`);
 
-    for (const item of toProcess) {
-      openWithApp(item.filePath, config.appPath, () => {});
-      await addCompressionTag(item);
-      processed.add(item.id);
-      await new Promise(r => setTimeout(r, 500));
+    const summary = await queueCompressionItems(toProcess, 'Auto progress');
+    if (summary.queued > 0) {
+      console.log(`[Auto-compression] Queued ${summary.queued} file(s) for 图压`);
     }
 
-    if (toProcess.length > 0) {
-      saveProcessed(processed);
-      console.log(`[Auto-compression] Opened ${toProcess.length} file(s) with 图压`);
-    }
-
-    lastRunTime = new Date().toLocaleTimeString('zh-CN');
+    lastRunTime = new Date().toLocaleTimeString('zh-CN', { hour12: false });
     updateStatusUI();
-    console.log('[Auto-compression] Task completed');
+    console.log(`[Auto-compression] Task completed (confirmed=${pendingResult.confirmed}, queued=${summary.queued}, retry=${summary.retry})`);
   } catch (err) {
     console.error('[Auto-compression] runTask error:', err);
+    setLastIssue(err.message || '自动压缩执行失败');
+  } finally {
+    updateStatusUI();
+    endCompressionJob();
   }
 }
 
@@ -436,11 +847,22 @@ function getTodayProcessedCount() {
   return 0;
 }
 
+function formatIssue(issue) {
+  if (!issue || !issue.message) return '—';
+  const prefix = issue.at ? new Date(issue.at).toLocaleTimeString('zh-CN', { hour12: false }) : '';
+  const itemName = issue.itemName ? `${issue.itemName} · ` : '';
+  return [prefix, `${itemName}${issue.message}`].filter(Boolean).join(' · ');
+}
+
 function updateStatusUI() {
   const lastEl = document.getElementById('statusLastRun');
   const countEl = document.getElementById('statusProcessedCount');
+  const pendingEl = document.getElementById('statusPendingCount');
+  const issueEl = document.getElementById('statusLastIssue');
   if (lastEl) lastEl.textContent = lastRunTime || '—';
   if (countEl) countEl.textContent = String(getTodayProcessedCount());
+  if (pendingEl) pendingEl.textContent = String(getPendingCount());
+  if (issueEl) issueEl.textContent = formatIssue(state.lastIssue);
 }
 
 function formatCountdown(ms) {
@@ -539,10 +961,11 @@ function bindUI() {
   refreshBatchButtonCounts();
 }
 
-eagle.onPluginCreate(async (plugin) => {
+eagle.onPluginCreate(async () => {
   console.log('[Auto-compression] Plugin created');
   setTimeout(() => {
     loadConfig();
+    loadState();
     startTimer();
   }, 1000);
 });
@@ -554,6 +977,7 @@ eagle.onPluginRun(() => {
 eagle.onPluginShow(() => {
   console.log('[Auto-compression] Plugin show');
   loadConfig();
+  loadState();
   bindUI();
   startSelectedCountWatcher();
   startCountdown();
@@ -567,4 +991,7 @@ eagle.onPluginHide(() => {
 
 eagle.onLibraryChanged && eagle.onLibraryChanged(() => {
   loadProcessed();
+  loadState();
+  updateStatusUI();
+  refreshBatchButtonCounts();
 });
