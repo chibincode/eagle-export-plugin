@@ -55,7 +55,7 @@
 
 1. **启用/禁用开关**
    - 复选框控制自动压缩功能的开关
-   - 默认：启用
+   - 默认：关闭
 
 2. **检查间隔设置**
    - 数字输入框
@@ -85,7 +85,7 @@
 **配置文件 (config.json)**:
 ```json
 {
-  "enabled": true,
+  "enabled": false,
   "intervalMinutes": 1,
   "appPath": "/Applications/图压.app"
 }

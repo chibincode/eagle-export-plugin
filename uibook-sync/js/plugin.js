@@ -1065,7 +1065,7 @@ function getSkipReason(reason) {
         case 'missing_url':
             return '素材缺少 URL';
         case 'missing_required_tag':
-            return '未命中自动同步必需标签';
+            return '未命中同步必需标签';
         case 'missing_entity_type':
             return '未命中 website / section 规则';
         case 'missing_file':
@@ -1081,6 +1081,21 @@ function getSkipReason(reason) {
         default:
             return reason || '已跳过';
     }
+}
+
+function formatEligibilityReason(prepared) {
+    if (!prepared || !prepared.reason) return '已跳过';
+
+    const base = prepared.reason === 'cooldown'
+        ? `${getSkipReason(prepared.reason)}，${formatDateTime(prepared.cooldown.until)} 后重试`
+        : getSkipReason(prepared.reason);
+
+    if (prepared.reason === 'missing_required_tag' && Array.isArray(prepared.missingRequiredTags) && prepared.missingRequiredTags.length > 0) {
+        const missing = prepared.missingRequiredTags.map(tag => `「${tag}」`).join('、');
+        return `${base}：缺少 ${missing}`;
+    }
+
+    return base;
 }
 
 function evaluateEligibility(item, mode, folderMap) {
@@ -1114,10 +1129,14 @@ function evaluateEligibility(item, mode, folderMap) {
         return { eligible: false, reason: 'missing_url' };
     }
 
-    if (mode === 'auto' && config.requiredTags.length > 0) {
-        const matches = config.requiredTags.every(tag => itemHasTag(item, tag));
-        if (!matches) {
-            return { eligible: false, reason: 'missing_required_tag' };
+    if (config.requiredTags.length > 0) {
+        const missingRequiredTags = config.requiredTags.filter(tag => !itemHasTag(item, tag));
+        if (missingRequiredTags.length > 0) {
+            return {
+                eligible: false,
+                reason: 'missing_required_tag',
+                missingRequiredTags
+            };
         }
     }
 
@@ -1270,9 +1289,7 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
 async function syncSingleItem(item, mode, folderMap) {
     const prepared = evaluateEligibility(item, mode, folderMap);
     if (!prepared.eligible) {
-        const reason = prepared.reason === 'cooldown'
-            ? `${getSkipReason(prepared.reason)}，${formatDateTime(prepared.cooldown.until)} 后重试`
-            : getSkipReason(prepared.reason);
+        const reason = formatEligibilityReason(prepared);
         if (mode === 'manual') {
             addLog({
                 itemId: item.id,

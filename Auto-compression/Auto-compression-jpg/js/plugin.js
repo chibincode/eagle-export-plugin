@@ -10,6 +10,11 @@ const PLUGIN_ID = 'auto-compression-jpg';
 const DEFAULT_APP_PATH = '/Applications/图压.app';
 const DEFAULT_INTERVAL_MINUTES = 5;
 const FILE_STABILITY_DELAY_MS = 400;
+const MANUAL_CONFIRMATION_DELAY_MS = 1200;
+const MANUAL_CONFIRMATION_MAX_ATTEMPTS = 5;
+const WRITE_RETRY_DELAY_MS = 5000;
+const TAG_RETRY_DELAY_MS = 15000;
+const OPEN_RETRY_DELAY_MS = 30000;
 const WAITING_FOR_WRITE_REASON = 'waiting_for_write';
 
 const DEFAULT_STATE = {
@@ -19,7 +24,7 @@ const DEFAULT_STATE = {
 
 let timerId = null;
 let config = {
-  enabled: true,
+  enabled: false,
   intervalMinutes: DEFAULT_INTERVAL_MINUTES,
   appPath: DEFAULT_APP_PATH
 };
@@ -31,6 +36,8 @@ let selectedCountWatcherId = null;
 let selectedCountRefreshInFlight = false;
 let pendingSelectedCountRefresh = false;
 let compressionJobInProgress = false;
+let pendingValidationTimerId = null;
+let pendingValidationRunInProgress = false;
 
 let cachedStorageDir = null;
 
@@ -223,7 +230,7 @@ function getHealthReasonMessage(reason) {
     case 'file_not_readable':
       return '原图文件暂时不可读';
     case 'file_not_stable':
-      return '文件仍在同步或写入中';
+      return '文件仍在同步或写入中，稍后自动重试';
     case 'decode_failed':
       return '图片暂时无法解码';
     case 'invalid_dimensions':
@@ -231,7 +238,7 @@ function getHealthReasonMessage(reason) {
     case 'open_failed':
       return '无法打开图压应用';
     case WAITING_FOR_WRITE_REASON:
-      return '等待图压写回文件';
+      return '等待图压写回文件，稍后自动重试';
     case 'item_missing':
       return '素材已不存在';
     case 'tag_failed':
@@ -256,6 +263,15 @@ function areSnapshotsEqual(a, b) {
     Math.round(Number(a.mtimeMs || 0)) === Math.round(Number(b.mtimeMs || 0));
 }
 
+function hasFileWriteAfterOpen(entry, snapshot) {
+  if (!entry || !entry.openedAt || !snapshot || !Number.isFinite(Number(snapshot.mtimeMs))) {
+    return false;
+  }
+  const openedAtMs = new Date(entry.openedAt).getTime();
+  if (!Number.isFinite(openedAtMs)) return false;
+  return Number(snapshot.mtimeMs) > openedAtMs + 250;
+}
+
 function hasPendingValidation(itemId) {
   return Boolean(state.pendingItems && state.pendingItems[itemId]);
 }
@@ -264,8 +280,24 @@ function getPendingCount() {
   return Object.keys(state.pendingItems || {}).length;
 }
 
-function getRetryDelayMs() {
-  return Math.max(60000, config.intervalMinutes * 60 * 1000);
+function getPendingCountForIds(itemIds) {
+  if (!itemIds) return getPendingCount();
+  const idSet = itemIds instanceof Set ? itemIds : new Set(itemIds);
+  return Object.values(state.pendingItems || {}).filter(entry => idSet.has(entry.itemId)).length;
+}
+
+function getRetryDelayMs(reason = '') {
+  switch (reason) {
+    case WAITING_FOR_WRITE_REASON:
+    case 'file_not_stable':
+      return WRITE_RETRY_DELAY_MS;
+    case 'tag_failed':
+      return TAG_RETRY_DELAY_MS;
+    case 'open_failed':
+      return OPEN_RETRY_DELAY_MS;
+    default:
+      return Math.max(60000, config.intervalMinutes * 60 * 1000);
+  }
 }
 
 function setLastIssue(message, item) {
@@ -276,6 +308,39 @@ function setLastIssue(message, item) {
     message: String(message || '').trim()
   };
   saveState();
+}
+
+function getNextPendingRetryDelay() {
+  const entries = Object.values(state.pendingItems || {});
+  if (!entries.length) return null;
+
+  const now = Date.now();
+  let minDelay = Infinity;
+  for (const entry of entries) {
+    if (!entry.nextRetryAt || entry.nextRetryAt <= now) {
+      return 0;
+    }
+    minDelay = Math.min(minDelay, Math.max(0, entry.nextRetryAt - now));
+  }
+  return Number.isFinite(minDelay) ? minDelay : null;
+}
+
+function stopPendingValidationTimer() {
+  if (pendingValidationTimerId) {
+    clearTimeout(pendingValidationTimerId);
+    pendingValidationTimerId = null;
+  }
+}
+
+function schedulePendingValidationTimer(delayMs = null) {
+  stopPendingValidationTimer();
+  const nextDelay = delayMs === null ? getNextPendingRetryDelay() : delayMs;
+  if (nextDelay === null) return;
+
+  pendingValidationTimerId = setTimeout(() => {
+    pendingValidationTimerId = null;
+    runPendingValidationTask();
+  }, Math.max(0, nextDelay));
 }
 
 function removePendingItem(itemId) {
@@ -314,12 +379,13 @@ function queuePendingRetry(item, reason, snapshot, existing, extraMessage, statu
   const entry = rememberPendingItem(item, {
     snapshot: snapshot || (existing ? existing.snapshot : null),
     attempts,
-    nextRetryAt: Date.now() + getRetryDelayMs(),
+    nextRetryAt: Date.now() + getRetryDelayMs(reason),
     lastReason: reason,
     status
   });
   const message = extraMessage ? `${getHealthReasonMessage(reason)}：${extraMessage}` : getHealthReasonMessage(reason);
   setLastIssue(message, item || entry);
+  schedulePendingValidationTimer();
   return entry;
 }
 
@@ -589,19 +655,29 @@ async function queueCompressionAttempt(item) {
   rememberPendingItem(item, {
     snapshot: health.snapshot,
     attempts,
-    nextRetryAt: Date.now() + getRetryDelayMs(),
+    nextRetryAt: Date.now() + getRetryDelayMs(WAITING_FOR_WRITE_REASON),
     lastReason: WAITING_FOR_WRITE_REASON,
     openedAt: new Date().toISOString(),
     status: 'pending'
   });
+  schedulePendingValidationTimer();
   return { status: 'queued' };
 }
 
-async function processPendingItems(processed) {
+async function processPendingItems(processed, options = {}) {
   loadState();
-  const dueEntries = Object.values(state.pendingItems || {}).filter(entry => !entry.nextRetryAt || entry.nextRetryAt <= Date.now());
+  const itemIds = options.itemIds ? (options.itemIds instanceof Set ? options.itemIds : new Set(options.itemIds)) : null;
+  const ignoreRetryAt = Boolean(options.ignoreRetryAt);
+  const dueEntries = Object.values(state.pendingItems || {}).filter(entry => {
+    if (itemIds && !itemIds.has(entry.itemId)) return false;
+    return ignoreRetryAt || !entry.nextRetryAt || entry.nextRetryAt <= Date.now();
+  });
   if (!dueEntries.length) {
-    return { confirmed: 0, pending: getPendingCount() };
+    return {
+      confirmed: 0,
+      pending: getPendingCount(),
+      targetedPending: getPendingCountForIds(itemIds)
+    };
   }
 
   let confirmed = 0;
@@ -637,11 +713,12 @@ async function processPendingItems(processed) {
       continue;
     }
 
-    if (entry.snapshot && areSnapshotsEqual(entry.snapshot, health.snapshot)) {
+    const fileWasWrittenAfterOpen = hasFileWriteAfterOpen(entry, health.snapshot);
+    if (entry.snapshot && areSnapshotsEqual(entry.snapshot, health.snapshot) && !fileWasWrittenAfterOpen) {
       rememberPendingItem(item, {
         snapshot: entry.snapshot,
         attempts: (entry.attempts || 0) + 1,
-        nextRetryAt: Date.now() + getRetryDelayMs(),
+        nextRetryAt: Date.now() + getRetryDelayMs(WAITING_FOR_WRITE_REASON),
         lastReason: WAITING_FOR_WRITE_REASON,
         openedAt: entry.openedAt || null,
         status: 'pending'
@@ -662,12 +739,73 @@ async function processPendingItems(processed) {
   if (confirmed > 0) {
     saveProcessed(processed);
   }
-  return { confirmed, pending: getPendingCount() };
+  schedulePendingValidationTimer();
+  return {
+    confirmed,
+    pending: getPendingCount(),
+    targetedPending: getPendingCountForIds(itemIds)
+  };
+}
+
+async function confirmPendingItemsNow(itemIds) {
+  const targets = Array.from(new Set((itemIds || []).filter(Boolean)));
+  if (!targets.length) {
+    return { confirmed: 0, pending: 0, totalPending: getPendingCount() };
+  }
+
+  const processed = loadProcessed();
+  let totalConfirmed = 0;
+  let pending = getPendingCountForIds(targets);
+
+  for (let attempt = 0; attempt < MANUAL_CONFIRMATION_MAX_ATTEMPTS && pending > 0; attempt++) {
+    if (attempt > 0) {
+      await wait(MANUAL_CONFIRMATION_DELAY_MS);
+    }
+    const result = await processPendingItems(processed, {
+      itemIds: targets,
+      ignoreRetryAt: true
+    });
+    totalConfirmed += result.confirmed;
+    pending = result.targetedPending;
+  }
+
+  schedulePendingValidationTimer();
+  return {
+    confirmed: totalConfirmed,
+    pending,
+    totalPending: getPendingCount()
+  };
+}
+
+async function runPendingValidationTask() {
+  if (pendingValidationRunInProgress) return;
+  if (compressionJobInProgress) {
+    schedulePendingValidationTimer(1000);
+    return;
+  }
+
+  pendingValidationRunInProgress = true;
+  try {
+    const processed = loadProcessed();
+    const result = await processPendingItems(processed);
+    if (result.confirmed > 0) {
+      console.log(`[Auto-compression] Confirmed ${result.confirmed} pending item(s)`);
+    }
+    updateStatusUI();
+    await refreshBatchButtonCounts();
+  } catch (err) {
+    console.error('[Auto-compression] Pending validation error:', err);
+    setLastIssue(err.message || '待验证检查失败');
+  } finally {
+    pendingValidationRunInProgress = false;
+    schedulePendingValidationTimer();
+  }
 }
 
 function summarizeQueueResult(summary, result) {
   if (result.status === 'queued') {
     summary.queued += 1;
+    summary.queuedItemIds.push(result.itemId);
   } else if (result.status === 'retry') {
     summary.retry += 1;
   } else {
@@ -678,9 +816,10 @@ function summarizeQueueResult(summary, result) {
 
 async function queueCompressionItems(items, progressLabel) {
   loadState();
-  const summary = { queued: 0, retry: 0, skipped: 0 };
+  const summary = { queued: 0, retry: 0, skipped: 0, queuedItemIds: [] };
   for (let i = 0; i < items.length; i++) {
     const result = await queueCompressionAttempt(items[i]);
+    if (!result.itemId) result.itemId = items[i].id;
     summarizeQueueResult(summary, result);
     if ((i + 1) % 10 === 0) {
       console.log(`[Auto-compression] ${progressLabel}: ${i + 1}/${items.length}`);
@@ -692,9 +831,14 @@ async function queueCompressionItems(items, progressLabel) {
 function getManualSummaryMessage(summary) {
   const parts = [];
   if (summary.queued > 0) parts.push(`已提交 ${summary.queued} 个文件到图压`);
+  if (summary.confirmed > 0) parts.push(`已确认打标 ${summary.confirmed} 个`);
   if (summary.retry > 0) parts.push(`待重试 ${summary.retry} 个`);
+  if (summary.pendingAfterConfirm > 0) parts.push(`仍待验证 ${summary.pendingAfterConfirm} 个`);
   if (!parts.length) parts.push('没有新的文件被提交');
-  parts.push(`待验证 ${getPendingCount()} 项`);
+  if (summary.pendingAfterConfirm > 0 || summary.retry > 0) {
+    parts.push('未打标前请勿手动同步');
+  }
+  parts.push(`当前待验证 ${summary.totalPending} 项`);
   return parts.join('，');
 }
 
@@ -731,7 +875,14 @@ async function batchCompress(days) {
 
     eagle.notification.show(`开始处理 ${toProcess.length} 个文件...`, 'info');
     const summary = await queueCompressionItems(toProcess, 'Batch progress');
-    eagle.notification.show(getManualSummaryMessage(summary), summary.retry > 0 ? 'info' : 'success');
+    const confirmation = await confirmPendingItemsNow(summary.queuedItemIds);
+    summary.confirmed = confirmation.confirmed;
+    summary.pendingAfterConfirm = confirmation.pending;
+    summary.totalPending = confirmation.totalPending;
+    eagle.notification.show(
+      getManualSummaryMessage(summary),
+      summary.retry > 0 || summary.pendingAfterConfirm > 0 ? 'info' : 'success'
+    );
     console.log(`[Auto-compression] Batch compression queued: ${JSON.stringify(summary)}`);
     updateStatusUI();
     await refreshBatchButtonCounts();
@@ -775,7 +926,14 @@ async function batchCompressSelected() {
 
     eagle.notification.show(`开始处理选中的 ${toProcess.length} 个文件...`, 'info');
     const summary = await queueCompressionItems(toProcess, 'Selected progress');
-    eagle.notification.show(getManualSummaryMessage(summary), summary.retry > 0 ? 'info' : 'success');
+    const confirmation = await confirmPendingItemsNow(summary.queuedItemIds);
+    summary.confirmed = confirmation.confirmed;
+    summary.pendingAfterConfirm = confirmation.pending;
+    summary.totalPending = confirmation.totalPending;
+    eagle.notification.show(
+      getManualSummaryMessage(summary),
+      summary.retry > 0 || summary.pendingAfterConfirm > 0 ? 'info' : 'success'
+    );
     console.log(`[Auto-compression] Selected compression queued: ${JSON.stringify(summary)}`);
     updateStatusUI();
     await refreshBatchButtonCounts();
@@ -967,6 +1125,7 @@ eagle.onPluginCreate(async () => {
     loadConfig();
     loadState();
     startTimer();
+    schedulePendingValidationTimer();
   }, 1000);
 });
 
@@ -981,6 +1140,7 @@ eagle.onPluginShow(() => {
   bindUI();
   startSelectedCountWatcher();
   startCountdown();
+  schedulePendingValidationTimer();
 });
 
 eagle.onPluginHide(() => {
@@ -994,4 +1154,5 @@ eagle.onLibraryChanged && eagle.onLibraryChanged(() => {
   loadState();
   updateStatusUI();
   refreshBatchButtonCounts();
+  schedulePendingValidationTimer();
 });
