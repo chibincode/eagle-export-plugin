@@ -1,0 +1,16 @@
+{
+    "id": "d66fa00a-9f53-4d5c-9f75-38a3bd1a5ee4",
+    "version": "0.1.0",
+    "platform": "all",
+    "arch": "all",
+    "name": "UIBook Sync",
+    "logo": "/logo.png",
+    "keywords": ["uibook", "sync", "upload", "supabase", "lovable"],
+    "devTools": true,
+    "main": {
+        "serviceMode": true,
+        "url": "index.html",
+        "width": 760,
+        "height": 940
+    }
+}

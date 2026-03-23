@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>UIBook Sync</title>
+    <link rel="stylesheet" href="../shared/liquid-glass.css">
+    <style>
+        :root {
+            --accent: var(--lg-accent);
+            --accent-solid: var(--lg-accent-solid);
+            --accent-hover: var(--lg-accent-hover);
+        }
+
+        .page-title {
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            margin-bottom: 14px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .field-grid--single {
+            grid-template-columns: 1fr;
+        }
+
+        .field-group {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field-group small,
+        .helper-text {
+            color: var(--lg-text-2);
+            font-size: 12px;
+        }
+
+        .field-group textarea {
+            min-height: 74px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .status-card {
+            background: var(--lg-glass-field);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--lg-radius-md);
+            padding: 14px;
+        }
+
+        .status-card strong {
+            display: block;
+            font-size: 11px;
+            color: var(--lg-text-2);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 6px;
+        }
+
+        .status-card span {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--lg-text-1);
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 8px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .activity-toolbar {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .activity-toolbar input[type="text"] {
+            width: 100%;
+        }
+
+        .activity-footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .activity-item {
+            background: var(--lg-glass-field);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--lg-radius-md);
+            padding: 10px 12px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .activity-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .activity-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--lg-text-1);
+            word-break: break-word;
+        }
+
+        .activity-meta,
+        .activity-message {
+            font-size: 12px;
+            color: var(--lg-text-2);
+            word-break: break-word;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 62px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .pill.success {
+            background: rgba(16, 185, 129, 0.14);
+            color: #047857;
+        }
+
+        .pill.duplicate,
+        .pill.skipped {
+            background: rgba(245, 158, 11, 0.14);
+            color: #b45309;
+        }
+
+        .pill.error {
+            background: rgba(239, 68, 68, 0.14);
+            color: #b91c1c;
+        }
+
+        .pill.info {
+            background: rgba(59, 130, 246, 0.14);
+            color: #1d4ed8;
+        }
+
+        .empty-state {
+            background: var(--lg-glass-field);
+            border: 1px dashed rgba(0, 0, 0, 0.12);
+            border-radius: var(--lg-radius-md);
+            padding: 18px;
+            text-align: center;
+            color: var(--lg-text-2);
+            font-size: 12px;
+        }
+
+        @media (max-width: 720px) {
+            .actions,
+            .status-grid,
+            .field-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title" data-lg-tip="将 Eagle 素材直接同步到 UIBook 云端，并在本地保留同步状态。">UIBook Sync</h1>
+        <div class="subtitle">支持手动同步当前选中项，以及单主设备自动同步。</div>
+
+        <div id="selectionInfo" class="info-box" role="status">
+            <span id="selectionInfoText">自动同步默认关闭。建议只在常开主设备启用，其他 iCloud 设备保留手动同步。</span>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="Lovable / Supabase edge function 的地址与同步密钥。">云端连接</div>
+            <div class="stack">
+                <div class="field-group">
+                    <label for="endpointUrl">Endpoint</label>
+                    <input type="url" id="endpointUrl" placeholder="https://.../functions/v1/eagle-sync">
+                </div>
+                <div class="field-group">
+                    <label for="syncSecret">Sync Secret</label>
+                    <input type="password" id="syncSecret" placeholder="EAGLE_SYNC_SECRET">
+                    <small>密钥只保存在当前设备本地，用于单主设备自动同步。</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="自动同步是本地设备开关，默认关闭。">同步设置</div>
+            <div class="field-grid">
+                <div class="field-item" onclick="toggleCheckbox('autoEnabled')">
+                    <input type="checkbox" id="autoEnabled">
+                    <label for="autoEnabled">启用自动同步</label>
+                </div>
+                <div class="field-item" onclick="toggleCheckbox('requireUrl')">
+                    <input type="checkbox" id="requireUrl" checked>
+                    <label for="requireUrl">要求素材带 URL</label>
+                </div>
+            </div>
+            <div class="stack" style="margin-top: 12px;">
+                <div class="field-group">
+                    <label for="intervalMinutes">自动扫描间隔（分钟）</label>
+                    <input type="number" id="intervalMinutes" min="1" max="120" value="5">
+                </div>
+                <div class="field-group">
+                    <label for="requiredTags">自动同步必需标签（逗号分隔）</label>
+                    <input type="text" id="requiredTags" placeholder="已图压压缩">
+                </div>
+                <div class="field-group">
+                    <label for="successTag">同步成功标签</label>
+                    <input type="text" id="successTag" placeholder="已同步UIBook">
+                </div>
+                <div class="field-group">
+                    <label for="manualAllowedExts">手动同步格式（逗号分隔）</label>
+                    <input type="text" id="manualAllowedExts" placeholder="jpg,jpeg,png,webp,gif,avif">
+                </div>
+                <div class="field-group">
+                    <label for="autoAllowedExts">自动同步格式（逗号分隔）</label>
+                    <input type="text" id="autoAllowedExts" placeholder="jpg,jpeg">
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="按标签或文件夹规则映射为 website / section。Section 规则优先级更高。">实体映射规则</div>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label for="sectionTags">Section 标签</label>
+                    <textarea id="sectionTags" placeholder="section"></textarea>
+                </div>
+                <div class="field-group">
+                    <label for="sectionFolders">Section 文件夹</label>
+                    <textarea id="sectionFolders" placeholder="Section, sections"></textarea>
+                </div>
+                <div class="field-group">
+                    <label for="websiteTags">Website 标签</label>
+                    <textarea id="websiteTags" placeholder="website"></textarea>
+                </div>
+                <div class="field-group">
+                    <label for="websiteFolders">Website 文件夹</label>
+                    <textarea id="websiteFolders" placeholder="Page, websites"></textarea>
+                </div>
+            </div>
+            <div class="helper-text" style="margin-top: 10px;">文件夹名会同时匹配完整名称和下划线前缀，例如 <code>Section_Hero</code> 可命中规则 <code>section</code>。</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="先保存设置，再手动同步当前在 Eagle 中选中的素材。">操作</div>
+            <div class="actions">
+                <button type="button" class="lg-secondary" id="saveButton">保存设置</button>
+                <button type="button" class="lg-primary" id="syncButton">同步选中项</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="今日统计、自动同步状态与最近一次自动扫描时间。">状态摘要</div>
+            <div class="status-grid">
+                <div class="status-card">
+                    <strong>自动同步</strong>
+                    <span id="statusAutoEnabled">关闭</span>
+                </div>
+                <div class="status-card">
+                    <strong>下次扫描</strong>
+                    <span id="statusNextRun">—</span>
+                </div>
+                <div class="status-card">
+                    <strong>今日成功</strong>
+                    <span id="statusSuccessCount">0</span>
+                </div>
+                <div class="status-card">
+                    <strong>今日跳过</strong>
+                    <span id="statusSkippedCount">0</span>
+                </div>
+                <div class="status-card">
+                    <strong>今日失败</strong>
+                    <span id="statusErrorCount">0</span>
+                </div>
+                <div class="status-card">
+                    <strong>最近自动扫描</strong>
+                    <span id="statusLastAutoScan">—</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title" data-lg-tip="保留最近 500 条同步活动，支持本地搜索与分批加载。">最近活动</div>
+            <div class="activity-toolbar">
+                <input type="text" id="logSearchInput" placeholder="搜索素材名、失败原因、item ID、remote ID">
+            </div>
+            <div id="activityList" class="activity-list"></div>
+            <div id="activityLoadMore" class="activity-footer"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div id="lg-tooltip" role="tooltip"></div>
+
+    <script type="text/javascript" src="js/plugin.js"></script>
+    <script>
+    (function () {
+        var tip = document.getElementById('lg-tooltip');
+        if (!tip) return;
+        var showTimer = null, hideTimer = null;
+        function clearTimers() {
+            clearTimeout(showTimer);
+            clearTimeout(hideTimer);
+            showTimer = null;
+            hideTimer = null;
+        }
+        function hide() {
+            clearTimers();
+            tip.classList.remove('lg-tooltip--visible');
+            tip.textContent = '';
+        }
+        function place(el) {
+            var msg = el.getAttribute('data-lg-tip');
+            if (!msg) return;
+            tip.textContent = msg;
+            tip.classList.add('lg-tooltip--visible');
+            var margin = 10, gap = 8, rect = el.getBoundingClientRect();
+            var tw = tip.offsetWidth, th = tip.offsetHeight;
+            if (tw < 8) {
+                requestAnimationFrame(function () { place(el); });
+                return;
+            }
+            var top = rect.bottom + gap;
+            if (top + th > window.innerHeight - margin) top = rect.top - th - gap;
+            if (top < margin) top = Math.min(rect.bottom + gap, window.innerHeight - th - margin);
+            var left = rect.left + rect.width / 2 - tw / 2;
+            left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+            tip.style.left = Math.round(left) + 'px';
+            tip.style.top = Math.round(top) + 'px';
+        }
+        document.addEventListener('mouseover', function (e) {
+            var el = e.target.closest('[data-lg-tip]');
+            if (!el) return;
+            clearTimeout(hideTimer);
+            hideTimer = null;
+            clearTimeout(showTimer);
+            showTimer = setTimeout(function () {
+                showTimer = null;
+                place(el);
+                requestAnimationFrame(function () { place(el); });
+            }, 500);
+        });
+        document.addEventListener('mouseout', function (e) {
+            var from = e.target.closest('[data-lg-tip]');
+            if (!from) return;
+            if (e.relatedTarget && from.contains(e.relatedTarget)) return;
+            clearTimeout(showTimer);
+            showTimer = null;
+            hideTimer = setTimeout(hide, 100);
+        });
+        window.addEventListener('scroll', hide, true);
+        window.addEventListener('resize', hide);
+    })();
+    </script>
+</body>
+</html>

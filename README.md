@@ -38,6 +38,7 @@
 ## 📚 文档导航
 
 - [基础使用指南](#使用方法)（本文档）
+- [UIBook Sync 插件](#uibook-sync-插件) - 直接将 Eagle 素材同步到 UIBook 云端
 - [后端集成指南](./BACKEND_INTEGRATION.md) - 详细的后端处理示例
 - [Eagle MCP 集成测试](./EAGLE_MCP_INTEGRATION.md) - MCP 服务对接测试文档
 
@@ -63,6 +64,25 @@
    - 📦 完整数据包 - 导出 ZIP（推荐，包含图片+元数据）
 7. 点击"开始导出"按钮
 8. 文件会自动下载到默认下载位置
+
+## UIBook Sync 插件
+
+`uibook-sync/` 是一个独立的 Eagle 服务插件，用于把素材直接同步到 Lovable Cloud / Supabase 的 `eagle-sync` edge function。
+
+### 使用方式
+
+1. 在 Eagle 中进入 `插件中心` > `开发者` > `加载插件`
+2. 选择 `uibook-sync` 文件夹
+3. 填写云端 `Endpoint` 和 `Sync Secret`
+4. 配置 `website / section` 的标签或文件夹规则
+5. 点击“保存设置”
+6. 手动使用“同步选中项”，或在主设备上打开自动同步开关
+
+### 自动同步默认策略
+
+- 默认关闭
+- 仅建议在一台常开主设备上开启
+- 其他通过 iCloud 同步 Eagle 的设备保留手动同步即可
 
 ### 后端如何使用导出的数据？
 
@@ -145,6 +165,13 @@ exportitem/
 ├── index.html          # 主界面
 ├── js/
 │   └── plugin.js      # 核心逻辑
+├── manifest.json      # 插件配置
+└── logo.png          # 插件图标
+
+uibook-sync/
+├── index.html          # 同步配置、状态摘要、活动日志
+├── js/
+│   └── plugin.js      # 手动/自动同步逻辑
 ├── manifest.json      # 插件配置
 └── logo.png          # 插件图标
 ```
