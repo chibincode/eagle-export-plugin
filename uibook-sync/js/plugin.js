@@ -858,7 +858,19 @@ async function loadImageBitmapFromPath(filePath) {
     return createImageBitmap(blob);
 }
 
-async function generateResizedThumbnail(imagePath, targetWidth) {
+function blobFromCanvas(canvas, mimeType, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => {
+            if (blob) {
+                resolve(blob);
+                return;
+            }
+            reject(new Error('Failed to render image blob'));
+        }, mimeType, quality);
+    });
+}
+
+async function generateContainedThumbnail(imagePath, targetWidth) {
     const bitmap = await loadImageBitmapFromPath(imagePath);
     const width = bitmap.width > targetWidth ? targetWidth : bitmap.width;
     const height = Math.max(1, Math.round(bitmap.height * (width / bitmap.width)));
@@ -868,18 +880,28 @@ async function generateResizedThumbnail(imagePath, targetWidth) {
     canvas.height = height;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(bitmap, 0, 0, width, height);
+    if (typeof bitmap.close === 'function') bitmap.close();
 
-    return new Promise(resolve => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.9);
-    });
+    return blobFromCanvas(canvas, 'image/jpeg', 0.9);
 }
 
-async function generateVerticalAdminThumb(imagePath) {
+async function generateCoverThumbnail(imagePath) {
     const bitmap = await loadImageBitmapFromPath(imagePath);
     const targetWidth = 600;
     const targetHeight = 800;
-    const scale = targetWidth / bitmap.width;
-    const sourceHeight = Math.min(bitmap.height, Math.round(targetHeight / scale));
+    const targetRatio = targetWidth / targetHeight;
+    const sourceRatio = bitmap.width / bitmap.height;
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceWidth = bitmap.width;
+    let sourceHeight = bitmap.height;
+
+    if (sourceRatio > targetRatio) {
+        sourceWidth = Math.round(bitmap.height * targetRatio);
+        sourceX = Math.max(0, Math.round((bitmap.width - sourceWidth) / 2));
+    } else if (sourceRatio < targetRatio) {
+        sourceHeight = Math.round(bitmap.width / targetRatio);
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = targetWidth;
@@ -887,37 +909,24 @@ async function generateVerticalAdminThumb(imagePath) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(
         bitmap,
-        0,
-        0,
-        bitmap.width,
+        sourceX,
+        sourceY,
+        sourceWidth,
         sourceHeight,
         0,
         0,
         targetWidth,
         targetHeight
     );
+    if (typeof bitmap.close === 'function') bitmap.close();
 
-    return new Promise(resolve => {
-        canvas.toBlob(resolve, 'image/jpeg', 0.95);
-    });
+    return blobFromCanvas(canvas, 'image/jpeg', 0.95);
 }
 
-async function buildThumbnailAsset(item, basename) {
-    if (item.thumbnailPath && !item.noThumbnail) {
-        try {
-            const blob = await readBlobFromFile(item.thumbnailPath, 'png');
-            const ext = normalizeExt(path.extname(item.thumbnailPath) || item.ext || 'png');
-            return {
-                blob,
-                filename: `${basename}-thumb.${ext || 'png'}`,
-                mimeType: blob.type || getMimeTypeForPath(item.thumbnailPath, ext)
-            };
-        } catch (error) {
-            console.warn('[UIBook Sync] Eagle thumbnail unavailable, generating fallback thumbnail:', error);
-        }
-    }
-
-    const generatedBlob = await generateResizedThumbnail(item.filePath, 800);
+async function buildThumbnailAsset(item, basename, entityType) {
+    const generatedBlob = entityType === 'section'
+        ? await generateContainedThumbnail(item.filePath, 800)
+        : await generateCoverThumbnail(item.filePath);
     return {
         blob: generatedBlob,
         filename: `${basename}-thumb.jpg`,
@@ -926,18 +935,29 @@ async function buildThumbnailAsset(item, basename) {
 }
 
 async function buildAdminThumbAsset(item, basename, thumbnailAsset) {
-    const isPortrait = item.height && item.width ? item.height > item.width : false;
-    if (isPortrait) {
+    if (item.thumbnailPath && !item.noThumbnail) {
         try {
-            const blob = await generateVerticalAdminThumb(item.filePath);
+            const ext = normalizeExt(path.extname(item.thumbnailPath) || item.ext || 'png');
+            const blob = await readBlobFromFile(item.thumbnailPath, ext);
             return {
                 blob,
-                filename: `${basename}-admin.jpg`,
-                mimeType: 'image/jpeg'
+                filename: `${basename}-admin.${ext || 'png'}`,
+                mimeType: blob.type || getMimeTypeForPath(item.thumbnailPath, ext)
             };
         } catch (error) {
-            console.warn('[UIBook Sync] Vertical admin thumb generation failed, falling back to thumbnail:', error);
+            console.warn('[UIBook Sync] Eagle thumbnail unavailable for admin thumb, generating fallback:', error);
         }
+    }
+
+    try {
+        const blob = await generateContainedThumbnail(item.filePath, 200);
+        return {
+            blob,
+            filename: `${basename}-admin.jpg`,
+            mimeType: 'image/jpeg'
+        };
+    } catch (error) {
+        console.warn('[UIBook Sync] Admin thumb fallback generation failed, falling back to thumbnail:', error);
     }
 
     return {
@@ -1240,7 +1260,7 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
     const mainBlob = inspectedFile && inspectedFile.blob
         ? inspectedFile.blob
         : await readBlobFromFile(item.filePath, item.ext);
-    const thumbnailAsset = await buildThumbnailAsset(item, baseName);
+    const thumbnailAsset = await buildThumbnailAsset(item, baseName, prepared.entityType);
     const adminAsset = await buildAdminThumbAsset(item, baseName, thumbnailAsset);
 
     const formData = new FormData();
