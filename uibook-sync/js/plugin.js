@@ -1251,7 +1251,8 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
         name: item.name || baseName,
         url: prepared.cleanedUrl || undefined,
         entityType: prepared.entityType,
-        capturedDate: prepared.capturedDate
+        capturedDate: prepared.capturedDate,
+        sourceItemId: item.id
     }));
 
     const response = await fetchWithTimeout(config.endpointUrl, {
