@@ -19,7 +19,12 @@ const WAITING_FOR_WRITE_REASON = 'waiting_for_write';
 
 const DEFAULT_STATE = {
   pendingItems: {},
-  lastIssue: null
+  lastIssue: null,
+  repairStats: {
+    date: null,
+    healedCount: 0,
+    lastIssue: null
+  }
 };
 
 let timerId = null;
@@ -110,9 +115,29 @@ function normalizeState(raw) {
       }
     : null;
 
+  const repairStatsRaw = merged.repairStats && typeof merged.repairStats === 'object'
+    ? merged.repairStats
+    : {};
+
+  const repairLastIssue = repairStatsRaw.lastIssue && typeof repairStatsRaw.lastIssue === 'object'
+    ? {
+        at: repairStatsRaw.lastIssue.at || null,
+        itemId: repairStatsRaw.lastIssue.itemId || null,
+        itemName: repairStatsRaw.lastIssue.itemName || '',
+        message: String(repairStatsRaw.lastIssue.message || '').trim()
+      }
+    : null;
+
+  const repairStats = {
+    date: repairStatsRaw.date || null,
+    healedCount: Number.isFinite(repairStatsRaw.healedCount) ? repairStatsRaw.healedCount : 0,
+    lastIssue: repairLastIssue && repairLastIssue.message ? repairLastIssue : null
+  };
+
   return {
     pendingItems,
-    lastIssue: lastIssue && lastIssue.message ? lastIssue : null
+    lastIssue: lastIssue && lastIssue.message ? lastIssue : null,
+    repairStats
   };
 }
 
@@ -308,6 +333,50 @@ function setLastIssue(message, item) {
     message: String(message || '').trim()
   };
   saveState();
+}
+
+function ensureRepairStatsForToday() {
+  const today = getTodayStr();
+  if (!state.repairStats || typeof state.repairStats !== 'object') {
+    state.repairStats = {
+      date: today,
+      healedCount: 0,
+      lastIssue: null
+    };
+    return;
+  }
+
+  if (state.repairStats.date !== today) {
+    state.repairStats = {
+      date: today,
+      healedCount: 0,
+      lastIssue: state.repairStats.lastIssue || null
+    };
+  } else if (!Number.isFinite(state.repairStats.healedCount)) {
+    state.repairStats.healedCount = 0;
+  }
+}
+
+function incrementRepairCount(count = 1) {
+  ensureRepairStatsForToday();
+  state.repairStats.healedCount += count;
+  saveState();
+}
+
+function setRepairIssue(message, item) {
+  ensureRepairStatsForToday();
+  state.repairStats.lastIssue = {
+    at: new Date().toISOString(),
+    itemId: item && (item.id || item.itemId) ? (item.id || item.itemId) : null,
+    itemName: item && (item.name || item.itemName) ? (item.name || item.itemName) : '',
+    message: String(message || '').trim()
+  };
+  saveState();
+}
+
+function getTodayRepairCount() {
+  ensureRepairStatsForToday();
+  return state.repairStats.healedCount || 0;
 }
 
 function getNextPendingRetryDelay() {
@@ -747,6 +816,53 @@ async function processPendingItems(processed, options = {}) {
   };
 }
 
+async function healProcessedTagDrift(processed) {
+  loadState();
+  const processedIds = Array.from(processed || []);
+  if (!processedIds.length) {
+    return { healed: 0, failed: 0 };
+  }
+
+  let healed = 0;
+  let failed = 0;
+  for (const itemId of processedIds) {
+    if (hasPendingValidation(itemId)) continue;
+
+    let item;
+    try {
+      item = await eagle.item.getById(itemId);
+    } catch (err) {
+      item = null;
+    }
+
+    if (!item || !item.filePath) {
+      failed += 1;
+      setRepairIssue(getHealthReasonMessage('item_missing'), { itemId });
+      continue;
+    }
+
+    if (hasCompressionTag(item)) continue;
+
+    const health = await inspectImageHealth(item.filePath);
+    if (!health.ok) {
+      failed += 1;
+      setRepairIssue(`漏标签自愈失败：${getHealthReasonMessage(health.reason)}`, item);
+      continue;
+    }
+
+    try {
+      await addCompressionTag(item.id);
+      healed += 1;
+      incrementRepairCount(1);
+    } catch (err) {
+      failed += 1;
+      setRepairIssue(`漏标签自愈失败：${err.message}`, item);
+    }
+  }
+
+  return { healed, failed };
+}
+
 async function confirmPendingItemsNow(itemIds) {
   const targets = Array.from(new Set((itemIds || []).filter(Boolean)));
   if (!targets.length) {
@@ -958,6 +1074,7 @@ async function runTask() {
     const processed = loadProcessed();
 
     const pendingResult = await processPendingItems(processed);
+    const repairResult = await healProcessedTagDrift(processed);
     const items = await getAllJpgItems();
     console.log(`[Auto-compression] Found ${items.length} JPG/JPEG items in total`);
 
@@ -982,7 +1099,7 @@ async function runTask() {
 
     lastRunTime = new Date().toLocaleTimeString('zh-CN', { hour12: false });
     updateStatusUI();
-    console.log(`[Auto-compression] Task completed (confirmed=${pendingResult.confirmed}, queued=${summary.queued}, retry=${summary.retry})`);
+    console.log(`[Auto-compression] Task completed (confirmed=${pendingResult.confirmed}, repaired=${repairResult.healed}, queued=${summary.queued}, retry=${summary.retry})`);
   } catch (err) {
     console.error('[Auto-compression] runTask error:', err);
     setLastIssue(err.message || '自动压缩执行失败');
@@ -1012,15 +1129,27 @@ function formatIssue(issue) {
   return [prefix, `${itemName}${issue.message}`].filter(Boolean).join(' · ');
 }
 
+function formatRepairIssue(issue) {
+  if (!issue || !issue.message) return '—';
+  const prefix = issue.at ? new Date(issue.at).toLocaleTimeString('zh-CN', { hour12: false }) : '';
+  const itemName = issue.itemName ? `${issue.itemName} · ` : '';
+  return [prefix, `${itemName}${issue.message}`].filter(Boolean).join(' · ');
+}
+
 function updateStatusUI() {
   const lastEl = document.getElementById('statusLastRun');
   const countEl = document.getElementById('statusProcessedCount');
+  const repairedEl = document.getElementById('statusRepairedCount');
   const pendingEl = document.getElementById('statusPendingCount');
   const issueEl = document.getElementById('statusLastIssue');
+  const repairIssueEl = document.getElementById('statusLastRepairIssue');
+  ensureRepairStatsForToday();
   if (lastEl) lastEl.textContent = lastRunTime || '—';
   if (countEl) countEl.textContent = String(getTodayProcessedCount());
+  if (repairedEl) repairedEl.textContent = String(getTodayRepairCount());
   if (pendingEl) pendingEl.textContent = String(getPendingCount());
   if (issueEl) issueEl.textContent = formatIssue(state.lastIssue);
+  if (repairIssueEl) repairIssueEl.textContent = formatRepairIssue(state.repairStats.lastIssue);
 }
 
 function formatCountdown(ms) {
