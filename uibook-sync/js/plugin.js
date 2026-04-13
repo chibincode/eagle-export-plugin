@@ -991,10 +991,16 @@ async function fetchFolderMap() {
         return folderCache.data;
     }
 
-    const response = await fetch('http://localhost:41595/api/folder/list');
+    let response;
+    try {
+        response = await fetch('http://localhost:41595/api/folder/list');
+    } catch (err) {
+        throw new Error(`Eagle 本地 API 无法连接 (localhost:41595)：${err.message}`);
+    }
+
     const result = await response.json();
     if (!response.ok || result.status !== 'success' || !Array.isArray(result.data)) {
-        throw new Error('Failed to fetch folder list');
+        throw new Error(`Eagle 文件夹列表请求失败 (HTTP ${response.status})`);
     }
 
     const folderMap = {};
@@ -1232,15 +1238,20 @@ async function refreshItemSelection(itemIds) {
 
 async function fetchWithTimeout(url, options, timeoutMs) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-        controller.abort();
-    }, timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         return await fetch(url, {
             ...options,
             signal: controller.signal
         });
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            throw new Error(`请求超时 (${timeoutMs / 1000}s)：${url}`);
+        }
+        let host;
+        try { host = new URL(url).host; } catch (_) { host = url; }
+        throw new Error(`云端连接失败 (${host})：${err.message}`);
     } finally {
         clearTimeout(timeoutId);
     }
@@ -1541,6 +1552,7 @@ async function runAutoSync() {
         addLog({
             mode: 'auto',
             status: 'error',
+            title: '自动同步异常',
             message: error.message
         });
     } finally {
