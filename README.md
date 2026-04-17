@@ -39,6 +39,7 @@
 
 - [基础使用指南](#使用方法)（本文档）
 - [UIBook Sync 插件](#uibook-sync-插件) - 直接将 Eagle 素材同步到 UIBook 云端
+- [UIBook Vision Skill](#uibook-vision-skill) - 用当前对话的视觉能力为今天已同步素材补充结构化分析备注
 - [后端集成指南](./BACKEND_INTEGRATION.md) - 详细的后端处理示例
 - [Eagle MCP 集成测试](./EAGLE_MCP_INTEGRATION.md) - MCP 服务对接测试文档
 
@@ -83,6 +84,52 @@
 - 默认关闭
 - 仅建议在一台常开主设备上开启
 - 其他通过 iCloud 同步 Eagle 的设备保留手动同步即可
+
+## UIBook Vision Skill
+
+`skills/eagle-uibook-vision-notes/` 是一个配套 skill，用于扫描今天已经同步到 UIBook 的 Eagle 素材，把候选截图交给当前对话做视觉理解，再把结构化分析写回素材 `annotation`。
+
+### 适用场景
+
+- 你没有单独的视觉 API key
+- 你希望直接用当前对话能力识别截图内容
+- 你希望把 OCR、布局、组件、配色等分析结果回写到 Eagle 备注里
+
+### 常用命令
+
+在对话里使用这个 skill 时，默认应先问时间窗口：
+- `today`
+- `yesterday`
+- `last3d`
+- `last7d`
+
+如果用户已经明确说了窗口，再直接执行对应扫描。
+
+也可以先看每个窗口的当前候选数量：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py windows --repo "$PWD"
+```
+
+扫描今天的候选素材：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD"
+```
+
+扫描其他时间窗口：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window yesterday
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window last3d
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window last7d
+```
+
+把已经写好的分析块回写到 Eagle：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py apply --repo "$PWD" --item-id ITEM_ID --analysis-file /absolute/path/to/block.md
+```
 
 ### 后端如何使用导出的数据？
 
@@ -174,6 +221,16 @@ uibook-sync/
 │   └── plugin.js      # 手动/自动同步逻辑
 ├── manifest.json      # 插件配置
 └── logo.png          # 插件图标
+
+skills/
+└── eagle-uibook-vision-notes/
+    ├── SKILL.md
+    ├── scripts/
+    │   └── analyze_synced_items.py
+    ├── references/
+    │   └── output-format.md
+    └── agents/
+        └── openai.yaml
 ```
 
 ### 核心 API

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Eagle UIBook Vision Notes"
+  short_description: "扫描今天已同步的 Eagle 截图，并把对话里的分析写回备注"
+  default_prompt: "Use $eagle-uibook-vision-notes to scan today's Eagle items synced to UIBook, analyze one screenshot in this conversation, and write the finished analysis block back to annotation."
