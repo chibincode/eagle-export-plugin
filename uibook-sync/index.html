@@ -112,11 +112,25 @@
             gap: 6px;
         }
 
+        .activity-item--system {
+            background: rgba(255, 255, 255, 0.38);
+            border-color: rgba(255, 255, 255, 0.2);
+            padding: 9px 12px;
+            gap: 4px;
+        }
+
         .activity-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
+        }
+
+        .activity-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .activity-title {
@@ -126,11 +140,30 @@
             word-break: break-word;
         }
 
+        .activity-item--system .activity-title {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--lg-text-2);
+        }
+
         .activity-meta,
         .activity-message {
             font-size: 12px;
             color: var(--lg-text-2);
             word-break: break-word;
+        }
+
+        .activity-item--system .activity-meta,
+        .activity-item--system .activity-message {
+            font-size: 11px;
+        }
+
+        .activity-locate-button {
+            padding: 6px 12px;
+            min-width: auto;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .pill {

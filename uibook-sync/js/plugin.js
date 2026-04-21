@@ -539,6 +539,28 @@ function getLogTitle(entry) {
     return entry.itemId || '系统消息';
 }
 
+function isSystemLogEntry(entry) {
+    return !entry || !entry.itemId;
+}
+
+function canLocateLogEntry(entry) {
+    return Boolean(entry && entry.itemId);
+}
+
+async function locateLogItem(itemId) {
+    if (!itemId) return;
+    try {
+        const item = await eagle.item.getById(itemId);
+        if (!item) {
+            throw new Error('素材不存在或已被删除');
+        }
+        await refreshItemSelection([itemId]);
+    } catch (error) {
+        console.warn('[UIBook Sync] Failed to locate log item:', error);
+        showToast(`定位失败: ${error.message}`, 'error');
+    }
+}
+
 function renderLoadMore(totalCount, shownCount) {
     const container = document.getElementById('activityLoadMore');
     if (!container) return;
@@ -581,11 +603,18 @@ function renderLogs() {
         const statusClass = ['success', 'duplicate', 'skipped', 'error'].includes(entry.status) ? entry.status : 'info';
         const title = getLogTitle(entry);
         const meta = `${formatDateTime(entry.at)} · ${modeLabel}${entry.entityType ? ` · ${entry.entityType}` : ''}`;
+        const itemClass = isSystemLogEntry(entry) ? 'activity-item activity-item--system' : 'activity-item';
+        const locateButton = canLocateLogEntry(entry)
+            ? `<button type="button" class="lg-secondary activity-locate-button" data-item-id="${escapeHtml(entry.itemId)}">定位</button>`
+            : '';
         return `
-            <div class="activity-item">
+            <div class="${itemClass}">
                 <div class="activity-row">
                     <div class="activity-title">${escapeHtml(title)}</div>
-                    <span class="pill ${statusClass}">${escapeHtml(getStatusLabel(entry.status))}</span>
+                    <div class="activity-actions">
+                        ${locateButton}
+                        <span class="pill ${statusClass}">${escapeHtml(getStatusLabel(entry.status))}</span>
+                    </div>
                 </div>
                 <div class="activity-meta">${escapeHtml(meta)}</div>
                 <div class="activity-message">${escapeHtml(message)}</div>
@@ -695,6 +724,7 @@ function bindUi() {
     const saveButton = document.getElementById('saveButton');
     const syncButton = document.getElementById('syncButton');
     const logSearchInput = document.getElementById('logSearchInput');
+    const activityList = document.getElementById('activityList');
 
     if (saveButton) {
         saveButton.onclick = async () => {
@@ -720,6 +750,17 @@ function bindUi() {
     if (logSearchInput) {
         logSearchInput.oninput = event => {
             handleLogSearchInput(event.target.value);
+        };
+    }
+
+    if (activityList) {
+        activityList.onclick = event => {
+            const button = event.target.closest('.activity-locate-button');
+            if (!button) return;
+            event.preventDefault();
+            const itemId = String(button.dataset.itemId || '').trim();
+            if (!itemId) return;
+            locateLogItem(itemId);
         };
     }
 }
