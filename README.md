@@ -87,13 +87,79 @@
 
 ## UIBook Vision Skill
 
-`skills/eagle-uibook-vision-notes/` 是一个配套 skill，用于扫描今天已经同步到 UIBook 的 Eagle 素材，把候选截图交给当前对话做视觉理解，再把结构化分析写回素材 `annotation`。
+`skills/eagle-uibook-vision-notes/` 是一个配套 skill，用于扫描最近时间窗口内的 Eagle 图片素材。候选范围既包括已经同步到 UIBook 的素材，也包括最近直接添加到 Eagle 的本地图片素材。候选截图会交给当前对话做视觉理解，再把结构化分析写回素材 `annotation`。
 
 ### 适用场景
 
 - 你没有单独的视觉 API key
 - 你希望直接用当前对话能力识别截图内容
-- 你希望把 OCR、布局、组件、配色等分析结果回写到 Eagle 备注里
+- 你希望最近添加到 Eagle 的图片也能直接纳入分析
+- 你希望把 OCR、布局、组件、配色、视觉记忆点等分析结果回写到 Eagle 备注里
+- 你希望对“还没有任何文件夹分类”的新图片，直接让 AI 帮你匹配到 Eagle 里现有的合适文件夹
+
+分析块默认包含这些核心部分：
+- `Overview`
+- `Visible Text`
+- `Layout`
+- `Components`
+- `Color Palette`
+- `Visual Memory Cues`
+- `Visual Notes`
+
+其中 `Visual Memory Cues` 专门记录可被记住的非文字视觉线索，例如真实摄影、人物穿着、姿态、道具、场景、光线，或无人物页面中的插画主体、3D 物体、图表、设备框、渐变背景等。
+
+现在 notes 默认采用双段式输出：
+- 先完整英文版
+- 再完整中文版
+- 不做中英穿插
+
+另外，这个 skill 现在也支持“无文件夹素材分类”工作流：
+- 先扫描最近新增图片，必要时只看 `--only-unfiled`
+- 通过 Eagle 本地 HTTP API `http://127.0.0.1:41595/api/folder/list` 读取完整 folder tree 和完整 path
+- 由当前对话结合图片内容、页面类型、URL 和现有 folder 名称自动判断最合适的分类
+- 最后把素材直接添加到现有 Eagle 文件夹中
+
+现在 folder 选择已经是默认流程的一部分，但默认只对无 folder 素材生效：
+- `scan --json` 会直接返回 `suggestedFolderPath`
+- 也会返回 `folderAction`，例如 `keep_locked`、`assign`、`review_unfiled`
+- 只要素材已经有任何 folder，默认就锁定，不会自动改动
+- 处理图片时会默认一起处理无 folder 项的分类，但必须先看截图视觉内容，再写入 folder
+- 脚本给出的 `suggestedFolderPath` 只是预判，不是自动写入依据
+- 无 folder 项默认进入视觉复核，不会只靠 URL、文件名、尺寸或脚本建议自动 assign
+- 已有 folder 的修正必须显式进入 correction workflow
+
+默认处理顺序现在是：
+- 先扫描候选
+- 再做截图理解并写回 annotation
+- 然后处理无 folder 项的 folder
+- 无 folder 项必须先由当前对话看图判断视觉内容
+- 视觉判断完成后才运行 `assign-folder`
+- 已有 folder 的素材默认保持不动
+
+文件夹分类现在是 full-path-aware 的：
+- 会读取完整层级路径，例如 `Page_Gerneral/Page_About`
+- 一级和更深层级都可以是准确目标，关键看 folder 名称和 path 语义是否最匹配
+- 不会因为 folder 更深就默认更优先，层级深浅只在语义同样准确时才作为次级参考
+- 长页面、整页滚动图、含导航和多个 section 的页面默认优先归 `Page_*`
+- 单屏桌面截图按比例判断，不按固定像素判断；`1920x1080`、`2560x1440`、`3840x2160` 这类 16:9 Retina 截图都视为同类
+- 接近 16:9 的单屏桌面截图会优先查找语义匹配的 `Section_*` folder
+- 对这类单屏截图，脚本里的 URL / 文件名建议只作为预判，必须结合截图视觉内容后才能真正写入 folder
+- 如果文件名或 URL 是 `about`，但画面里实际是 `BLOG`、`TEAM`、`INVESTORS`、客户评价、价格卡片、logo 墙等具体模块，以画面内容为准，不归到 `Section_About`
+- 对这类单屏截图，视觉确认后的顺序是先找 `Section_{visualTopic}`，实在没有准确 section 时再退到 `Page_{visualTopic}`
+- 不会因为只有弱泛化证据就盲目归入 `Section_Gerneral`；弱 fallback 仍会进入人工 review
+- URL 会作为强信号，例如 `/about` 优先命中 `Page_About`
+- 如果素材此前误归到较宽泛的父级 folder，可以在写入更准确的 path 时同步移除旧父级
+
+单屏 section 的判断流程现在固定为：
+- 先看截图比例，16:9 Retina 图会进入视觉复核状态
+- 再看画面里的 section label、主标题、核心组件和视觉主体
+- 画面内容与 URL / 文件名冲突时，以画面内容为准
+- 没有准确 folder 时保持 `review_unfiled`，不强行塞进泛化 folder
+
+更高优先级规则：
+- 所有无 folder 图片都必须通过视觉内容判断后才能选择 folder
+- URL、文件名、尺寸和脚本建议都只能作为辅助线索
+- 画面内容是最终分类依据
 
 ### 常用命令
 
@@ -123,6 +189,36 @@ python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window yesterday
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window last3d
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window last7d
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py scan --repo "$PWD" --window today --only-unfiled
+```
+
+查看 Eagle 当前已有文件夹：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py folders
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py folders --json
+```
+
+先只读获取 AI 的 folder 建议：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py suggest-folder --item-id ITEM_ID
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py suggest-folder --item-id ITEM_ID --json
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py suggest-folder --item-id ITEM_ID --allow-filed --json
+```
+
+把某张无文件夹素材添加到已有 folder：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py assign-folder --item-id ITEM_ID --folder-name "Section_Selected Works"
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py assign-folder --item-id ITEM_ID --folder-name "Page_Gerneral/Page_About"
+```
+
+如果你明确要修正一个已经有 folder 的素材，再显式进入 correction workflow：
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py suggest-folder --item-id ITEM_ID --allow-filed --json
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py assign-folder --item-id ITEM_ID --folder-name "Page_Gerneral/Page_About" --replace-parent-folders --dry-run
 ```
 
 把已经写好的分析块回写到 Eagle：

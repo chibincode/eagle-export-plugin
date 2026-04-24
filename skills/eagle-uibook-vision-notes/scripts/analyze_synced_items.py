@@ -15,6 +15,7 @@ from typing import Any
 
 
 MCP_BASE_URL = "http://127.0.0.1:41596"
+FOLDER_API_URL = "http://127.0.0.1:41595/api/folder/list"
 DEFAULT_SUCCESS_TAG = "已同步UIBook"
 BLOCK_START = "<!-- UIBOOK_AI_ANALYSIS_START -->"
 BLOCK_END = "<!-- UIBOOK_AI_ANALYSIS_END -->"
@@ -160,9 +161,24 @@ def get_success_tag(repo: Path) -> str:
     return DEFAULT_SUCCESS_TAG
 
 
+def get_library_path(client: MCPClient) -> Path:
+    result = client.call_tool("get_app_info", {})
+    payload = parse_mcp_text_payload(result)
+    data = payload.get("data") if isinstance(payload, dict) else {}
+    library_path = Path(str(data.get("libraryPath") or "")).expanduser()
+    if not library_path.exists():
+        raise RuntimeError("Unable to resolve Eagle library path from get_app_info")
+    return library_path
+
+
 def parse_timestamp(value: Any) -> datetime | None:
     if value is None:
         return None
+    if isinstance(value, datetime):
+        if value.tzinfo:
+            return value.astimezone()
+        local_tz = datetime.now().astimezone().tzinfo
+        return value.replace(tzinfo=local_tz)
     if isinstance(value, (int, float)):
         timestamp = float(value)
         if timestamp > 10_000_000_000:
@@ -215,6 +231,32 @@ def get_window_label(window: str) -> str:
     }[window]
 
 
+def get_file_timestamp(path: Path) -> datetime | None:
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    raw = getattr(stat, "st_birthtime", None)
+    if raw is None:
+        raw = stat.st_mtime
+    return parse_timestamp(raw)
+
+
+def find_original_image_file(info_dir: Path) -> Path | None:
+    if not info_dir.exists() or not info_dir.is_dir():
+        return None
+    for child in sorted(info_dir.iterdir()):
+        if not child.is_file():
+            continue
+        ext = child.suffix.lower().lstrip(".")
+        if ext not in SUPPORTED_EXTS:
+            continue
+        if "_thumbnail" in child.stem.lower():
+            continue
+        return child
+    return None
+
+
 def get_synced_records_for_window(window: str) -> dict[str, dict[str, Any]]:
     state_path = get_uibook_storage_dir() / "state.json"
     state = load_json(state_path)
@@ -229,6 +271,33 @@ def get_synced_records_for_window(window: str) -> dict[str, dict[str, Any]]:
         item_id = entry.get("itemId")
         if item_id and matches_window(entry.get("at"), now, window):
             by_id[str(item_id)] = entry
+    return by_id
+
+
+def get_recent_image_records_for_window(client: MCPClient, window: str) -> dict[str, dict[str, Any]]:
+    library_path = get_library_path(client)
+    images_dir = library_path / "images"
+    now = datetime.now().astimezone()
+    by_id: dict[str, dict[str, Any]] = {}
+    if not images_dir.exists():
+        return by_id
+
+    for info_dir in images_dir.glob("*.info"):
+        item_id = info_dir.name.removesuffix(".info")
+        if not item_id:
+            continue
+        image_path = find_original_image_file(info_dir)
+        if not image_path:
+            continue
+        added_at = get_file_timestamp(info_dir) or get_file_timestamp(image_path)
+        if not added_at or not matches_window(added_at, now, window):
+            continue
+        by_id[item_id] = {
+            "itemId": item_id,
+            "filePath": str(image_path),
+            "addedAt": added_at.isoformat(),
+            "source": "recent-image",
+        }
     return by_id
 
 
@@ -259,6 +328,192 @@ def parse_mcp_text_payload(result: Any) -> Any:
     return result
 
 
+def fetch_folder_tree(timeout: float) -> list[dict[str, Any]]:
+    request = urllib.request.Request(
+        FOLDER_API_URL,
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:
+        raise RuntimeError(f"Unable to fetch Eagle folder tree from {FOLDER_API_URL}: {exc}") from exc
+
+    if isinstance(payload, dict):
+        folders = payload.get("data")
+        if payload.get("status") != "success" or not isinstance(folders, list):
+            raise RuntimeError(f"Invalid Eagle folder API payload from {FOLDER_API_URL}")
+        return folders
+    if isinstance(payload, list):
+        return payload
+    raise RuntimeError(f"Unexpected Eagle folder API payload from {FOLDER_API_URL}")
+
+
+def flatten_folders(
+    folders: list[dict[str, Any]],
+    parent_path: str = "",
+) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for folder in folders:
+        if not isinstance(folder, dict):
+            continue
+        folder_id = str(folder.get("id") or "")
+        name = str(folder.get("name") or "").strip()
+        if not folder_id or not name:
+            continue
+        path = f"{parent_path}/{name}" if parent_path else name
+        flattened.append(
+            {
+                "id": folder_id,
+                "name": name,
+                "path": path,
+                "description": str(folder.get("description") or ""),
+                "iconColor": folder.get("iconColor"),
+                "children": folder.get("children") or [],
+            }
+        )
+        children = folder.get("children")
+        if isinstance(children, list) and children:
+            flattened.extend(flatten_folders(children, path))
+    return flattened
+
+
+def build_folder_lookup(timeout: float) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+    flattened = flatten_folders(fetch_folder_tree(timeout))
+    by_id = {folder["id"]: folder for folder in flattened}
+    return flattened, by_id
+
+
+def normalize_token(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def is_section_sized(width: Any, height: Any) -> bool:
+    try:
+        w = int(width or 0)
+        h = int(height or 0)
+    except (TypeError, ValueError):
+        return False
+    if w <= 0 or h <= 0:
+        return False
+    ratio = w / h
+    # Retina screenshots scale the pixels, but keep the viewport aspect ratio.
+    return 1.45 <= ratio <= 2.1 and h <= 3200
+
+
+def is_long_page(width: Any, height: Any) -> bool:
+    try:
+        w = int(width or 0)
+        h = int(height or 0)
+    except (TypeError, ValueError):
+        return False
+    if w <= 0 or h <= 0:
+        return False
+    return h > int(w * 1.2)
+
+
+def folder_kind_priority(item: dict[str, Any]) -> tuple[list[str], str]:
+    width = item.get("width")
+    height = item.get("height")
+    if is_long_page(width, height):
+        return ["Page"], "Long or scroll-like image; prefer Page folders"
+    if is_section_sized(width, height):
+        return ["Section", "Page"], "Single-screen 16:9-ish image; prefer Section folders before Page folders"
+    return ["Page", "Section"], "Non-section-sized image; prefer Page folders before Section folders"
+
+
+def requires_visual_folder_review(item: dict[str, Any]) -> bool:
+    return True
+
+
+def infer_folder_topic(item: dict[str, Any]) -> tuple[str | None, str]:
+    url = str(item.get("url") or "").strip().lower()
+    name = str(item.get("name") or "").strip().lower()
+    text = f"{url} {name}"
+    patterns = [
+        ("About", ["/about", " about ", "about "]),
+        ("Pricing", ["/pricing", " pricing"]),
+        ("Login", ["/login", "/signin", "/sign-in", " login"]),
+        ("Sign up", ["/signup", "/sign-up", "/register", " sign up", " signup"]),
+        ("Book demo", ["/demo", "/book-demo", "/bookdemo", " book demo"]),
+        ("Report", ["/report", " report"]),
+        ("Settings", ["/settings", " settings"]),
+        ("Playground", ["/playground", " playground"]),
+        ("Onboarding", ["/onboarding", " onboarding"]),
+        ("Home", ["/home", " homepage", " home "]),
+        ("Press list", ["/press", " press "]),
+    ]
+    for topic, needles in patterns:
+        if any(needle in text for needle in needles):
+            return topic, f"Matched URL or item name pattern for {topic}"
+    return None, "No strong URL or item-name topic match"
+
+
+def choose_suggested_folder(item: dict[str, Any], flattened_folders: list[dict[str, Any]]) -> dict[str, Any]:
+    folder_kinds, size_reason = folder_kind_priority(item)
+    primary_folder_kind = folder_kinds[0]
+    needs_visual_review = requires_visual_folder_review(item)
+    topic, topic_reason = infer_folder_topic(item)
+    candidates: list[dict[str, Any]] = []
+
+    if topic:
+        for folder_kind in folder_kinds:
+            exact_name = f"{folder_kind}_{topic}"
+            exact_matches = [folder for folder in flattened_folders if normalize_token(folder["name"]) == normalize_token(exact_name)]
+            if len(exact_matches) == 1:
+                return {
+                    "suggestedFolderId": exact_matches[0]["id"],
+                    "suggestedFolderName": exact_matches[0]["name"],
+                    "suggestedFolderPath": exact_matches[0]["path"],
+                    "reason": f"{topic_reason}; {size_reason}; resolved the semantically best folder match for {exact_name}",
+                    "alternatives": [folder["path"] for folder in candidates if folder["path"] != exact_matches[0]["path"]],
+                    "folderKind": folder_kind,
+                    "folderKindPriority": folder_kinds,
+                    "requiresVisualFolderReview": needs_visual_review,
+                    "topic": topic,
+                    "matchType": "exact",
+                }
+            if len(exact_matches) > 1:
+                candidates.extend(exact_matches)
+
+    for folder_kind in folder_kinds:
+        fallback_names = [f"{folder_kind}_Gerneral", f"{folder_kind}_General"]
+        fallback_matches = [
+            folder
+            for folder in flattened_folders
+            if any(normalize_token(folder["name"]) == normalize_token(name) for name in fallback_names)
+        ]
+        if len(fallback_matches) == 1:
+            return {
+                "suggestedFolderId": fallback_matches[0]["id"],
+                "suggestedFolderName": fallback_matches[0]["name"],
+                "suggestedFolderPath": fallback_matches[0]["path"],
+                "reason": f"{topic_reason}; {size_reason}; fell back to weak general folder {fallback_matches[0]['name']}",
+                "alternatives": [folder["path"] for folder in candidates if folder["path"] != fallback_matches[0]["path"]],
+                "folderKind": folder_kind,
+                "folderKindPriority": folder_kinds,
+                "requiresVisualFolderReview": needs_visual_review,
+                "topic": topic,
+                "matchType": "fallback_general",
+            }
+        if len(fallback_matches) > 1:
+            candidates.extend(fallback_matches)
+
+    return {
+        "suggestedFolderId": None,
+        "suggestedFolderName": None,
+        "suggestedFolderPath": None,
+        "reason": f"{topic_reason}; {size_reason}",
+        "alternatives": [folder["path"] for folder in candidates],
+        "folderKind": primary_folder_kind,
+        "folderKindPriority": folder_kinds,
+        "requiresVisualFolderReview": needs_visual_review,
+        "topic": topic,
+        "matchType": "none",
+    }
+
+
 def list_tagged_items(client: MCPClient, success_tag: str) -> list[dict[str, Any]]:
     page_size = 100
     offset = 0
@@ -284,6 +539,29 @@ def list_tagged_items(client: MCPClient, success_tag: str) -> list[dict[str, Any
     return items
 
 
+def get_items_by_ids(client: MCPClient, ids: list[str]) -> list[dict[str, Any]]:
+    if not ids:
+        return []
+
+    items: list[dict[str, Any]] = []
+    batch_size = 100
+    for start in range(0, len(ids), batch_size):
+        batch_ids = ids[start : start + batch_size]
+        result = client.call_tool(
+            "item_get",
+            {
+                "ids": batch_ids,
+                "fullDetails": True,
+                "limit": len(batch_ids),
+            },
+        )
+        payload = parse_mcp_text_payload(result)
+        batch = payload.get("data") if isinstance(payload, dict) else []
+        if isinstance(batch, list):
+            items.extend(batch)
+    return items
+
+
 def get_item_by_id(client: MCPClient, item_id: str) -> dict[str, Any]:
     result = client.call_tool(
         "item_get",
@@ -296,7 +574,13 @@ def get_item_by_id(client: MCPClient, item_id: str) -> dict[str, Any]:
     return items[0]
 
 
-def discover_candidates(items: list[dict[str, Any]], synced_records: dict[str, dict[str, Any]], window: str) -> list[dict[str, Any]]:
+def discover_candidates(
+    items: list[dict[str, Any]],
+    synced_records: dict[str, dict[str, Any]],
+    recent_records: dict[str, dict[str, Any]],
+    window: str,
+    only_unfiled: bool = False,
+) -> list[dict[str, Any]]:
     now = datetime.now().astimezone()
     candidates = []
     for item in items:
@@ -307,15 +591,37 @@ def discover_candidates(items: list[dict[str, Any]], synced_records: dict[str, d
             continue
         sync_dt = parse_sync_annotation_date(item.get("annotation", ""))
         annotation_matches_window = bool(sync_dt and matches_window(sync_dt, now, window))
-        if item_id not in synced_records and not annotation_matches_window:
+        recent_record = recent_records.get(item_id)
+        if item_id not in synced_records and not annotation_matches_window and not recent_record:
             continue
-        file_path = Path(str(item.get("filePath") or ""))
+        file_path_value = str(item.get("filePath") or "")
+        if not file_path_value and recent_record:
+            file_path_value = str(recent_record.get("filePath") or "")
+        file_path = Path(file_path_value)
         ext = file_path.suffix.lower().lstrip(".") or str(item.get("ext") or "").lower()
+        has_local_image = file_path.exists()
+        supported_image = ext in SUPPORTED_EXTS
+        if not has_local_image or not supported_image:
+            continue
+        folder_ids = item.get("folders")
+        if not isinstance(folder_ids, list):
+            folder_ids = []
+        if only_unfiled and folder_ids:
+            continue
+        if recent_record and not item.get("filePath"):
+            item["filePath"] = recent_record.get("filePath")
+        candidate_source = "synced"
+        if recent_record and (item_id in synced_records or annotation_matches_window):
+            candidate_source = "synced+recent"
+        elif recent_record:
+            candidate_source = "recent"
         item["scanInfo"] = {
-            "hasLocalImage": file_path.exists(),
-            "supportedImage": ext in SUPPORTED_EXTS,
+            "hasLocalImage": has_local_image,
+            "supportedImage": supported_image,
             "windowSyncLog": synced_records.get(item_id),
             "annotationMatchesWindow": annotation_matches_window,
+            "recentImageRecord": recent_record,
+            "candidateSource": candidate_source,
         }
         candidates.append(item)
     return candidates
@@ -363,9 +669,60 @@ def update_annotation(client: MCPClient, item_id: str, annotation: str) -> None:
     )
 
 
-def render_candidate(item: dict[str, Any]) -> dict[str, Any]:
+def add_item_to_folder(client: MCPClient, item_id: str, folder_id: str) -> None:
+    client.call_tool(
+        "item_add_to_folders",
+        {
+            "ids": [item_id],
+            "folders": [folder_id],
+        },
+    )
+
+
+def remove_item_from_folders(client: MCPClient, item_id: str, folder_ids: list[str]) -> None:
+    if not folder_ids:
+        return
+    client.call_tool(
+        "item_remove_from_folders",
+        {
+            "ids": [item_id],
+            "folders": folder_ids,
+        },
+    )
+
+
+def get_folder_action(
+    current_folder_paths: list[str],
+    suggestion: dict[str, Any],
+) -> tuple[str, bool]:
+    suggested_path = suggestion.get("suggestedFolderPath")
+    if current_folder_paths:
+        return "keep_locked", False
+    if not suggested_path:
+        return "review_unfiled", True
+    if suggestion.get("requiresVisualFolderReview"):
+        return "review_unfiled", True
+    if suggestion.get("matchType") == "fallback_general":
+        return "review_unfiled", True
+    return "assign", True
+
+
+def render_candidate(
+    item: dict[str, Any],
+    folder_lookup: dict[str, dict[str, Any]],
+    flattened_folders: list[dict[str, Any]],
+) -> dict[str, Any]:
     scan_info = item.get("scanInfo") or {}
     log = scan_info.get("windowSyncLog") or {}
+    recent = scan_info.get("recentImageRecord") or {}
+    folder_ids = item.get("folders")
+    if not isinstance(folder_ids, list):
+        folder_ids = []
+    folder_meta = [folder_lookup.get(str(folder_id)) for folder_id in folder_ids]
+    folder_meta = [folder for folder in folder_meta if folder]
+    folder_paths = [folder["path"] for folder in folder_meta]
+    suggestion = choose_suggested_folder(item, flattened_folders)
+    folder_action, folder_action_needed = get_folder_action(folder_paths, suggestion)
     return {
         "id": item.get("id"),
         "name": item.get("name"),
@@ -378,27 +735,65 @@ def render_candidate(item: dict[str, Any]) -> dict[str, Any]:
         "hasLocalImage": scan_info.get("hasLocalImage"),
         "supportedImage": scan_info.get("supportedImage"),
         "syncedAt": log.get("at"),
+        "addedAt": recent.get("addedAt"),
         "entityType": log.get("entityType"),
         "remoteId": log.get("remoteId"),
+        "candidateSource": scan_info.get("candidateSource"),
+        "folderIds": folder_ids,
+        "folderNames": [folder["name"] for folder in folder_meta],
+        "folderPaths": folder_paths,
+        "isUnfiled": len(folder_ids) == 0,
+        "suggestedFolderId": suggestion.get("suggestedFolderId"),
+        "suggestedFolderName": suggestion.get("suggestedFolderName"),
+        "suggestedFolderPath": suggestion.get("suggestedFolderPath"),
+        "suggestedFolderReason": suggestion.get("reason"),
+        "suggestedFolderMatchType": suggestion.get("matchType"),
+        "requiresVisualFolderReview": suggestion.get("requiresVisualFolderReview"),
+        "folderAction": folder_action,
+        "folderActionNeeded": folder_action_needed,
+        "existingFolderLocked": len(folder_ids) > 0,
     }
 
 
-def get_rendered_candidates(client: MCPClient, repo: Path, window: str, limit: int | None) -> tuple[str, dict[str, dict[str, Any]], list[dict[str, Any]]]:
+def get_rendered_candidates(
+    client: MCPClient,
+    repo: Path,
+    window: str,
+    limit: int | None,
+    only_unfiled: bool = False,
+) -> tuple[str, dict[str, dict[str, Any]], dict[str, dict[str, Any]], list[dict[str, Any]]]:
     success_tag = get_success_tag(repo)
     synced_records = get_synced_records_for_window(window)
+    recent_records = get_recent_image_records_for_window(client, window)
     tagged_items = list_tagged_items(client, success_tag)
-    candidates = discover_candidates(tagged_items, synced_records, window)
+    flattened_folders, folder_lookup = build_folder_lookup(client.timeout)
+    tagged_ids = {str(item.get("id") or "") for item in tagged_items}
+    missing_recent_ids = [item_id for item_id in recent_records if item_id not in tagged_ids]
+    recent_items = get_items_by_ids(client, missing_recent_ids)
+    candidates = discover_candidates(
+        tagged_items + recent_items,
+        synced_records,
+        recent_records,
+        window,
+        only_unfiled=only_unfiled,
+    )
     if limit is not None:
         candidates = candidates[: limit]
-    rendered = [render_candidate(item) for item in candidates]
-    return success_tag, synced_records, rendered
+    rendered = [render_candidate(item, folder_lookup, flattened_folders) for item in candidates]
+    return success_tag, synced_records, recent_records, rendered
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
     repo = Path(args.repo).expanduser().resolve()
     client = MCPClient(timeout=args.timeout)
     try:
-        success_tag, synced_records, rendered = get_rendered_candidates(client, repo, args.window, args.limit)
+        success_tag, synced_records, recent_records, rendered = get_rendered_candidates(
+            client,
+            repo,
+            args.window,
+            args.limit,
+            only_unfiled=args.only_unfiled,
+        )
 
         if args.json:
             json.dump(
@@ -407,6 +802,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
                     "window": args.window,
                     "windowLabel": get_window_label(args.window),
                     "syncedRecordCount": len(synced_records),
+                    "recentImageCount": len(recent_records),
+                    "onlyUnfiled": args.only_unfiled,
                     "candidates": rendered,
                 },
                 sys.stdout,
@@ -419,13 +816,21 @@ def cmd_scan(args: argparse.Namespace) -> int:
         print(f"Success tag: {success_tag}")
         print(f"Window: {get_window_label(args.window)}")
         print(f"Matched synced ids from local state: {len(synced_records)}")
+        print(f"Matched recent local images: {len(recent_records)}")
+        print(f"Only unfiled: {'yes' if args.only_unfiled else 'no'}")
         print(f"Candidates: {len(rendered)}")
         for item in rendered:
             print(f"- {item['id']} | {item['name']}")
             print(f"  image: {item['filePath']}")
             print(f"  syncedAt: {item['syncedAt'] or '—'}")
+            print(f"  addedAt: {item['addedAt'] or '—'}")
             print(f"  entityType: {item['entityType'] or '—'}")
             print(f"  remoteId: {item['remoteId'] or '—'}")
+            print(f"  source: {item['candidateSource'] or '—'}")
+            print(f"  folders: {', '.join(item['folderPaths']) if item['folderPaths'] else '—'}")
+            print(f"  suggestedFolder: {item['suggestedFolderPath'] or '—'}")
+            print(f"  requiresVisualFolderReview: {'yes' if item.get('requiresVisualFolderReview') else 'no'}")
+            print(f"  folderAction: {item['folderAction']}")
         return 0
     finally:
         client.close()
@@ -438,13 +843,21 @@ def cmd_windows(args: argparse.Namespace) -> int:
         summary = []
         success_tag = get_success_tag(repo)
         for window in WINDOW_CHOICES:
-            _, synced_records, rendered = get_rendered_candidates(client, repo, window, None)
+            _, synced_records, recent_records, rendered = get_rendered_candidates(
+                client,
+                repo,
+                window,
+                None,
+                only_unfiled=args.only_unfiled,
+            )
             summary.append(
                 {
                     "window": window,
                     "windowLabel": get_window_label(window),
                     "syncedRecordCount": len(synced_records),
+                    "recentImageCount": len(recent_records),
                     "candidateCount": len(rendered),
+                    "unfiledOnly": args.only_unfiled,
                 }
             )
 
@@ -463,7 +876,159 @@ def cmd_windows(args: argparse.Namespace) -> int:
 
         print(f"Success tag: {success_tag}")
         for item in summary:
-            print(f"- {item['window']}: {item['candidateCount']} candidates ({item['windowLabel']})")
+            print(
+                f"- {item['window']}: {item['candidateCount']} candidates "
+                f"({item['windowLabel']}, synced={item['syncedRecordCount']}, recent={item['recentImageCount']}, "
+                f"unfiledOnly={'yes' if item['unfiledOnly'] else 'no'})"
+            )
+        return 0
+    finally:
+        client.close()
+
+
+def cmd_folders(args: argparse.Namespace) -> int:
+    flattened, _ = build_folder_lookup(args.timeout)
+    if args.json:
+        json.dump({"folders": flattened}, sys.stdout, ensure_ascii=False, indent=2)
+        sys.stdout.write("\n")
+        return 0
+    print(f"Folders: {len(flattened)}")
+    for folder in flattened:
+        print(f"- {folder['id']} | {folder['path']}")
+    return 0
+
+
+def resolve_folder_id(
+    flattened_folders: list[dict[str, Any]],
+    folder_id: str | None,
+    folder_name: str | None,
+) -> dict[str, Any]:
+    if folder_id:
+        for folder in flattened_folders:
+            if folder["id"] == folder_id:
+                return folder
+        raise RuntimeError(f"Folder id not found: {folder_id}")
+
+    if not folder_name:
+        raise RuntimeError("Provide either --folder-id or --folder-name")
+
+    exact_path = [folder for folder in flattened_folders if folder["path"] == folder_name]
+    if len(exact_path) == 1:
+        return exact_path[0]
+    if len(exact_path) > 1:
+        raise RuntimeError(f"Folder path matched multiple folders unexpectedly: {folder_name}")
+
+    exact_name = [folder for folder in flattened_folders if folder["name"] == folder_name]
+    if len(exact_name) == 1:
+        return exact_name[0]
+    if len(exact_name) > 1:
+        matches = ", ".join(folder["path"] for folder in exact_name)
+        raise RuntimeError(f"Folder name is ambiguous, use full path or id instead: {matches}")
+
+    raise RuntimeError(f"Folder not found: {folder_name}")
+
+
+def cmd_assign_folder(args: argparse.Namespace) -> int:
+    client = MCPClient(timeout=args.timeout)
+    try:
+        flattened, folder_lookup = build_folder_lookup(client.timeout)
+        folder = resolve_folder_id(flattened, args.folder_id, args.folder_name)
+        item = get_item_by_id(client, args.item_id)
+        current_folders = item.get("folders")
+        if not isinstance(current_folders, list):
+            current_folders = []
+        current_folder_meta = [folder_lookup.get(str(folder_id)) for folder_id in current_folders]
+        current_folder_meta = [entry for entry in current_folder_meta if entry]
+        remove_folder_ids: list[str] = []
+        if args.replace_parent_folders:
+            for current_folder in current_folder_meta:
+                current_path = current_folder["path"]
+                if current_folder["id"] == folder["id"]:
+                    continue
+                if folder["path"].startswith(f"{current_path}/"):
+                    remove_folder_ids.append(current_folder["id"])
+        if folder["id"] in current_folders and not remove_folder_ids:
+            print(f"[skipped] {args.item_id} already in {folder['path']}")
+            return 0
+        if args.dry_run:
+            print(
+                json.dumps(
+                    {
+                        "itemId": args.item_id,
+                        "itemName": item.get("name"),
+                        "currentFolderIds": current_folders,
+                        "currentFolderPaths": [entry["path"] for entry in current_folder_meta],
+                        "targetFolderId": folder["id"],
+                        "targetFolderName": folder["name"],
+                        "targetFolderPath": folder["path"],
+                        "removeFolderIds": remove_folder_ids,
+                        "removeFolderPaths": [folder_lookup[folder_id]["path"] for folder_id in remove_folder_ids if folder_id in folder_lookup],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+        remove_item_from_folders(client, args.item_id, remove_folder_ids)
+        add_item_to_folder(client, args.item_id, folder["id"])
+        if remove_folder_ids:
+            removed = ", ".join(folder_lookup[folder_id]["path"] for folder_id in remove_folder_ids if folder_id in folder_lookup)
+            print(f"[folder-reassigned] {args.item_id} -> {folder['path']} (removed: {removed})")
+        else:
+            print(f"[folder-added] {args.item_id} -> {folder['path']}")
+        return 0
+    finally:
+        client.close()
+
+
+def cmd_suggest_folder(args: argparse.Namespace) -> int:
+    client = MCPClient(timeout=args.timeout)
+    try:
+        flattened, _ = build_folder_lookup(client.timeout)
+        item = get_item_by_id(client, args.item_id)
+        current_folders = item.get("folders")
+        if not isinstance(current_folders, list):
+            current_folders = []
+        result = choose_suggested_folder(item, flattened)
+        current_folder_meta = [folder for folder in flattened if folder["id"] in {str(folder_id) for folder_id in current_folders}]
+        current_folder_paths = [folder["path"] for folder in current_folder_meta]
+        if current_folder_paths and not args.allow_filed:
+            result = {
+                **result,
+                "action": "keep_locked",
+                "actionable": False,
+                "note": "Existing folders are locked by default. Re-run with --allow-filed only when you intentionally want a correction suggestion.",
+            }
+        elif current_folder_paths and args.allow_filed:
+            suggested_path = result.get("suggestedFolderPath")
+            correction_needed = bool(suggested_path and suggested_path not in current_folder_paths)
+            result = {
+                **result,
+                "action": "review_correction" if correction_needed else "keep",
+                "actionable": correction_needed,
+                "note": "Filed-item correction review is explicitly enabled for this request.",
+            }
+        else:
+            folder_action, folder_action_needed = get_folder_action([], result)
+            result = {
+                **result,
+                "action": folder_action,
+                "actionable": folder_action_needed,
+            }
+        payload = {
+            "itemId": args.item_id,
+            "itemName": item.get("name"),
+            "url": item.get("url"),
+            "width": item.get("width"),
+            "height": item.get("height"),
+            "currentFolderPaths": current_folder_paths,
+            **result,
+        }
+        if args.json:
+            json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
+            sys.stdout.write("\n")
+            return 0
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
     finally:
         client.close()
@@ -489,23 +1054,37 @@ def cmd_apply(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Scan today's UIBook-synced Eagle items and apply a conversation-generated AI analysis block."
+        description="Scan recent Eagle image items and recent UIBook-synced items, then apply a conversation-generated AI analysis block."
     )
     subparsers = parser.add_subparsers(dest="command")
 
-    scan = subparsers.add_parser("scan", help="List today's UIBook-synced Eagle items for conversation-based analysis")
+    scan = subparsers.add_parser("scan", help="List recent Eagle image items and recent UIBook-synced items for conversation-based analysis")
     scan.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
-    scan.add_argument("--window", choices=WINDOW_CHOICES, default="today", help="Time window for synced items (default: today)")
+    scan.add_argument("--window", choices=WINDOW_CHOICES, default="today", help="Time window for recent items (default: today)")
     scan.add_argument("--limit", type=int, default=None, help="Limit the number of candidates")
+    scan.add_argument("--only-unfiled", action="store_true", help="Only include candidates that are not in any Eagle folder")
     scan.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
     scan.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     scan.set_defaults(func=cmd_scan)
 
     windows = subparsers.add_parser("windows", help="Show candidate counts for each supported time window")
     windows.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
+    windows.add_argument("--only-unfiled", action="store_true", help="Only count candidates that are not in any Eagle folder")
     windows.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
     windows.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     windows.set_defaults(func=cmd_windows)
+
+    folders = subparsers.add_parser("folders", help="List Eagle folders for AI-assisted folder assignment")
+    folders.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
+    folders.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
+    folders.set_defaults(func=cmd_folders)
+
+    suggest_cmd = subparsers.add_parser("suggest-folder", help="Suggest the semantically best existing folder path for an item using folder names, full paths, and URL heuristics")
+    suggest_cmd.add_argument("--item-id", required=True, help="Eagle item ID to inspect")
+    suggest_cmd.add_argument("--allow-filed", action="store_true", help="Allow correction suggestions for items that already have folders")
+    suggest_cmd.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
+    suggest_cmd.add_argument("--timeout", type=float, default=60.0, help="Timeout in seconds")
+    suggest_cmd.set_defaults(func=cmd_suggest_folder)
 
     apply_cmd = subparsers.add_parser("apply", help="Write a ready-made AI analysis block back to Eagle annotation")
     apply_cmd.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
@@ -515,15 +1094,31 @@ def build_parser() -> argparse.ArgumentParser:
     apply_cmd.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     apply_cmd.set_defaults(func=cmd_apply)
 
+    assign_cmd = subparsers.add_parser("assign-folder", help="Add an Eagle item to an existing folder after conversation-based classification")
+    assign_cmd.add_argument("--item-id", required=True, help="Eagle item ID to update")
+    assign_cmd.add_argument("--folder-id", help="Target Eagle folder id")
+    assign_cmd.add_argument("--folder-name", help="Target Eagle folder path or exact folder name")
+    assign_cmd.add_argument("--replace-parent-folders", action="store_true", help="Remove broader current parent folders when moving the item into a more accurate folder path")
+    assign_cmd.add_argument("--dry-run", action="store_true", help="Preview the resolved folder assignment without writing")
+    assign_cmd.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
+    assign_cmd.set_defaults(func=cmd_assign_folder)
+
     return parser
 
 
 def main() -> int:
     parser = build_parser()
-    args = parser.parse_args()
-    if not getattr(args, "command", None):
-        args = parser.parse_args(["scan", *sys.argv[1:]])
-    return args.func(args)
+    try:
+        args = parser.parse_args()
+        if not getattr(args, "command", None):
+            args = parser.parse_args(["scan", *sys.argv[1:]])
+        return args.func(args)
+    except KeyboardInterrupt:
+        print("Interrupted", file=sys.stderr)
+        return 130
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
