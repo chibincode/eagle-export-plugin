@@ -43,9 +43,10 @@ Default conversation behavior:
 8. Let the current Codex conversation inspect the chosen screenshot and draft the analysis block.
 9. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
 10. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
-11. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
-12. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
-13. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
+11. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
+12. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
+13. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
+14. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
 
 ## Default Processing Order
 
@@ -58,7 +59,7 @@ Once the user picks a time window, treat the end-to-end flow as:
 5. evaluate the semantically best existing folder path
 6. for unfiled items, inspect the image visually before assigning any folder
 7. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
-8. if `folderAction=keep_locked`, do nothing because the existing folder is treated as user-owned
+8. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
 9. only enter correction mode for already-filed items when the user explicitly asks for folder correction
 
 Do not treat folder assignment as a separate follow-up task. It is part of the default completion criteria for each processed candidate.
@@ -185,6 +186,7 @@ The block format is documented in [references/output-format.md](references/outpu
 
 - Use the scan output to identify the exact item ID and image path.
 - Treat folder choice as part of the default processing flow only for unfiled items.
+- Treat annotation writing as part of the default processing flow for every processed candidate, regardless of whether it already has folders.
 - Use `scan --only-unfiled` when the task is to classify newly added images that currently have no folder.
 - Ask the user for the time window first unless it is already explicit in the request.
 - If possible, ask with live counts, for example: `today (22), yesterday (1), last3d (23), last7d (23)`.
@@ -206,7 +208,7 @@ The block format is documented in [references/output-format.md](references/outpu
 - If the image area is a dominant part of the card or page, write at least two sentences in `Visual Memory Cues`; if it is a small supporting image, one sentence is enough as long as it explains the role it plays.
 - The Chinese pass should mirror the English pass faithfully, not introduce a second different interpretation.
 - When an item has no Eagle folder, fetch the current full folder tree first and classify against existing folders only.
-- If an item already has any folder, treat that folder state as locked and user-owned in the default flow.
+- If an item already has any folder, treat that folder state as locked and user-owned in the default flow, but do not treat the item as fully processed until the AI analysis block is written or refreshed.
 - Prefer the semantically most accurate existing folder path based on visual content first, then page type, URL, file name, and folder naming.
 - Do not prefer a deeper folder just because it is deeper. First-level and deeper folders are equally valid if their names are the best match.
 - If a parent path and a child path both match, choose the one whose folder name and path semantics are more accurate. Use depth only as a tie-breaker, not as the primary rule.
@@ -227,9 +229,9 @@ The block format is documented in [references/output-format.md](references/outpu
 - After drafting the block, use the `apply` command to write it back.
 - After scan, do not auto-assign unfiled items from script suggestions alone.
 - After scan, if `folderAction` is `review_unfiled`, inspect the image, choose the folder from visual content, then use `assign-folder` only after that visual decision.
-- After scan, if `folderAction` is `keep_locked`, do not modify folders.
+- After scan, if `folderAction` is `keep_locked`, do not modify folders, but still write or refresh the AI analysis block for that item.
 - Use `suggest-folder --allow-filed` only when the user explicitly wants a correction suggestion for an item that already has folders.
-- A candidate is not fully processed until both annotation writing and folder handling are done.
+- A candidate is not fully processed until annotation writing is done, and folder handling is also done when the item is unfiled or the user explicitly requested folder correction.
 
 ## Failure Handling
 

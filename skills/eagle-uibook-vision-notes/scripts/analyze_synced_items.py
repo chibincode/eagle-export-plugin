@@ -655,6 +655,15 @@ def read_analysis_block(args: argparse.Namespace) -> str:
     return text
 
 
+def has_ai_analysis(annotation: Any) -> bool:
+    text = str(annotation or "")
+    return (
+        BLOCK_START in text
+        or AI_HEADING_EN in text
+        or AI_HEADING_ZH in text
+    )
+
+
 def update_annotation(client: MCPClient, item_id: str, annotation: str) -> None:
     client.call_tool(
         "item_update",
@@ -723,6 +732,10 @@ def render_candidate(
     folder_paths = [folder["path"] for folder in folder_meta]
     suggestion = choose_suggested_folder(item, flattened_folders)
     folder_action, folder_action_needed = get_folder_action(folder_paths, suggestion)
+    has_analysis = has_ai_analysis(item.get("annotation"))
+    analysis_action = "refresh_analysis" if has_analysis else "write_analysis"
+    analysis_action_needed = not has_analysis
+    candidate_complete = has_analysis and not folder_action_needed
     return {
         "id": item.get("id"),
         "name": item.get("name"),
@@ -751,6 +764,10 @@ def render_candidate(
         "requiresVisualFolderReview": suggestion.get("requiresVisualFolderReview"),
         "folderAction": folder_action,
         "folderActionNeeded": folder_action_needed,
+        "hasAiAnalysis": has_analysis,
+        "analysisAction": analysis_action,
+        "analysisActionNeeded": analysis_action_needed,
+        "candidateComplete": candidate_complete,
         "existingFolderLocked": len(folder_ids) > 0,
     }
 
@@ -819,6 +836,8 @@ def cmd_scan(args: argparse.Namespace) -> int:
         print(f"Matched recent local images: {len(recent_records)}")
         print(f"Only unfiled: {'yes' if args.only_unfiled else 'no'}")
         print(f"Candidates: {len(rendered)}")
+        print(f"Needs AI analysis: {sum(1 for item in rendered if item.get('analysisActionNeeded'))}")
+        print(f"Complete: {sum(1 for item in rendered if item.get('candidateComplete'))}")
         for item in rendered:
             print(f"- {item['id']} | {item['name']}")
             print(f"  image: {item['filePath']}")
@@ -831,6 +850,9 @@ def cmd_scan(args: argparse.Namespace) -> int:
             print(f"  suggestedFolder: {item['suggestedFolderPath'] or '—'}")
             print(f"  requiresVisualFolderReview: {'yes' if item.get('requiresVisualFolderReview') else 'no'}")
             print(f"  folderAction: {item['folderAction']}")
+            print(f"  hasAiAnalysis: {'yes' if item.get('hasAiAnalysis') else 'no'}")
+            print(f"  analysisAction: {item['analysisAction']}")
+            print(f"  complete: {'yes' if item.get('candidateComplete') else 'no'}")
         return 0
     finally:
         client.close()
@@ -857,6 +879,8 @@ def cmd_windows(args: argparse.Namespace) -> int:
                     "syncedRecordCount": len(synced_records),
                     "recentImageCount": len(recent_records),
                     "candidateCount": len(rendered),
+                    "needsAnalysisCount": sum(1 for item in rendered if item.get("analysisActionNeeded")),
+                    "completeCount": sum(1 for item in rendered if item.get("candidateComplete")),
                     "unfiledOnly": args.only_unfiled,
                 }
             )
@@ -879,6 +903,7 @@ def cmd_windows(args: argparse.Namespace) -> int:
             print(
                 f"- {item['window']}: {item['candidateCount']} candidates "
                 f"({item['windowLabel']}, synced={item['syncedRecordCount']}, recent={item['recentImageCount']}, "
+                f"needsAnalysis={item['needsAnalysisCount']}, complete={item['completeCount']}, "
                 f"unfiledOnly={'yes' if item['unfiledOnly'] else 'no'})"
             )
         return 0
