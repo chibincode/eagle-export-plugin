@@ -104,6 +104,38 @@ Recommended block layout:
 - Keep `Color Palette` / `配色信息` focused on color usage only; do not hide subject or photography details there.
 - The Chinese version should be a faithful translation/adaptation of the English version, not a second different analysis.
 
+## Quality Gate
+
+Before writing to Eagle, the block must pass this specificity check:
+
+- The analysis must be based on actual visual inspection of the local image, not only file name, URL, folder name, dimensions, or scan metadata.
+- `Visible Text` must list real text observed in the screenshot. Do not use placeholders such as "navigation labels, CTA labels, headings, body copy, and footer links".
+- `Layout` must describe this screenshot's specific regions. Do not use generic "multiple stacked sections" language without naming what those sections are.
+- `Components` must name visible components, such as portrait cards, pricing tables, article cards, code blocks, product mockups, video players, logo walls, footer columns, compliance badges, or specific form fields.
+- `Color Palette` must connect colors to visible usage, such as black footer, pale mint hero background, purple gradient stats card, red CTA, or gray document sidebar.
+- `Visual Memory Cues` must include concrete visual anchors that would help the user remember the asset later.
+- If the draft could apply to multiple screenshots from the same brand, it is too generic and must be rewritten.
+- If the image cannot be inspected with enough detail, do not write the AI block. Report the item as needing manual review instead.
+
+Forbidden boilerplate phrases:
+
+```txt
+It captures the page as a design reference
+Key visible text includes the page title/name
+Additional visible text includes navigation labels
+A long scroll capture with multiple stacked sections
+A single-screen desktop section with a top navigation or framed module
+Mostly clean SaaS palettes
+The strongest visual cue is the dominant page-specific subject
+These non-text anchors make the screenshot recognizable beyond its copy
+The screenshot is useful as a UI reference
+它适合作为层级、信息表达、视觉证明和转化结构的设计参考
+主要可见文字包括页面标题/名称
+截图中还可见导航标签
+整体是干净的 SaaS 配色
+最强视觉记忆点来自页面特定主体
+```
+
 ## Example
 
 Example English-first then Chinese `Visual Memory Cues` for a growth-stage card with embedded photography:

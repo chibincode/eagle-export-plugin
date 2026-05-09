@@ -54,15 +54,57 @@ Once the user picks a time window, treat the end-to-end flow as:
 
 1. `scan`
 2. inspect the image in this conversation
-3. draft the AI analysis block
-4. `apply` the annotation
-5. evaluate the semantically best existing folder path
-6. for unfiled items, inspect the image visually before assigning any folder
-7. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
-8. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
-9. only enter correction mode for already-filed items when the user explicitly asks for folder correction
+3. draft the AI analysis block from observed screenshot evidence only
+4. run the quality gate before writing
+5. `apply` the annotation only if the block passes the quality gate
+6. evaluate the semantically best existing folder path
+7. for unfiled items, inspect the image visually before assigning any folder
+8. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
+9. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
+10. only enter correction mode for already-filed items when the user explicitly asks for folder correction
 
 Do not treat folder assignment as a separate follow-up task. It is part of the default completion criteria for each processed candidate.
+
+## AI Notes Quality Gate
+
+This skill is only useful if the annotation contains real visual understanding. A formally valid block is not enough.
+
+Hard rules before writing any AI block:
+- Do not use template, fallback, or boilerplate analysis to fill unknown details.
+- Do not write an AI block from file name, URL, folder name, dimensions, or scan metadata alone.
+- Do not write generic claims such as "clean SaaS palette", "visual proof", or "multiple stacked sections" unless tied to specific observed content in the screenshot.
+- If a contact sheet or thumbnail is not detailed enough, open the original image before drafting.
+- If the original image is too large or too hard to inspect in one pass, inspect key regions or skip the item and report it as `needs_manual_review`.
+- If you cannot name at least 3 concrete visible details from the screenshot, do not write the block.
+- If the screenshot is a long page, include page-specific section evidence, not only "long scroll page" structure.
+- Never prioritize completion count over note quality. It is better to process fewer images than to write unreliable notes.
+
+Each finished block must include screenshot-specific evidence:
+- `Overview`: the actual page purpose and the concrete product/page type visible in the image.
+- `Visible Text`: real visible text, not a placeholder saying that navigation, CTA, body copy, or footer links are present.
+- `Layout`: page-specific structure, including actual major regions visible in this screenshot.
+- `Components`: concrete components visible in this screenshot.
+- `Color Palette`: concrete colors and where they are used.
+- `Visual Memory Cues`: concrete visual anchors, such as portraits, clothing, photos, product mockups, diagrams, decorative motifs, textures, or specific image treatments.
+- `Visual Notes`: what makes this specific screenshot useful as a UI/design reference.
+
+Forbidden template phrases:
+- `It captures the page as a design reference`
+- `Key visible text includes the page title/name`
+- `Additional visible text includes navigation labels`
+- `A long scroll capture with multiple stacked sections`
+- `A single-screen desktop section with a top navigation or framed module`
+- `Mostly clean SaaS palettes`
+- `The strongest visual cue is the dominant page-specific subject`
+- `These non-text anchors make the screenshot recognizable beyond its copy`
+- `The screenshot is useful as a UI reference`
+- `它适合作为层级、信息表达、视觉证明和转化结构的设计参考`
+- `主要可见文字包括页面标题/名称`
+- `截图中还可见导航标签`
+- `整体是干净的 SaaS 配色`
+- `最强视觉记忆点来自页面特定主体`
+
+If any forbidden phrase appears in the draft, rewrite the block before applying it.
 
 ## Visual Folder Decision Protocol
 
@@ -193,6 +235,12 @@ The block format is documented in [references/output-format.md](references/outpu
 - Treat recent local image additions as valid candidates even if they have never been synced to UIBook.
 - Ask the user to confirm the target image or paste the full local image path if needed for inspection.
 - Use the current conversation's vision ability to inspect the screenshot.
+- Never draft notes from a reusable brand/page-type template. Every section must be grounded in visible screenshot evidence.
+- Do not let a contact sheet be the only evidence for detailed notes unless all required details are clearly readable there.
+- For long screenshots, inspect enough of the original image to identify actual top, middle, and bottom content before writing.
+- Before applying, check that the block names concrete visible text, concrete layout regions, concrete components, concrete colors, and concrete visual memory cues.
+- If the draft could plausibly apply to several different screenshots from the same brand, it is too generic and must be rewritten.
+- If a candidate cannot be analyzed with sufficient specificity in the current run, skip writing for that item and report it instead of writing a generic block.
 - Separate each analysis into three layers before drafting: visible text, UI structure, and visual subject cues.
 - Draft the block as two full passes:
   - English version first
