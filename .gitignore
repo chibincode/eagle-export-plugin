@@ -5,3 +5,7 @@ node_modules/
 *.log
 .cursor/
 .claude/
+reports/eagle-tag-audit-*.md
+reports/eagle-tag-audit-*.json
+reports/eagle-tag-audit-*.html
+reports/eagle-tag-audit-*.png

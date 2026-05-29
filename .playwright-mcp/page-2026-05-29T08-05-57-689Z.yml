@@ -1,0 +1,888 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "AI Logo" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "AI Logo" [ref=e6]
+        - generic [ref=e7]:
+          - link "Bites" [ref=e8] [cursor=pointer]:
+            - /url: /browse
+          - link "AI Patterns" [ref=e9] [cursor=pointer]:
+            - /url: /patterns
+          - link "Newsletter" [ref=e10] [cursor=pointer]:
+            - /url: /insights
+          - button "More" [ref=e11] [cursor=pointer]:
+            - generic [ref=e12]: More
+            - img [ref=e13]
+      - generic [ref=e15]:
+        - link "Log in" [ref=e16] [cursor=pointer]:
+          - /url: /login?redirect=%2Fpatterns
+        - link "Join today" [ref=e17] [cursor=pointer]:
+          - /url: /signup?redirect=%2Fpatterns
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - heading "A simple framework to help you design confidently for AI" [level=1] [ref=e23]:
+          - text: A simple framework
+          - text: to help you design confidently for AI
+        - generic [ref=e26]:
+          - generic [ref=e29] [cursor=pointer]:
+            - generic [ref=e30]:
+              - generic [ref=e31]: Phase 1
+              - heading "Onboarding" [level=3] [ref=e32]
+              - paragraph [ref=e33]: How do users discover what AI can do in the first interaction?
+            - generic [ref=e34]:
+              - generic [ref=e36]: 1 sets
+              - generic [ref=e37]: 6 patterns
+          - generic [ref=e40] [cursor=pointer]:
+            - generic [ref=e41]:
+              - generic [ref=e42]: Phase 2
+              - heading "Input" [level=3] [ref=e43]
+              - paragraph [ref=e44]: How does the user input context into the AI?
+            - generic [ref=e45]:
+              - generic [ref=e47]: 2 sets
+              - generic [ref=e48]: 9 patterns
+          - generic [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]:
+              - generic [ref=e53]: Phase 3
+              - heading "Output" [level=3] [ref=e54]
+              - paragraph [ref=e55]: How does the AI respond and in what formats?
+            - generic [ref=e56]:
+              - generic [ref=e58]: 3 sets
+              - generic [ref=e59]: 14 patterns
+          - generic [ref=e62] [cursor=pointer]:
+            - generic [ref=e63]:
+              - generic [ref=e64]: Phase 4
+              - heading "Refinement" [level=3] [ref=e65]
+              - paragraph [ref=e66]: How does the user edit, review, or improve results?
+            - generic [ref=e67]:
+              - generic [ref=e69]: 1 sets
+              - generic [ref=e70]: 5 patterns
+          - generic [ref=e73] [cursor=pointer]:
+            - generic [ref=e74]:
+              - generic [ref=e75]: Phase 5
+              - heading "Learning" [level=3] [ref=e76]
+              - paragraph [ref=e77]: How does the system adapt, remember, and improve over time?
+            - generic [ref=e78]:
+              - generic [ref=e80]: 3 sets
+              - generic [ref=e81]: 3 patterns
+      - generic [ref=e82]:
+        - paragraph [ref=e83]:
+          - text: 37 AI patterns are based on our 200+ real-world examples,
+          - text: organized across five phases of an interaction journey.
+        - generic [ref=e85] [cursor=pointer]:
+          - generic:
+            - img "Behind-the-scenes teaser"
+          - generic [ref=e86]:
+            - link "We are revamping the framework, with some spicy new takes" [ref=e87]:
+              - /url: /insights/new-ai-patterns-framework
+              - paragraph [ref=e88]:
+                - text: We are
+                - generic [ref=e89]: revamping
+                - text: the framework,
+                - text: with some spicy new takes
+            - link "Watch behind-the-scenes" [ref=e90]:
+              - /url: /insights/new-ai-patterns-framework
+              - img [ref=e91]
+              - generic [ref=e93]: Watch behind-the-scenes
+      - generic [ref=e94]:
+        - complementary [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]: PATTERNS
+            - navigation [ref=e98]:
+              - generic [ref=e99]:
+                - heading "Onboarding" [level=3] [ref=e100]
+                - list [ref=e101]:
+                  - listitem [ref=e102]:
+                    - button "Entry touchpoints 6" [ref=e103]:
+                      - img [ref=e104]
+                      - generic [ref=e106]: Entry touchpoints
+                      - generic [ref=e107]: "6"
+              - generic [ref=e108]:
+                - heading "Input" [level=3] [ref=e109]
+                - list [ref=e110]:
+                  - listitem [ref=e111]:
+                    - button "Expressive Input 5" [ref=e112]:
+                      - img [ref=e113]
+                      - generic [ref=e115]: Expressive Input
+                      - generic [ref=e116]: "5"
+                  - listitem [ref=e117]:
+                    - button "Expanding context 4" [ref=e118]:
+                      - img [ref=e119]
+                      - generic [ref=e121]: Expanding context
+                      - generic [ref=e122]: "4"
+              - generic [ref=e123]:
+                - heading "Output" [level=3] [ref=e124]
+                - list [ref=e125]:
+                  - listitem [ref=e126]:
+                    - button "Types of outputs 8" [ref=e127]:
+                      - img [ref=e128]
+                      - generic [ref=e130]: Types of outputs
+                      - generic [ref=e131]: "8"
+                  - listitem [ref=e132]:
+                    - button "Processing 4" [ref=e133]:
+                      - img [ref=e134]
+                      - generic [ref=e136]: Processing
+                      - generic [ref=e137]: "4"
+                  - listitem [ref=e138]:
+                    - button "Explainability 2" [ref=e139]:
+                      - img [ref=e140]
+                      - generic [ref=e142]: Explainability
+                      - generic [ref=e143]: "2"
+              - generic [ref=e144]:
+                - heading "Refinement" [level=3] [ref=e145]
+                - list [ref=e146]:
+                  - listitem [ref=e147]:
+                    - button "Correction & Iteration 5" [ref=e148]:
+                      - img [ref=e149]
+                      - generic [ref=e151]: Correction & Iteration
+                      - generic [ref=e152]: "5"
+              - generic [ref=e153]:
+                - heading "Learning" [level=3] [ref=e154]
+                - list [ref=e155]:
+                  - listitem [ref=e156]:
+                    - button "Managing memory 1" [ref=e157]:
+                      - img [ref=e158]
+                      - generic [ref=e160]: Managing memory
+                      - generic [ref=e161]: "1"
+                  - listitem [ref=e162]:
+                    - button "Collecting feedback 1" [ref=e163]:
+                      - img [ref=e164]
+                      - generic [ref=e166]: Collecting feedback
+                      - generic [ref=e167]: "1"
+                  - listitem [ref=e168]:
+                    - button "Personalization 1" [ref=e169]:
+                      - img [ref=e170]
+                      - generic [ref=e172]: Personalization
+                      - generic [ref=e173]: "1"
+        - generic [ref=e174]:
+          - generic [ref=e175]:
+            - heading "Onboarding" [level=2] [ref=e176]
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - heading "Entry touchpoints" [level=3] [ref=e180]
+                  - paragraph [ref=e181]: Entryways that show users how to begin; search, suggested prompts, open input, icons, proactive nudges, or autocomplete.
+                - img "Entry touchpoints" [ref=e185]
+              - generic [ref=e186]:
+                - generic [ref=e187] [cursor=pointer]:
+                  - link "Open Suggested prompts" [ref=e188]:
+                    - /url: /patterns/onboarding-suggested
+                    - generic [ref=e189]: Open Suggested prompts
+                  - generic [ref=e192]:
+                    - img
+                    - generic: Free
+                  - heading "Suggested prompts" [level=4] [ref=e193]
+                  - paragraph [ref=e194]: Jumpstart user engagement with smart and context-aware preset actions.
+                  - generic [ref=e195]:
+                    - img [ref=e196]
+                    - generic [ref=e199]: 41 examples inside
+                    - img [ref=e201]
+                - generic [ref=e203] [cursor=pointer]:
+                  - link "Open Icons" [ref=e204]:
+                    - /url: /patterns/onboarding-icons
+                    - generic [ref=e205]: Open Icons
+                  - generic [ref=e208]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Icons" [level=4] [ref=e209]
+                  - paragraph [ref=e210]: Using visual symbols to signal AI's presence.
+                  - generic [ref=e211]:
+                    - img [ref=e212]
+                    - generic [ref=e215]: 5 examples inside
+                    - img [ref=e217]
+                - generic [ref=e219] [cursor=pointer]:
+                  - link "Open Proactive suggestions" [ref=e220]:
+                    - /url: /patterns/onboarding-proactive
+                    - generic [ref=e221]: Open Proactive suggestions
+                  - generic [ref=e224]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Proactive suggestions" [level=4] [ref=e225]
+                  - paragraph [ref=e226]: Invisible AI moments that surprise users with exactly what and when they need.
+                  - generic [ref=e227]:
+                    - img [ref=e228]
+                    - generic [ref=e231]: 9 examples inside
+                    - img [ref=e233]
+                - generic [ref=e235] [cursor=pointer]:
+                  - link "Open Searching & filtering" [ref=e236]:
+                    - /url: /patterns/onboarding-searching
+                    - generic [ref=e237]: Open Searching & filtering
+                  - generic [ref=e240]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Searching & filtering" [level=4] [ref=e241]
+                  - paragraph [ref=e242]: Moving from clicks to natural language searches and applying filters.
+                  - generic [ref=e243]:
+                    - img [ref=e244]
+                    - generic [ref=e247]: 17 examples inside
+                    - img [ref=e249]
+                - generic [ref=e251] [cursor=pointer]:
+                  - link "Open Autocomplete" [ref=e252]:
+                    - /url: /patterns/onboarding-autocomplete
+                    - generic [ref=e253]: Open Autocomplete
+                  - generic [ref=e256]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Autocomplete" [level=4] [ref=e257]
+                  - paragraph [ref=e258]: Anticipating & completing actions without disrupting user's workflow.
+                  - generic [ref=e259]:
+                    - img [ref=e260]
+                    - generic [ref=e263]: 6 examples inside
+                    - img [ref=e265]
+                - generic [ref=e267]:
+                  - heading "Disclaimer" [level=4] [ref=e268]
+                  - paragraph [ref=e269]: A disclosure shown to users that clarifies AI's involvement, limitations, and sets expectations.
+                  - generic [ref=e270]:
+                    - img [ref=e271]
+                    - generic [ref=e274]: Examples inside
+                    - img [ref=e276]
+            - generic [ref=e279]:
+              - img [ref=e280]
+              - generic [ref=e282]:
+                - generic [ref=e283]: ★
+                - generic [ref=e284]: ★
+                - generic [ref=e285]: ★
+                - generic [ref=e286]: ★
+                - generic [ref=e287]: ★
+              - blockquote [ref=e288]: "\"For my daily work, conference talks and online courses, it’s invaluable.\""
+              - generic [ref=e289]:
+                - generic [ref=e290]:
+                  - img "Christian Kuhn" [ref=e291]
+                  - generic [ref=e292]: 🇵🇹
+                - generic [ref=e293]:
+                  - generic [ref=e294]:
+                    - generic [ref=e295]: Christian Kuhn
+                    - generic [ref=e296]: since Aug 2025
+                  - generic [ref=e297]: Head of UX center of competence at Optimizer.pt
+          - generic [ref=e298]:
+            - heading "Input" [level=2] [ref=e299]
+            - generic [ref=e300]:
+              - generic [ref=e301]:
+                - generic [ref=e302]:
+                  - heading "Expressive Input" [level=3] [ref=e303]
+                  - paragraph [ref=e304]: Ways for users to express intent; voice, images, handwriting, gestures, or structured prompts.
+                - img "Expressive Input" [ref=e308]
+              - generic [ref=e309]:
+                - generic [ref=e310] [cursor=pointer]:
+                  - link "Open Voice input" [ref=e311]:
+                    - /url: /patterns/input-voice
+                    - generic [ref=e312]: Open Voice input
+                  - generic [ref=e315]:
+                    - img
+                    - generic: Free
+                  - heading "Voice input" [level=4] [ref=e316]
+                  - paragraph [ref=e317]: Enabling users to interact with their voice, have a conversation or take actions.
+                  - generic [ref=e318]:
+                    - img [ref=e319]
+                    - generic [ref=e322]: 13 examples inside
+                    - img [ref=e324]
+                - generic [ref=e326] [cursor=pointer]:
+                  - link "Open Handwriting input" [ref=e327]:
+                    - /url: /patterns/input-handwriting
+                    - generic [ref=e328]: Open Handwriting input
+                  - generic [ref=e331]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Handwriting input" [level=4] [ref=e332]
+                  - paragraph [ref=e333]: Allowing users to write and receive information in natural handwriting.
+                  - generic [ref=e334]:
+                    - img [ref=e335]
+                    - generic [ref=e338]: 2 examples inside
+                    - img [ref=e340]
+                - generic [ref=e342] [cursor=pointer]:
+                  - link "Open Visual input" [ref=e343]:
+                    - /url: /patterns/input-visual
+                    - generic [ref=e344]: Open Visual input
+                  - generic [ref=e347]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Visual input" [level=4] [ref=e348]
+                  - paragraph [ref=e349]: Let users attach images, screenshots, or other visuals as part of the input.
+                  - generic [ref=e350]:
+                    - img [ref=e351]
+                    - generic [ref=e354]: 20 examples inside
+                    - img [ref=e356]
+                - generic [ref=e358] [cursor=pointer]:
+                  - link "Open Gesture input" [ref=e359]:
+                    - /url: /patterns/input-gesture
+                    - generic [ref=e360]: Open Gesture input
+                  - generic [ref=e363]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Gesture input" [level=4] [ref=e364]
+                  - paragraph [ref=e365]: Using physical gestures (swipes, pinches, circles) as expressive input signals for AI systems.
+                  - generic [ref=e366]:
+                    - img [ref=e367]
+                    - generic [ref=e370]: 5 examples inside
+                    - img [ref=e372]
+                - generic [ref=e374] [cursor=pointer]:
+                  - link "Open Structured input" [ref=e375]:
+                    - /url: /patterns/input-structured
+                    - generic [ref=e376]: Open Structured input
+                  - generic [ref=e379]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Structured input" [level=4] [ref=e380]
+                  - paragraph [ref=e381]: Offer lightweight structure (slots, hints) to compose clearer prompts faster.
+                  - generic [ref=e382]:
+                    - img [ref=e383]
+                    - generic [ref=e386]: 9 examples inside
+                    - img [ref=e388]
+            - generic [ref=e390]:
+              - generic [ref=e391]:
+                - generic [ref=e392]:
+                  - heading "Expanding context" [level=3] [ref=e393]
+                  - paragraph [ref=e394]: Additional signals that enrich the request; prompt help, model choice, connectors, or knowledge sources.
+                - img "Expanding context" [ref=e398]
+              - generic [ref=e399]:
+                - generic [ref=e400] [cursor=pointer]:
+                  - link "Open Prompt assistance" [ref=e401]:
+                    - /url: /patterns/input-prompt
+                    - generic [ref=e402]: Open Prompt assistance
+                  - generic [ref=e405]:
+                    - img
+                    - generic: Free
+                  - heading "Prompt assistance" [level=4] [ref=e406]
+                  - paragraph [ref=e407]: Guiding users to express their intent effectively via suggestions, follow-ups, templates etc.
+                  - generic [ref=e408]:
+                    - img [ref=e409]
+                    - generic [ref=e412]: 15 examples inside
+                    - img [ref=e414]
+                - generic [ref=e416] [cursor=pointer]:
+                  - link "Open Model selection" [ref=e417]:
+                    - /url: /patterns/input-model
+                    - generic [ref=e418]: Open Model selection
+                  - generic [ref=e421]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Model selection" [level=4] [ref=e422]
+                  - paragraph [ref=e423]: Let users pick the right model or mode for the task when it matters.
+                  - generic [ref=e424]:
+                    - img [ref=e425]
+                    - generic [ref=e428]: 10 examples inside
+                    - img [ref=e430]
+                - generic [ref=e432] [cursor=pointer]:
+                  - link "Open MCP connectors" [ref=e433]:
+                    - /url: /patterns/input-mcp
+                    - generic [ref=e434]: Open MCP connectors
+                  - generic [ref=e437]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "MCP connectors" [level=4] [ref=e438]
+                  - paragraph [ref=e439]: Let AI directly interact with other apps and services to perform tasks.
+                  - generic [ref=e440]:
+                    - img [ref=e441]
+                    - generic [ref=e444]: 3 examples inside
+                    - img [ref=e446]
+                - generic [ref=e448] [cursor=pointer]:
+                  - link "Open Knowledge bases & Integration" [ref=e449]:
+                    - /url: /patterns/input-knowledge
+                    - generic [ref=e450]: Open Knowledge bases & Integration
+                  - generic [ref=e453]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Knowledge bases & Integration" [level=4] [ref=e454]
+                  - paragraph [ref=e455]: Use organizational knowledge (databases, docs, wikis) to specialize responses.
+                  - generic [ref=e456]:
+                    - img [ref=e457]
+                    - generic [ref=e460]: 5 examples inside
+                    - img [ref=e462]
+            - generic [ref=e465]:
+              - img [ref=e466]
+              - generic [ref=e468]:
+                - generic [ref=e469]: ★
+                - generic [ref=e470]: ★
+                - generic [ref=e471]: ★
+                - generic [ref=e472]: ★
+                - generic [ref=e473]: ★
+              - blockquote [ref=e474]: "\"I've gotten a ton of value out of aiverse over the last year. Patterns book was solid!\""
+              - generic [ref=e475]:
+                - generic [ref=e476]:
+                  - img "Dave Brown" [ref=e477]
+                  - generic [ref=e478]: 🇺🇸
+                - generic [ref=e479]:
+                  - generic [ref=e480]:
+                    - generic [ref=e481]: Dave Brown
+                    - generic [ref=e482]: since Feb 2025
+                  - generic [ref=e483]: Head of AI/ML Product Design at Amazon
+          - generic [ref=e484]:
+            - heading "Output" [level=2] [ref=e485]
+            - generic [ref=e486]:
+              - generic [ref=e487]:
+                - generic [ref=e488]:
+                  - heading "Types of outputs" [level=3] [ref=e489]
+                  - paragraph [ref=e490]: Different ways responses are delivered; previews, video, images, audio, summaries, or structured formats.
+                - img "Types of outputs" [ref=e494]
+              - generic [ref=e495]:
+                - generic [ref=e496] [cursor=pointer]:
+                  - link "Open Preview output" [ref=e497]:
+                    - /url: /patterns/output-preview
+                    - generic [ref=e498]: Open Preview output
+                  - generic [ref=e501]:
+                    - img
+                    - generic: Free
+                  - heading "Preview output" [level=4] [ref=e502]
+                  - paragraph [ref=e503]: The "test-drive" of AI to get a glimpse of results before committing to the process.
+                  - generic [ref=e504]:
+                    - img [ref=e505]
+                    - generic [ref=e508]: 9 examples inside
+                    - img [ref=e510]
+                - generic [ref=e512]:
+                  - heading "Video output" [level=4] [ref=e513]
+                  - paragraph [ref=e514]: Generate or assemble video for dynamic explanations and demos.
+                  - generic [ref=e515]:
+                    - img [ref=e516]
+                    - generic [ref=e519]: 2 examples inside
+                    - img [ref=e521]
+                - generic [ref=e523]:
+                  - heading "Image output" [level=4] [ref=e524]
+                  - paragraph [ref=e525]: Return images or generated visuals as the primary output form.
+                  - generic [ref=e526]:
+                    - img [ref=e527]
+                    - generic [ref=e530]: 28 examples inside
+                    - img [ref=e532]
+                - generic [ref=e534] [cursor=pointer]:
+                  - link "Open Audio output" [ref=e535]:
+                    - /url: /patterns/output-audio
+                    - generic [ref=e536]: Open Audio output
+                  - generic [ref=e539]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Audio output" [level=4] [ref=e540]
+                  - paragraph [ref=e541]: Speak results aloud for accessibility and hands-free use.
+                  - generic [ref=e542]:
+                    - img [ref=e543]
+                    - generic [ref=e546]: 4 examples inside
+                    - img [ref=e548]
+                - generic [ref=e550] [cursor=pointer]:
+                  - link "Open Variations" [ref=e551]:
+                    - /url: /patterns/output-variations
+                    - generic [ref=e552]: Open Variations
+                  - generic [ref=e555]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Variations" [level=4] [ref=e556]
+                  - paragraph [ref=e557]: Presenting multiple alternative outputs for the same input.
+                  - generic [ref=e558]:
+                    - img [ref=e559]
+                    - generic [ref=e562]: 15 examples inside
+                    - img [ref=e564]
+                - generic [ref=e566]:
+                  - heading "Multi-modal output" [level=4] [ref=e567]
+                  - paragraph [ref=e568]: Combine text, images, audio, and video where appropriate for richer responses.
+                  - generic [ref=e569]:
+                    - img [ref=e570]
+                    - generic [ref=e573]: Examples inside
+                    - img [ref=e575]
+                - generic [ref=e577] [cursor=pointer]:
+                  - link "Open Summary" [ref=e578]:
+                    - /url: /patterns/output-summary
+                    - generic [ref=e579]: Open Summary
+                  - generic [ref=e582]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Summary" [level=4] [ref=e583]
+                  - paragraph [ref=e584]: Condense long content into concise takeaways or executive summaries.
+                  - generic [ref=e585]:
+                    - img [ref=e586]
+                    - generic [ref=e589]: 12 examples inside
+                    - img [ref=e591]
+                - generic [ref=e593] [cursor=pointer]:
+                  - link "Open Structured output" [ref=e594]:
+                    - /url: /patterns/output-structured
+                    - generic [ref=e595]: Open Structured output
+                  - generic [ref=e598]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Structured output" [level=4] [ref=e599]
+                  - paragraph [ref=e600]: Consistently formatting AI responses into predefined schemas instead of free-form text.
+                  - generic [ref=e601]:
+                    - img [ref=e602]
+                    - generic [ref=e605]: 25 examples inside
+                    - img [ref=e607]
+            - generic [ref=e609]:
+              - generic [ref=e610]:
+                - generic [ref=e611]:
+                  - heading "Processing" [level=3] [ref=e612]
+                  - paragraph [ref=e613]: How the system handles generation; real-time, streaming, parallel work, or stepwise updates.
+                - img "Processing" [ref=e617]
+              - generic [ref=e618]:
+                - generic [ref=e619] [cursor=pointer]:
+                  - link "Open Parallel processing" [ref=e620]:
+                    - /url: /patterns/output-parallel
+                    - generic [ref=e621]: Open Parallel processing
+                  - generic [ref=e624]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Parallel processing" [level=4] [ref=e625]
+                  - paragraph [ref=e626]: Run mutliple processes / agents concurrently to become architects of processes.
+                  - generic [ref=e627]:
+                    - img [ref=e628]
+                    - generic [ref=e631]: 12 examples inside
+                    - img [ref=e633]
+                - generic [ref=e635] [cursor=pointer]:
+                  - link "Open Real-time" [ref=e636]:
+                    - /url: /patterns/output-realtime
+                    - generic [ref=e637]: Open Real-time
+                  - generic [ref=e640]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Real-time" [level=4] [ref=e641]
+                  - paragraph [ref=e642]: Return immediate answers when latency matters.
+                  - generic [ref=e643]:
+                    - img [ref=e644]
+                    - generic [ref=e647]: 8 examples inside
+                    - img [ref=e649]
+                - generic [ref=e651] [cursor=pointer]:
+                  - link "Open Streaming" [ref=e652]:
+                    - /url: /patterns/output-streaming
+                    - generic [ref=e653]: Open Streaming
+                  - generic [ref=e656]:
+                    - img
+                    - generic: Free
+                  - heading "Streaming" [level=4] [ref=e657]
+                  - paragraph [ref=e658]: Gradual reveal of AI output, showing the progress instead of waiting blindly.
+                  - generic [ref=e659]:
+                    - img [ref=e660]
+                    - generic [ref=e663]: 45 examples inside
+                    - img [ref=e665]
+                - generic [ref=e667] [cursor=pointer]:
+                  - link "Open Processing steps" [ref=e668]:
+                    - /url: /patterns/output-processing
+                    - generic [ref=e669]: Open Processing steps
+                  - generic [ref=e672]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Processing steps" [level=4] [ref=e673]
+                  - paragraph [ref=e674]: Show progress through distinct steps so users understand what's happening.
+                  - generic [ref=e675]:
+                    - img [ref=e676]
+                    - generic [ref=e679]: 24 examples inside
+                    - img [ref=e681]
+            - generic [ref=e683]:
+              - generic [ref=e684]:
+                - generic [ref=e685]:
+                  - heading "Explainability" [level=3] [ref=e686]
+                  - paragraph [ref=e687]: Help users understand answers and recover gracefully when things go wrong.
+                - img "Explainability" [ref=e691]
+              - generic [ref=e692]:
+                - generic [ref=e693] [cursor=pointer]:
+                  - link "Open Confidence indicators" [ref=e694]:
+                    - /url: /patterns/output-confidence
+                    - generic [ref=e695]: Open Confidence indicators
+                  - generic [ref=e698]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Confidence indicators" [level=4] [ref=e699]
+                  - paragraph [ref=e700]: Showing how sure the AI is to help users gauge reliability, and understand the basis of the output.
+                  - generic [ref=e701]:
+                    - img [ref=e702]
+                    - generic [ref=e705]: 2 examples inside
+                    - img [ref=e707]
+                - generic [ref=e709] [cursor=pointer]:
+                  - link "Open Citations" [ref=e710]:
+                    - /url: /patterns/output-citations
+                    - generic [ref=e711]: Open Citations
+                  - generic [ref=e714]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Citations" [level=4] [ref=e715]
+                  - paragraph [ref=e716]: Showing how the AI constructed the answer (sources, references) to build user's trust.
+                  - generic [ref=e717]:
+                    - img [ref=e718]
+                    - generic [ref=e721]: 16 examples inside
+                    - img [ref=e723]
+            - generic [ref=e726]:
+              - img [ref=e727]
+              - generic [ref=e729]:
+                - generic [ref=e730]: ★
+                - generic [ref=e731]: ★
+                - generic [ref=e732]: ★
+                - generic [ref=e733]: ★
+                - generic [ref=e734]: ★
+              - blockquote [ref=e735]: "\"Absolutely love the product and I use it at work to share with coworkers!\""
+              - generic [ref=e736]:
+                - generic [ref=e737]:
+                  - img "Evangeline" [ref=e738]
+                  - generic [ref=e739]: 🇺🇸
+                - generic [ref=e740]:
+                  - generic [ref=e741]:
+                    - generic [ref=e742]: Evangeline
+                    - generic [ref=e743]: since Jun 2025
+                  - generic [ref=e744]: Staff UX Designer at Palo Alto Networks
+          - generic [ref=e745]:
+            - heading "Refinement" [level=2] [ref=e746]
+            - generic [ref=e747]:
+              - generic [ref=e748]:
+                - generic [ref=e749]:
+                  - heading "Correction & Iteration" [level=3] [ref=e750]
+                  - paragraph [ref=e751]: Tools for revising outputs — continue, retry, act inline, edit visually, or review results.
+                - img "Correction & Iteration" [ref=e755]
+              - generic [ref=e756]:
+                - generic [ref=e757] [cursor=pointer]:
+                  - link "Open Inline actions" [ref=e758]:
+                    - /url: /patterns/refinement-inline
+                    - generic [ref=e759]: Open Inline actions
+                  - generic [ref=e762]:
+                    - img
+                    - generic: Free
+                  - heading "Inline actions" [level=4] [ref=e763]
+                  - paragraph [ref=e764]: Enabling edits on specific parts of textual content, leveraging existing mental models.
+                  - generic [ref=e765]:
+                    - img [ref=e766]
+                    - generic [ref=e769]: 19 examples inside
+                    - img [ref=e771]
+                - generic [ref=e773] [cursor=pointer]:
+                  - link "Open Visual editing" [ref=e774]:
+                    - /url: /patterns/refinement-visual
+                    - generic [ref=e775]: Open Visual editing
+                  - generic [ref=e778]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Visual editing" [level=4] [ref=e779]
+                  - paragraph [ref=e780]: Enable users to refine visually and continuously, without back-and-forth prompts.
+                  - generic [ref=e781]:
+                    - img [ref=e782]
+                    - generic [ref=e785]: 15 examples inside
+                    - img [ref=e787]
+                - generic [ref=e789] [cursor=pointer]:
+                  - link "Open Reply" [ref=e790]:
+                    - /url: /patterns/refinement-reply
+                    - generic [ref=e791]: Open Reply
+                  - generic [ref=e794]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Reply" [level=4] [ref=e795]
+                  - paragraph [ref=e796]: Continue the conversation to refine results with follow-up instructions.
+                  - generic [ref=e797]:
+                    - img [ref=e798]
+                    - generic [ref=e801]: 2 examples inside
+                    - img [ref=e803]
+                - generic [ref=e805]:
+                  - heading "Regenerate" [level=4] [ref=e806]
+                  - paragraph [ref=e807]: Request a fresh attempt with the same or tweaked prompt.
+                  - generic [ref=e808]:
+                    - img [ref=e809]
+                    - generic [ref=e812]: 7 examples inside
+                    - img [ref=e814]
+                - generic [ref=e816] [cursor=pointer]:
+                  - link "Open Review" [ref=e817]:
+                    - /url: /patterns/refinement-review
+                    - generic [ref=e818]: Open Review
+                  - generic [ref=e821]:
+                    - img
+                    - text: PRO Exclusive
+                  - heading "Review" [level=4] [ref=e822]
+                  - paragraph [ref=e823]: Allowing users to step through AI-suggested changes and refine them before finalizing.
+                  - generic [ref=e824]:
+                    - img [ref=e825]
+                    - generic [ref=e828]: 5 examples inside
+                    - img [ref=e830]
+          - generic [ref=e832]:
+            - heading "Learning" [level=2] [ref=e833]
+            - generic [ref=e834]:
+              - generic [ref=e835]:
+                - generic [ref=e836]:
+                  - heading "Managing memory" [level=3] [ref=e837]
+                  - paragraph [ref=e838]: The system recalls, persists, or forgets context to support continuity and control.
+                - img "Managing memory" [ref=e842]
+              - generic [ref=e844] [cursor=pointer]:
+                - link "Open Managing memory" [ref=e845]:
+                  - /url: /patterns/learning-memory
+                  - generic [ref=e846]: Open Managing memory
+                - generic [ref=e849]:
+                  - img
+                  - text: PRO Exclusive
+                - heading "Managing memory" [level=4] [ref=e850]
+                - paragraph [ref=e851]: AI system remembers and recalls user context, or history to support continuity and personalization.
+                - generic [ref=e852]:
+                  - img [ref=e853]
+                  - generic [ref=e856]: 2 examples inside
+                  - img [ref=e858]
+            - generic [ref=e860]:
+              - generic [ref=e861]:
+                - generic [ref=e862]:
+                  - heading "Collecting feedback" [level=3] [ref=e863]
+                  - paragraph [ref=e864]: Collect feedback to improve outputs and personalize future interactions.
+                - img "Collecting feedback" [ref=e868]
+              - generic [ref=e870] [cursor=pointer]:
+                - link "Open Collecting feedback" [ref=e871]:
+                  - /url: /patterns/learning-feedback
+                  - generic [ref=e872]: Open Collecting feedback
+                - generic [ref=e875]:
+                  - img
+                  - generic: Free
+                - heading "Collecting feedback" [level=4] [ref=e876]
+                - paragraph [ref=e877]: Capturing quick sentiment on results to steer quality.
+                - generic [ref=e878]:
+                  - img [ref=e879]
+                  - generic [ref=e882]: 12 examples inside
+                  - img [ref=e884]
+            - generic [ref=e886]:
+              - generic [ref=e887]:
+                - generic [ref=e888]:
+                  - heading "Personalization" [level=3] [ref=e889]
+                  - paragraph [ref=e890]: Adjust behavior, tone, and defaults to fit the individual user.
+                - img "Personalization" [ref=e894]
+              - generic [ref=e896]:
+                - heading "Personalization" [level=4] [ref=e897]
+                - paragraph [ref=e898]: Tailor tone, suggestions, and defaults based on user history and choices.
+                - generic [ref=e899]:
+                  - img [ref=e900]
+                  - generic [ref=e903]: 9 examples inside
+                  - img [ref=e905]
+            - generic [ref=e908]:
+              - img [ref=e909]
+              - generic [ref=e911]:
+                - generic [ref=e912]: ★
+                - generic [ref=e913]: ★
+                - generic [ref=e914]: ★
+                - generic [ref=e915]: ★
+                - generic [ref=e916]: ★
+              - blockquote [ref=e917]: "\"I genuinely found it really helpful while designing in a recent project!\""
+              - generic [ref=e918]:
+                - generic [ref=e919]:
+                  - img "Manasi Agarwal" [ref=e920]
+                  - generic [ref=e921]: 🇬🇧
+                - generic [ref=e922]:
+                  - generic [ref=e923]:
+                    - generic [ref=e924]: Manasi Agarwal
+                    - generic [ref=e925]: since May 2025
+                  - generic [ref=e926]: Senior Product Designer
+      - generic [ref=e928]:
+        - generic [ref=e929]:
+          - generic [ref=e930]: Co-authors
+          - generic [ref=e931]:
+            - link "Kshitij Agrawal Kshitij Agrawal Kshitij Agrawal Co-author Founder at Aiverse" [ref=e932] [cursor=pointer]:
+              - /url: https://www.linkedin.com/in/okkshitij/
+              - img "Kshitij Agrawal" [ref=e933]
+              - generic [ref=e934]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img "Kshitij Agrawal"
+                      - generic:
+                        - generic: Kshitij Agrawal
+                        - generic: Co-author
+                    - paragraph: Founder at Aiverse
+            - link "Dave Brown Dave Brown Dave Brown Co-author Design Director at Qualtrics" [ref=e935] [cursor=pointer]:
+              - /url: https://www.linkedin.com/in/davestevenbrown/
+              - img "Dave Brown" [ref=e936]
+              - generic [ref=e937]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img "Dave Brown"
+                      - generic:
+                        - generic: Dave Brown
+                        - generic: Co-author
+                    - paragraph: Design Director at Qualtrics
+            - link "Clair Sun Clair Sun Clair Sun Co-author Senior Product Designer at AWS" [ref=e938] [cursor=pointer]:
+              - /url: https://www.linkedin.com/in/clair-sun-b628b3123/
+              - img "Clair Sun" [ref=e939]
+              - generic [ref=e940]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img "Clair Sun"
+                      - generic:
+                        - generic: Clair Sun
+                        - generic: Co-author
+                    - paragraph: Senior Product Designer at AWS
+        - generic [ref=e941]:
+          - generic [ref=e942]: Last updated on Nov 11, 2025
+          - generic [ref=e943]: Published on Sep 8, 2025
+      - generic [ref=e945]:
+        - img "AI UX Gallery" [ref=e947]
+        - generic [ref=e950]:
+          - generic [ref=e951]: Updated weekly with new examples
+          - heading "200+ curated AI interactions" [level=3] [ref=e952]
+          - paragraph [ref=e953]: From ChatGPT to Figma AI, explore the best AI UX patterns from leading products.
+          - generic [ref=e954]:
+            - textbox "Enter your email" [ref=e955]
+            - button "Subscribe" [ref=e956]:
+              - text: Subscribe
+              - img [ref=e957]
+          - generic [ref=e959]:
+            - generic [ref=e960]:
+              - generic [ref=e961]: ★
+              - generic [ref=e962]: ★
+              - generic [ref=e963]: ★
+              - generic [ref=e964]: ★
+              - generic [ref=e965]: ★
+            - generic [ref=e966]: Join 14,000+ design and product folks
+  - contentinfo [ref=e967]:
+    - generic [ref=e969]:
+      - generic [ref=e971]:
+        - img "AI Logo" [ref=e972]
+        - generic [ref=e973]:
+          - paragraph [ref=e974]: © 2026 aiverse
+          - paragraph [ref=e975]: Design for AI, Augment with AI
+      - generic [ref=e976]:
+        - paragraph [ref=e977]: COMPANY
+        - list [ref=e979]:
+          - listitem [ref=e980]:
+            - link "Our manifesto" [ref=e981] [cursor=pointer]:
+              - /url: /manifesto
+          - listitem [ref=e982]:
+            - link "Pricing" [ref=e983] [cursor=pointer]:
+              - /url: /pricing
+          - listitem [ref=e984]:
+            - link "Team" [ref=e985] [cursor=pointer]:
+              - /url: /team
+      - generic [ref=e986]:
+        - paragraph [ref=e987]: CONTENT
+        - list [ref=e989]:
+          - listitem [ref=e990]:
+            - link "Gallery" [ref=e991] [cursor=pointer]:
+              - /url: /browse
+          - listitem [ref=e992]:
+            - link "AI Patterns NEW" [ref=e993] [cursor=pointer]:
+              - /url: /patterns
+              - text: AI Patterns
+              - generic [ref=e994]: NEW
+          - listitem [ref=e995]:
+            - link "Insights" [ref=e996] [cursor=pointer]:
+              - /url: /insights
+      - generic [ref=e997]:
+        - paragraph [ref=e998]: OTHER
+        - list [ref=e1000]:
+          - listitem [ref=e1001]:
+            - link "AI Design Studio" [ref=e1002] [cursor=pointer]:
+              - /url: https://studio.aiverse.design
+              - text: AI Design Studio
+              - img [ref=e1003]
+          - listitem [ref=e1006]:
+            - link "Glossary" [ref=e1007] [cursor=pointer]:
+              - /url: /glossary
+          - listitem [ref=e1008]:
+            - link "All Categories" [ref=e1009] [cursor=pointer]:
+              - /url: /categories
+          - listitem [ref=e1010]:
+            - link "Community" [ref=e1011] [cursor=pointer]:
+              - /url: /community
+      - generic [ref=e1012]:
+        - generic [ref=e1013]:
+          - paragraph [ref=e1014]: Follow us
+          - generic [ref=e1015]:
+            - link "x" [ref=e1016] [cursor=pointer]:
+              - /url: https://x.com/aiversedesign
+              - img [ref=e1017]
+            - link "linkedin" [ref=e1019] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/aiverse-design
+              - img [ref=e1020]
+            - link "youtube" [ref=e1024] [cursor=pointer]:
+              - /url: https://www.youtube.com/@aiverse.design
+              - img [ref=e1025]
+            - link "medium" [ref=e1027] [cursor=pointer]:
+              - /url: https://medium.com/ai-ux-designers
+              - img [ref=e1028]
+        - generic [ref=e1029]:
+          - link "Privacy Policy" [ref=e1030] [cursor=pointer]:
+            - /url: /privacy
+          - link "Terms and Conditions" [ref=e1031] [cursor=pointer]:
+            - /url: "#"
+  - alert [ref=e1032]
+  - region "Notifications alt+T"

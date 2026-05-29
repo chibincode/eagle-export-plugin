@@ -1,0 +1,198 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "AI Logo" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "AI Logo" [ref=e6]
+        - generic [ref=e7]:
+          - link "Bites" [ref=e8] [cursor=pointer]:
+            - /url: /browse
+          - link "AI Patterns" [ref=e9] [cursor=pointer]:
+            - /url: /patterns
+          - link "Newsletter" [ref=e10] [cursor=pointer]:
+            - /url: /insights
+          - button "More" [ref=e11] [cursor=pointer]:
+            - generic [ref=e12]: More
+            - img [ref=e13]
+      - generic [ref=e15]:
+        - link "Log in" [ref=e16] [cursor=pointer]:
+          - /url: /login?redirect=%2Fbrowse
+        - link "Join today" [ref=e17] [cursor=pointer]:
+          - /url: /signup?redirect=%2Fbrowse
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - heading "Bites" [level=1] [ref=e25]
+          - generic [ref=e26]: "[346]"
+        - paragraph [ref=e27]: Real-world AI UX examples.
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - button "Play all" [ref=e33] [cursor=pointer]:
+            - img [ref=e34]
+          - generic [ref=e37]:
+            - button "AI Patterns" [ref=e38] [cursor=pointer]:
+              - generic [ref=e39]: AI Patterns
+              - img [ref=e40]
+            - button "Industries" [ref=e42] [cursor=pointer]:
+              - generic [ref=e43]: Industries
+              - img [ref=e44]
+            - button "Apps" [ref=e46] [cursor=pointer]:
+              - generic [ref=e47]: Apps
+              - img [ref=e48]
+        - button "Scroll left":
+          - img
+        - button "Scroll right":
+          - img
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52] [cursor=pointer]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: NEW
+              - img "Bite preview" [ref=e56]
+            - generic [ref=e58]:
+              - link "Codex" [ref=e59]:
+                - /url: /apps/codex
+              - text: / side chat branching
+          - generic [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]:
+              - generic [ref=e62]: NEW
+              - img "Bite preview" [ref=e64]
+            - generic [ref=e66]:
+              - link "Codex" [ref=e67]:
+                - /url: /apps/codex
+              - text: / annotate to iterate
+          - generic [ref=e68] [cursor=pointer]:
+            - generic [ref=e69]:
+              - generic [ref=e70]: NEW
+              - img "Bite preview" [ref=e72]
+            - generic [ref=e74]:
+              - link "Codex" [ref=e75]:
+                - /url: /apps/codex
+              - text: / thinking loading state
+          - generic [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: NEW
+              - img "Bite preview" [ref=e80]
+            - generic [ref=e82]:
+              - link "Codex" [ref=e83]:
+                - /url: /apps/codex
+              - text: / filename tiny UX detail
+          - generic [ref=e84] [cursor=pointer]:
+            - generic [ref=e85]:
+              - generic [ref=e86]: NEW
+              - img "Bite preview" [ref=e88]
+            - generic [ref=e90]:
+              - link "Codex" [ref=e91]:
+                - /url: /apps/codex
+              - text: / open in another app
+          - generic [ref=e92] [cursor=pointer]:
+            - img "Bite preview" [ref=e95]
+            - generic [ref=e97]:
+              - link "Cursor" [ref=e98]:
+                - /url: /apps/cursor
+              - text: / tool call density slider
+        - generic [ref=e99]:
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]: ★
+              - generic [ref=e105]: ★
+              - generic [ref=e106]: ★
+              - generic [ref=e107]: ★
+              - generic [ref=e108]: ★
+            - generic [ref=e109]:
+              - img "Left laurel wreath"
+              - generic [ref=e110]:
+                - generic [ref=e111]: "\"It's basically like Mobbin,"
+                - text: but specifically for AI"
+              - img "Right laurel wreath"
+            - generic [ref=e113]:
+              - img "Lead Product Designer at Focaldata" [ref=e114]
+              - generic [ref=e115]: Lead Product Designer at Focaldata
+          - generic [ref=e116]:
+            - heading "Continue browsing for free" [level=3] [ref=e117]
+            - paragraph [ref=e118]: Featuring over 300 real-world design inspiration — New content weekly.
+            - link "Create your free account" [ref=e120] [cursor=pointer]:
+              - /url: /signup?redirect=%2Fbrowse
+              - text: Create your free account
+              - img [ref=e121]
+            - generic [ref=e123]:
+              - generic [ref=e124]:
+                - img [ref=e125]
+                - generic [ref=e127]: No credit card required.
+              - generic [ref=e128]:
+                - img [ref=e129]
+                - generic [ref=e132]: Upgrade when you want the full playbook.
+  - contentinfo [ref=e133]:
+    - generic [ref=e135]:
+      - generic [ref=e137]:
+        - img "AI Logo" [ref=e138]
+        - generic [ref=e139]:
+          - paragraph [ref=e140]: © 2026 aiverse
+          - paragraph [ref=e141]: Design for AI, Augment with AI
+      - generic [ref=e142]:
+        - paragraph [ref=e143]: COMPANY
+        - list [ref=e145]:
+          - listitem [ref=e146]:
+            - link "Our manifesto" [ref=e147] [cursor=pointer]:
+              - /url: /manifesto
+          - listitem [ref=e148]:
+            - link "Pricing" [ref=e149] [cursor=pointer]:
+              - /url: /pricing
+          - listitem [ref=e150]:
+            - link "Team" [ref=e151] [cursor=pointer]:
+              - /url: /team
+      - generic [ref=e152]:
+        - paragraph [ref=e153]: CONTENT
+        - list [ref=e155]:
+          - listitem [ref=e156]:
+            - link "Gallery" [ref=e157] [cursor=pointer]:
+              - /url: /browse
+          - listitem [ref=e158]:
+            - link "AI Patterns NEW" [ref=e159] [cursor=pointer]:
+              - /url: /patterns
+              - text: AI Patterns
+              - generic [ref=e160]: NEW
+          - listitem [ref=e161]:
+            - link "Insights" [ref=e162] [cursor=pointer]:
+              - /url: /insights
+      - generic [ref=e163]:
+        - paragraph [ref=e164]: OTHER
+        - list [ref=e166]:
+          - listitem [ref=e167]:
+            - link "AI Design Studio" [ref=e168] [cursor=pointer]:
+              - /url: https://studio.aiverse.design
+              - text: AI Design Studio
+              - img [ref=e169]
+          - listitem [ref=e172]:
+            - link "Glossary" [ref=e173] [cursor=pointer]:
+              - /url: /glossary
+          - listitem [ref=e174]:
+            - link "All Categories" [ref=e175] [cursor=pointer]:
+              - /url: /categories
+          - listitem [ref=e176]:
+            - link "Community" [ref=e177] [cursor=pointer]:
+              - /url: /community
+      - generic [ref=e178]:
+        - generic [ref=e179]:
+          - paragraph [ref=e180]: Follow us
+          - generic [ref=e181]:
+            - link "x" [ref=e182] [cursor=pointer]:
+              - /url: https://x.com/aiversedesign
+              - img [ref=e183]
+            - link "linkedin" [ref=e185] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/aiverse-design
+              - img [ref=e186]
+            - link "youtube" [ref=e190] [cursor=pointer]:
+              - /url: https://www.youtube.com/@aiverse.design
+              - img [ref=e191]
+            - link "medium" [ref=e193] [cursor=pointer]:
+              - /url: https://medium.com/ai-ux-designers
+              - img [ref=e194]
+        - generic [ref=e195]:
+          - link "Privacy Policy" [ref=e196] [cursor=pointer]:
+            - /url: /privacy
+          - link "Terms and Conditions" [ref=e197] [cursor=pointer]:
+            - /url: "#"
+  - alert [ref=e198]
