@@ -1,0 +1,2513 @@
+[
+  {
+    "id": "MQROJRH9ICY25",
+    "name": "Factory  Agent-Native Software Development",
+    "size": 140540,
+    "btime": 1782281770478,
+    "mtime": 1782281874000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://factory.ai/",
+    "annotation": "- 同步于 2026-06-24 14:27 (uibook, section, 740c07ed-bf5d-4781-81fd-16e5f4bb60a0, sourceItemId=MQROJRH9ICY25)\n\n\n## AI Screen Analysis\n\n### Overview\nFactory analytics section explaining credit/token savings with a large dashboard visualization.\n\n### Visible Text\n- Infra Companies sell tokens. We help you buy fewer.\n- Factory Standard Credits\n- 269.0K\n- 17.8x\n- 667.7K\n- 124.2K\n\n### Layout\n- Left side contains the value proposition and explanatory copy.\n- Right side contains a large dark analytics panel with a bar chart and KPI row.\n\n### Components\n- Headline/copy block, dark dashboard card, grouped bar chart, tab-like controls, and metric tiles.\n- The dashboard card functions as the proof object for the savings message.\n\n### Color Palette\n- Black page background with white typography.\n- The chart uses orange and teal bars against a charcoal panel.\n- Muted gray labels and borders keep the dense dashboard readable.\n\n### Visual Memory Cues\n- The orange/teal bar chart and KPI row are the strongest visual anchors.\n- The phrase about buying fewer tokens makes the product benefit unusually concrete.\n\n### Visual Notes\n- Useful for metric-led feature sections where a data panel supports the value proposition.\n- The section turns an abstract infrastructure-cost claim into a visible analytics object.\n\n### Metadata\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Factory 的 analytics 区块，用大型 dashboard 可视化解释 credit/token 节省。\n\n### 可见文字\n- Infra Companies sell tokens. We help you buy fewer.\n- Factory Standard Credits\n- 269.0K\n- 17.8x\n- 667.7K\n- 124.2K\n\n### 布局结构\n- 左侧是价值主张和说明文案。\n- 右侧是大型深色 analytics 面板，包含柱状图和 KPI 行。\n\n### 组件拆分\n- Headline/说明文案、深色 dashboard 卡、分组柱状图、tab-like 控制和指标 tile。\n- Dashboard 卡片作为节省主张的证明物。\n\n### 配色信息\n- 黑色页面背景配白色文字。\n- 图表在炭灰面板上使用橙色和青绿色柱。\n- 灰色标签和边框帮助密集 dashboard 保持可读。\n\n### 视觉记忆点\n- 橙色/青绿色柱状图和 KPI 行是最强视觉锚点。\n- “buy fewer tokens” 让产品收益变得非常具体。\n\n### 视觉备注\n- 适合参考用数据面板支撑价值主张的 metric-led feature section。\n- 它把抽象的基础设施成本主张转化成可见 analytics 对象。\n\n### 元数据\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## UIBook Pattern Layer\n\n### Pattern Profile\n- section_type: Stats & Metrics\n- message_intent: complexity-reduction\n- structure_pattern: split-copy-with-dashboard-panel\n- layout_skeleton: split\n- information_sequence: benefit headline -> short explanation -> analytics dashboard -> KPI proof\n- content_style: data-led\n- interaction_implication: dashboard-filtering\n- design_language_modifier: dark-dashboard\n\n### Similarity Signature\n`Stats & Metrics / complexity-reduction / split-copy-with-dashboard-panel / split / data-led`\n\n### Discovery Note\n- match_when: Find feature sections that explain savings or efficiency through a large analytics dashboard.\n- avoid_when: Avoid when the reference needs icon-only benefit cards, pure copy, or a qualitative testimonial.\n\n### Evidence\n- The headline says Infra Companies sell tokens. We help you buy fewer.\n- The right dashboard is labeled Factory Standard Credits.\n- The dashboard includes an orange/teal bar chart and KPI values such as 269.0K and 17.8x.\n\n### Confidence\n- pattern_confidence: high\n- reason: The metric-led structure and visual proof are easy to identify.\n",
+    "modificationTime": 1782281770461,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          7,
+          7,
+          7
+        ],
+        "ratio": 89,
+        "$$hashKey": "object:74105"
+      },
+      {
+        "color": [
+          172,
+          130,
+          87
+        ],
+        "ratio": 4.68,
+        "$$hashKey": "object:74109"
+      },
+      {
+        "color": [
+          90,
+          88,
+          81
+        ],
+        "ratio": 2.22,
+        "$$hashKey": "object:74108"
+      },
+      {
+        "color": [
+          43,
+          39,
+          37
+        ],
+        "ratio": 1.83,
+        "$$hashKey": "object:74106"
+      },
+      {
+        "color": [
+          112,
+          162,
+          126
+        ],
+        "ratio": 1.71,
+        "$$hashKey": "object:74110"
+      },
+      {
+        "color": [
+          60,
+          60,
+          60
+        ],
+        "ratio": 0.26,
+        "$$hashKey": "object:74107"
+      }
+    ],
+    "lastModified": 1782456369869,
+    "rank": 1,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQROJRH9ICY25.info/Factory  Agent-Native Software Development.jpg"
+  },
+  {
+    "id": "MQROJJ59IXJNK",
+    "name": "Factory  Agent-Native Software Development",
+    "size": 154233,
+    "btime": 1782281759000,
+    "mtime": 1782281875423,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://factory.ai/",
+    "annotation": "- 同步于 2026-06-24 14:28 (uibook, section, 19a52fcb-6661-42df-9757-099e4de91623, sourceItemId=MQROJJ59IXJNK)\n\n\n## AI Screen Analysis\n\n### Overview\nFactory platform-surface section presenting one product across CLI, desktop, web/mobile, Slack, and project-management tools.\n\n### Visible Text\n- One platform, every surface your team works on.\n- Droid CLI\n- Desktop\n- Web + Mobile\n- Slack\n- Jira & Linear\n\n### Layout\n- A centered headline and surface labels sit above a large product mockup area.\n- The main visual pairs a desktop app frame with a phone frame on a dark page.\n\n### Components\n- Surface selector labels, desktop product screenshot, mobile product screenshot, top nav, and dark hero container.\n- The selector row implies switching between product contexts.\n\n### Color Palette\n- Black page background and white headline.\n- A soft gray panel behind the mockups separates the product stage from the page.\n- Orange highlights inside the UI reinforce Factory’s product accent color.\n\n### Visual Memory Cues\n- The desktop-plus-phone pairing makes the multi-surface promise instantly visible.\n- The row of surface labels above the mockups reads like a product switcher.\n\n### Visual Notes\n- Useful for feature sections that need to show one platform spanning multiple work surfaces.\n- The section makes channel breadth visible without using a generic integration logo grid.\n\n### Metadata\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Factory 的多端平台区块，展示同一产品覆盖 CLI、桌面、Web/Mobile、Slack 和项目管理工具。\n\n### 可见文字\n- One platform, every surface your team works on.\n- Droid CLI\n- Desktop\n- Web + Mobile\n- Slack\n- Jira & Linear\n\n### 布局结构\n- 居中 headline 和 surface 标签位于大型产品 mockup 上方。\n- 主视觉把桌面应用框和手机框放在同一个深色页面中。\n\n### 组件拆分\n- Surface 选择标签、桌面产品截图、移动端产品截图、顶部导航和深色 hero 容器。\n- 标签行暗示可以在不同产品语境之间切换。\n\n### 配色信息\n- 黑色页面背景配白色 headline。\n- Mockup 背后的柔和灰色面板把产品舞台从页面中分离出来。\n- UI 内部的橙色高亮延续 Factory 产品强调色。\n\n### 视觉记忆点\n- 桌面加手机的组合让“多 surface”承诺一眼可见。\n- Mockup 上方的 surface 标签行像一个产品切换器。\n\n### 视觉备注\n- 适合参考需要展示一个平台覆盖多工作界面的 feature section。\n- 它没有用普通 integration logo grid，而是直接把 channel breadth 做成产品舞台。\n\n### 元数据\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## UIBook Pattern Layer\n\n### Pattern Profile\n- section_type: Features\n- message_intent: capability-overview\n- structure_pattern: centered-multisurface-product-showcase\n- layout_skeleton: stacked\n- information_sequence: platform headline -> surface labels -> desktop/mobile product proof\n- content_style: screenshot-led\n- interaction_implication: tabs\n- design_language_modifier: dark-product-stage\n\n### Similarity Signature\n`Features / capability-overview / centered-multisurface-product-showcase / stacked / screenshot-led`\n\n### Discovery Note\n- match_when: Find sections that show one product working across several surfaces or channels.\n- avoid_when: Avoid when the reference should focus on integrations as logos rather than product UIs.\n\n### Evidence\n- The headline reads One platform, every surface your team works on.\n- Labels include Droid CLI, Desktop, Web + Mobile, Slack, and Jira & Linear.\n- The main visual combines a desktop UI frame and a phone UI frame.\n\n### Confidence\n- pattern_confidence: high\n- reason: The platform breadth and tabbed product-showcase structure are visible.\n",
+    "modificationTime": 1782281759661,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          7,
+          7,
+          7
+        ],
+        "ratio": 73,
+        "$$hashKey": "object:51658"
+      },
+      {
+        "color": [
+          109,
+          108,
+          110
+        ],
+        "ratio": 13,
+        "$$hashKey": "object:51665"
+      },
+      {
+        "color": [
+          132,
+          132,
+          132
+        ],
+        "ratio": 6,
+        "$$hashKey": "object:51659"
+      },
+      {
+        "color": [
+          51,
+          50,
+          49
+        ],
+        "ratio": 2.34,
+        "$$hashKey": "object:51661"
+      },
+      {
+        "color": [
+          68,
+          68,
+          70
+        ],
+        "ratio": 1.38,
+        "$$hashKey": "object:51663"
+      },
+      {
+        "color": [
+          124,
+          124,
+          132
+        ],
+        "ratio": 0.8,
+        "$$hashKey": "object:51664"
+      },
+      {
+        "color": [
+          152,
+          152,
+          152
+        ],
+        "ratio": 0.63,
+        "$$hashKey": "object:51660"
+      },
+      {
+        "color": [
+          61,
+          60,
+          68
+        ],
+        "ratio": 0.43,
+        "$$hashKey": "object:51662"
+      }
+    ],
+    "lastModified": 1782401868087,
+    "rank": 2,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQROJJ59IXJNK.info/Factory  Agent-Native Software Development.jpg"
+  },
+  {
+    "id": "MQROJ8CW5FY7X",
+    "name": "Factory  Agent-Native Software Development",
+    "size": 113309,
+    "btime": 1782281745000,
+    "mtime": 1782281875874,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://factory.ai/",
+    "annotation": "- 同步于 2026-06-24 14:28 (uibook, section, c08eae59-0f08-479f-9b39-7e45627d547b, sourceItemId=MQROJ8CW5FY7X)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nFactory feature section defining the Software Factory concept through three dark capability cards.\n\n### Visible Text\n- Defining your Software Factory\n- Model Independence\n- Sovereign Deployment\n- Across the SDLC\n\n### Layout\n- A large section headline sits above a three-card grid.\n- Each card uses a different technical visualization: radar/shape chart, configuration panel, and node map.\n\n### Components\n- Three feature cards, chart visualization, deployment/configuration list, network diagram, top navigation, and dark page frame.\n- Cards are equal width and read as three pillars of the product concept.\n\n### Color Palette\n- Black background with dark charcoal cards.\n- White headings and muted gray labels create hierarchy.\n- Orange accents appear inside charts and interface elements.\n\n### Visual Memory Cues\n- The three side-by-side technical cards are the main memory cue.\n- The radar chart and node map make the abstract Software Factory concept more tangible.\n\n### Visual Notes\n- Useful for explaining a complex platform concept as a small set of pillars.\n- The section avoids icon-only abstraction by using product-like technical visuals inside each card.\n\n### Metadata\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Factory 的功能说明区，用三张深色能力卡定义 Software Factory 概念。\n\n### 可见文字\n- Defining your Software Factory\n- Model Independence\n- Sovereign Deployment\n- Across the SDLC\n\n### 布局结构\n- 大号区块标题位于三卡片网格上方。\n- 每张卡使用不同技术可视化：雷达/形状图、配置面板、节点图。\n\n### 组件拆分\n- 三张功能卡、图表可视化、部署/配置列表、网络图、顶部导航和深色页面框架。\n- 卡片等宽排列，读起来像产品概念的三根支柱。\n\n### 配色信息\n- 黑色背景配深炭灰卡片。\n- 白色标题和灰色标签建立层级。\n- 图表和界面元素中出现橙色点缀。\n\n### 视觉记忆点\n- 三张并排技术卡片是主要记忆点。\n- 雷达图和节点图把抽象的 Software Factory 概念变得更具体。\n\n### 视觉备注\n- 适合参考把复杂平台概念拆成少数支柱的说明区块。\n- 它没有停留在 icon-only 抽象，而是在卡片里放入产品化技术视觉。\n\n### 元数据\n- analyzedAt: 2026-06-25T18:58:42+08:00\n- source: Eagle local image\n- model: gpt-5 conversation vision\n\n## UIBook Pattern Layer\n\n### Pattern Profile\n- section_type: Features\n- message_intent: capability-overview\n- structure_pattern: three-technical-card-grid\n- layout_skeleton: grid\n- information_sequence: concept headline -> three capability pillars -> visual proof per pillar\n- content_style: diagram-led\n- interaction_implication: none-visible\n- design_language_modifier: dark-technical-blueprint\n\n### Similarity Signature\n`Features / capability-overview / three-technical-card-grid / grid / diagram-led`\n\n### Discovery Note\n- match_when: Find feature sections that define a complex platform through three equal technical pillars.\n- avoid_when: Avoid when the reference should be a lightweight icon grid or a single deep product screenshot.\n\n### Evidence\n- The headline says Defining your Software Factory.\n- Three cards are titled Model Independence, Sovereign Deployment, and Across the SDLC.\n- The cards contain a radar chart, configuration-style panel, and node-map diagram.\n\n### Confidence\n- pattern_confidence: high\n- reason: The three-pillar grid and diagram-led content are directly visible.\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1782281745680,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          11,
+          11,
+          11
+        ],
+        "ratio": 94
+      },
+      {
+        "color": [
+          52,
+          47,
+          45
+        ],
+        "ratio": 1.54
+      },
+      {
+        "color": [
+          86,
+          80,
+          76
+        ],
+        "ratio": 1.25
+      },
+      {
+        "color": [
+          28,
+          28,
+          28
+        ],
+        "ratio": 0.69
+      },
+      {
+        "color": [
+          169,
+          169,
+          169
+        ],
+        "ratio": 0.52
+      },
+      {
+        "color": [
+          36,
+          36,
+          35
+        ],
+        "ratio": 0.43
+      },
+      {
+        "color": [
+          63,
+          60,
+          60
+        ],
+        "ratio": 0.39
+      },
+      {
+        "color": [
+          68,
+          68,
+          66
+        ],
+        "ratio": 0.32
+      }
+    ],
+    "lastModified": 1782385156561,
+    "rank": 3,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQROJ8CW5FY7X.info/Factory  Agent-Native Software Development.jpg"
+  },
+  {
+    "id": "MQQ8X495WZIHB",
+    "name": "Agentic Infrastructure",
+    "size": 92107,
+    "btime": 1782185554782,
+    "mtime": 1782195295000,
+    "ext": "jpg",
+    "tags": [
+      "imported by Autoscreenshot",
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://vercel.com/home",
+    "annotation": "- 同步于 2026-06-23 14:20 (uibook, section, 08488126-511e-4d14-88b0-90b8d25215f6, sourceItemId=MQQ8X495WZIHB)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nVercel “Apps” feature section explaining app/integration usage with a product screenshot and supporting business proof.\n\n### Visible Text\n- Apps\n- Zapier serves over 100 million monthly website visits on Vercel.\n- Global deliver\n- Deployment automation\n- Serverless functions\n- Web application firewall\n- Let’s save you some time, Mark.\n\n### Layout\n- The section title is large and left-aligned near the top; proof copy sits on the left; the product UI screenshot spans the center-right.\n- The page keeps a lot of white margin around a single dashboard-like screenshot.\n\n### Components\n- Feature headline, customer proof text, metric/category labels, embedded web app screenshot, toolbar/navigation inside the screenshot.\n\n### Color Palette\n- White background and black typography dominate; the embedded UI uses light gray chrome with small dark accents.\n\n### Visual Memory Cues\n- The Zapier screenshot inside the Vercel page is the strongest anchor, with a compact dashboard and “Let’s save you some time, Mark.” message.\n- The left proof copy gives the otherwise abstract product screenshot a concrete customer story.\n\n### Visual Notes\n- Useful for feature sections that combine a short customer stat with one restrained interface screenshot.\n- The composition shows how to make a plain UI capture feel premium through whitespace.\n\n### Metadata\n- analyzedAt: 2026-06-23T19:03:56+08:00\n- source: Eagle local image\n- model: gpt-5\n\n## AI 页面分析\n\n### 页面概述\nVercel 的 “Apps” feature section，用产品截图和业务背书解释 app/integration 能力。\n\n### 可见文字\n- Apps\n- Zapier serves over 100 million monthly website visits on Vercel.\n- Global deliver\n- Deployment automation\n- Serverless functions\n- Web application firewall\n- Let’s save you some time, Mark.\n\n### 布局结构\n- 大标题在上方偏左，客户背书文案在左侧，产品 UI 截图横跨中右区域。\n- 画面围绕一张 dashboard 式截图保留大量白边。\n\n### 组件拆分\n- 功能标题、客户证明文本、指标/类别标签、内嵌 Web app 截图，以及截图里的工具栏/导航。\n\n### 配色信息\n- 白底和黑色字体为主；内嵌 UI 使用浅灰 chrome 和少量深色强调。\n\n### 视觉记忆点\n- 最强记忆点是 Vercel 页面中的 Zapier 截图，里面有紧凑 dashboard 和 “Let’s save you some time, Mark.” 文案。\n- 左侧客户数据让抽象的产品截图有了具体案例。\n\n### 视觉备注\n- 适合把短客户证明和一张克制产品截图组合成 feature section。\n- 这个构图展示了如何用留白让普通 UI 截图显得更高级。\n\n### 元数据\n- analyzedAt: 2026-06-23T19:03:56+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1782195053515,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          251,
+          251,
+          251
+        ],
+        "ratio": 96
+      },
+      {
+        "color": [
+          58,
+          58,
+          58
+        ],
+        "ratio": 0.85
+      },
+      {
+        "color": [
+          165,
+          165,
+          165
+        ],
+        "ratio": 0.62
+      },
+      {
+        "color": [
+          208,
+          208,
+          208
+        ],
+        "ratio": 0.52
+      },
+      {
+        "color": [
+          228,
+          228,
+          228
+        ],
+        "ratio": 0.51
+      },
+      {
+        "color": [
+          220,
+          220,
+          220
+        ],
+        "ratio": 0.36
+      },
+      {
+        "color": [
+          196,
+          196,
+          196
+        ],
+        "ratio": 0.31
+      }
+    ],
+    "lastModified": 1782212671879,
+    "rank": 4,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQQ8X495WZIHB.info/Agentic Infrastructure.jpg"
+  },
+  {
+    "id": "MQQ2U1D8NQU6R",
+    "name": "CoTrain  The Only Platform You Need to Hire, Work, Train",
+    "size": 110368,
+    "btime": 1782184832000,
+    "mtime": 1782184853507,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://cotrain.ai/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nCoTrain features section presenting built-in intelligence tools through five soft UI preview cards.\n### Visible Text\n- FEATURES\n- Coupled with Intelligent tools\n- Built-in intelligence for faster decisions and better results\n- AI Response\n- Resume.pdf\n- AI Interview\n- Intro Video\n- AI Matching\n- Sort by: Best Match\n- Your earnings\n- $21,043.41\n- Invite your Team\n### Layout\n- The headline is centered near the top; beneath it, three smaller cards form the first row and two wider cards form the second row.\n- The UI cards fade downward into the white page, keeping the screenshots light and airy.\n### Components\n- Top navigation, Get Started pill, feature label, headline, upload/progress card, intro-video card, matching card, earnings chart, team invite table.\n### Color Palette\n- White background, black headline, pale gray card surfaces, soft blue accents, and light blue chart bars.\n### Visual Memory Cues\n- The Resume.pdf upload card and the $21,043.41 earnings card make the toolset feel concrete.\n- The blurred card bottoms create a soft, futuristic product-preview effect.\n### Visual Notes\n- Useful for feature sections that show multiple product capabilities without using heavy screenshots.\n- The grid communicates breadth while keeping the page visually quiet.\n### Metadata\n- analyzedAt: 2026-06-23T19:03:56+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\nCoTrain features section，通过五张柔和 UI preview card 展示 built-in intelligence tools。\n### 可见文字\n- FEATURES\n- Coupled with Intelligent tools\n- Built-in intelligence for faster decisions and better results\n- AI Response\n- Resume.pdf\n- AI Interview\n- Intro Video\n- AI Matching\n- Sort by: Best Match\n- Your earnings\n- $21,043.41\n- Invite your Team\n### 布局结构\n- 标题居中位于上方；下方第一行三张小卡，第二行两张更宽的卡。\n- UI 卡片向下逐渐淡出到白色页面，让截图显得轻盈。\n### 组件拆分\n- 顶部导航、Get Started pill、feature label、标题、上传/进度卡、intro-video 卡、matching 卡、收益图表、team invite 表格。\n### 配色信息\n- 白色背景、黑色标题、浅灰卡片表面、柔和蓝色强调和淡蓝图表柱。\n### 视觉记忆点\n- Resume.pdf 上传卡和 $21,043.41 收益卡让工具集变得具体。\n- 卡片底部的模糊淡出制造柔和的未来感产品预览。\n### 视觉备注\n- 适合参考 feature section 如何展示多项产品能力而不显得截图沉重。\n- 网格传达能力广度，同时保持页面安静。\n### 元数据\n- analyzedAt: 2026-06-23T19:03:56+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-06-23 19:23 (uibook, section, dcb624b3-9d9e-4076-bde4-6f7374666ef9, sourceItemId=MQQ2U1D8NQU6R)",
+    "modificationTime": 1782184832108,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          250,
+          250,
+          251
+        ],
+        "ratio": 93
+      },
+      {
+        "color": [
+          202,
+          214,
+          224
+        ],
+        "ratio": 2.06
+      },
+      {
+        "color": [
+          159,
+          186,
+          211
+        ],
+        "ratio": 1.42
+      },
+      {
+        "color": [
+          103,
+          147,
+          194
+        ],
+        "ratio": 0.94
+      },
+      {
+        "color": [
+          220,
+          220,
+          221
+        ],
+        "ratio": 0.52
+      },
+      {
+        "color": [
+          227,
+          228,
+          228
+        ],
+        "ratio": 0.51
+      },
+      {
+        "color": [
+          50,
+          49,
+          52
+        ],
+        "ratio": 0.33
+      }
+    ],
+    "lastModified": 1782213798631,
+    "rank": 5,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQQ2U1D8NQU6R.info/CoTrain  The Only Platform You Need to Hire, Work, Train.jpg"
+  },
+  {
+    "id": "MQHFERHNEVEQY",
+    "name": "Framer 3.0",
+    "size": 115869,
+    "btime": 1781661758912,
+    "mtime": 1781661775000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.framer.com/events/",
+    "annotation": "- 同步于 2026-06-17 10:04 (uibook, section, de357f71-ebe7-4383-b735-669841c137df, sourceItemId=MQHFERHNEVEQY)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\n- Framer announcements/events section on a black brand page. It presents recent launch posts in a two-column card grid with neon-blue product imagery and dates.\n\n### Visible Text\n- Product; Community; Resources; Enterprise; Pricing.\n- Read more about the announcements.\n- Building Agents for Framer; What we learned while building design agents for real websites.; Jun 16, 2026.\n- Why Marketplace is becoming part of the new Framer Community; A note on Community, ranking, reviews, quality, and discoverability.; Jun 16, 2026.\n- AI Credits, simpler plans, and lower prices; A clearer pricing model for the new era of...; Jun 16, 2026.\n- Introducing Framer 3.0 with Agents, Branching, and a new Community; Jun 16, 2026.\n\n### Layout\n- The top navigation is centered in a narrow header, with the Framer mark on the left and a small account/avatar button on the right.\n- The main heading is centered above a two-by-two announcement grid. Each card pairs a large image area with a title, short description, and date below.\n\n### Components\n- Dark header navigation, large centered section heading, announcement cards, thumbnail panels, date labels, and article teaser text.\n- The cards use thin rounded borders and spacious gutters, making the grid feel like a curated release archive rather than a dense blog list.\n\n### Color Palette\n- Dominant black background with white heading text and muted gray descriptions.\n- Electric blue glows and dark navy gradients drive the visual energy inside the thumbnails.\n\n### Visual Memory Cues\n- The first card contains a glowing \"Ask Framer...\" agent input box with Opus 4.8 and action icons.\n- Other thumbnails show a blue community UI screenshot, a glowing star-like mark above a hand, and a single vertical blue light beam.\n\n### Visual Notes\n- Useful reference for announcement sections where launch content needs to feel premium and product-led.\n- The consistent neon imagery helps unrelated posts read as one launch story.\n\n### Metadata\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n- 这是 Framer 黑色品牌页里的 announcements/events section。页面用两列卡片网格展示近期发布内容，每张卡都有霓虹蓝产品视觉和日期。\n\n### 可见文字\n- Product; Community; Resources; Enterprise; Pricing.\n- Read more about the announcements.\n- Building Agents for Framer; What we learned while building design agents for real websites.; Jun 16, 2026.\n- Why Marketplace is becoming part of the new Framer Community; A note on Community, ranking, reviews, quality, and discoverability.; Jun 16, 2026.\n- AI Credits, simpler plans, and lower prices; A clearer pricing model for the new era of...; Jun 16, 2026.\n- Introducing Framer 3.0 with Agents, Branching, and a new Community; Jun 16, 2026.\n\n### 布局结构\n- 顶部导航居中排布，左侧是 Framer 标志，右侧有小头像/账户按钮。\n- 主标题居中，下面是二乘二公告卡片网格；每张卡上方是大图，下方是标题、摘要和日期。\n\n### 组件拆分\n- 深色导航、居中大标题、公告卡片、缩略图面板、日期标签和文章摘要。\n- 卡片使用细圆角边框和大间距，让内容更像精选发布档案，而不是普通博客列表。\n\n### 配色信息\n- 以黑色背景、白色标题、灰色说明文字为主。\n- 缩略图里大量使用电光蓝、深海军蓝和霓虹渐变。\n\n### 视觉记忆点\n- 第一张卡是发光的 \"Ask Framer...\" agent 输入框，带 Opus 4.8 和操作图标。\n- 其他缩略图分别出现蓝色社区界面、手掌上方的发光星形符号，以及一束垂直蓝色光线。\n\n### 视觉备注\n- 适合作为发布公告 section 参考，让 launch 内容显得更产品化、更高级。\n- 统一的霓虹视觉让不同主题文章看起来像同一个发布叙事。\n\n### 元数据\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1781661758891,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          4,
+          4,
+          6
+        ],
+        "ratio": 79,
+        "$$hashKey": "object:5089"
+      },
+      {
+        "color": [
+          9,
+          10,
+          45
+        ],
+        "ratio": 8,
+        "$$hashKey": "object:5091"
+      },
+      {
+        "color": [
+          17,
+          23,
+          92
+        ],
+        "ratio": 7,
+        "$$hashKey": "object:5092"
+      },
+      {
+        "color": [
+          19,
+          44,
+          160
+        ],
+        "ratio": 3.42,
+        "$$hashKey": "object:5094"
+      },
+      {
+        "color": [
+          156,
+          159,
+          175
+        ],
+        "ratio": 0.56,
+        "$$hashKey": "object:5090"
+      },
+      {
+        "color": [
+          58,
+          108,
+          214
+        ],
+        "ratio": 0.48,
+        "$$hashKey": "object:5093"
+      }
+    ],
+    "lastModified": 1781663715018,
+    "rank": 6,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQHFERHNEVEQY.info/Framer 3.0.jpg"
+  },
+  {
+    "id": "MQHFAFA3C5PCF",
+    "name": "Framer Create a professional website, free. No code website builder lo",
+    "size": 102948,
+    "btime": 1781661556454,
+    "mtime": 1781661597000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.framer.com/",
+    "annotation": "- 同步于 2026-06-17 10:04 (uibook, section, c6e65635-b3cc-42ca-96c4-c7205269ba55, sourceItemId=MQHFAFA3C5PCF)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\n- Framer platform capability section. It argues that Framer is \"not just vibes\" by showing a structured grid of technical/product capabilities.\n\n### Visible Text\n- Product; Community; Resources; Enterprise; Pricing.\n- Not just vibes, a full platform.\n- Core Web Vitals; GOOD; LCP 1.1s; INP 95ms; CLS 0.01; Performance.\n- Collections; Fields; Blog; Careers; Events; Categories; Speakers; Talks; CMS.\n- Site Settings; Title; Page Description; Collaboration; Hosting; 99.99% uptime.\n\n### Layout\n- The heading is left aligned above a large bordered grid.\n- The grid contains multiple capability cells: a performance metrics card, a CMS table screenshot, site settings, branch collaboration, uptime/hosting, and a browser URL area.\n\n### Components\n- Header nav, capability grid, metric bars, CMS sidebar/table, settings panel, branches list, uptime hero number, and link-style labels with arrows.\n\n### Color Palette\n- Black page background with dark gray panels and subtle grid lines.\n- Blue accents appear in Core Web Vitals bars and small UI highlights.\n- White headings and gray body/UI labels keep the section technical and restrained.\n\n### Visual Memory Cues\n- The \"Core Web Vitals\" card shows three blue progress bars with exact numbers, making performance feel measurable.\n- The CMS cell has a dark database table with collections like Blog, Careers, Events, Categories, Speakers, and Talks.\n- The lower right \"99.99% uptime\" block uses a large mirrored number over a dark abstract wave.\n\n### Visual Notes\n- Useful reference for communicating platform depth through a feature matrix rather than icon cards.\n- The section balances technical credibility and visual drama by combining real UI fragments with bold metrics.\n\n### Metadata\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n- 这是 Framer 的平台能力 section。它用结构化网格证明 Framer 不只是视觉氛围，而是完整平台。\n\n### 可见文字\n- Product; Community; Resources; Enterprise; Pricing.\n- Not just vibes, a full platform.\n- Core Web Vitals; GOOD; LCP 1.1s; INP 95ms; CLS 0.01; Performance.\n- Collections; Fields; Blog; Careers; Events; Categories; Speakers; Talks; CMS.\n- Site Settings; Title; Page Description; Collaboration; Hosting; 99.99% uptime.\n\n### 布局结构\n- 标题左对齐，下面是一个大面积描边网格。\n- 网格中包含多个能力区块：性能指标、CMS 表格截图、站点设置、分支协作、uptime/hosting 和浏览器 URL 区域。\n\n### 组件拆分\n- 顶部导航、能力网格、指标进度条、CMS sidebar/table、设置面板、branches 列表、uptime 大数字和带箭头的链接标签。\n\n### 配色信息\n- 黑色页面背景，深灰面板和细网格线。\n- 蓝色主要用于 Core Web Vitals 进度条和少量 UI 高亮。\n- 白色标题和灰色 UI 文案让整体显得克制、技术化。\n\n### 视觉记忆点\n- \"Core Web Vitals\" 卡片展示三条蓝色进度条和明确数值，让性能能力变得可量化。\n- CMS 区块是一张深色数据库表，左侧可见 Blog、Careers、Events、Categories、Speakers、Talks 等 collection。\n- 右下角 \"99.99% uptime\" 用大号反射数字叠在黑色抽象波形上。\n\n### 视觉备注\n- 适合作为平台深度说明参考，比普通 icon 卡更能传达能力覆盖面。\n- 这个模块把真实 UI 片段和大指标结合起来，同时保留技术可信度和视觉张力。\n\n### 元数据\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1781661556443,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          6,
+          6,
+          6
+        ],
+        "ratio": 95,
+        "$$hashKey": "object:77442"
+      },
+      {
+        "color": [
+          44,
+          44,
+          44
+        ],
+        "ratio": 1.87,
+        "$$hashKey": "object:77443"
+      },
+      {
+        "color": [
+          91,
+          91,
+          92
+        ],
+        "ratio": 1.15,
+        "$$hashKey": "object:77445"
+      },
+      {
+        "color": [
+          175,
+          177,
+          178
+        ],
+        "ratio": 0.4,
+        "$$hashKey": "object:77444"
+      }
+    ],
+    "lastModified": 1781663715559,
+    "rank": 7,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQHFAFA3C5PCF.info/Framer Create a professional website, free. No code website builder lo.jpg"
+  },
+  {
+    "id": "MQHFA29YIV8YP",
+    "name": "Framer Create a professional website, free. No code website builder lo",
+    "size": 154995,
+    "btime": 1781661539000,
+    "mtime": 1781661598416,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.framer.com/",
+    "annotation": "- 同步于 2026-06-17 10:05 (uibook, section, 095741ce-8925-4707-89f9-b5d96786b41f, sourceItemId=MQHFA29YIV8YP)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\n- Framer feature section about connecting external AI tools to a site workflow. The section shows a website/blog grid on the left and a terminal-like agent window on the right.\n\n### Visible Text\n- Product; Community; Resources; Enterprise; Pricing.\n- Connect to any AI.\n- Take action on your site from anywhere. Update copy from Slack. Trigger CMS changes from the terminal. Ship from a GitHub PR. Drive it all from your Terminal, Codex, Claude Code, Cursor, or any external AI.\n- framer-agent; claude; cursor; codex.\n- Claude Code v2.1.170; Sonnet 4.6; Claude Team; Framer.\n- Extract blog entries from my WordPress site and import them into Framer CMS.\n- WP REST API detected; Framer CMS connected; WordPress credentials verified; 47 posts returned; Import complete; Copy install prompt.\n\n### Layout\n- The content is split into a large left card and a narrower right agent panel.\n- The left card shows a dark website/blog grid with image thumbnails and titles; the right panel shows command output and import progress.\n\n### Components\n- Header nav, site preview card, blog/article grid, terminal/agent window, provider tabs, status bullets, command log, and \"Copy install prompt\" button.\n\n### Color Palette\n- Black page background and dark charcoal UI panels.\n- Green status dots indicate successful import steps.\n- Cyan/blue image thumbnails inside the blog grid add contrast against the dark interface.\n\n### Visual Memory Cues\n- The right panel resembles a developer terminal but is branded as \"framer-agent\", with tabs for Claude, Cursor, and Codex.\n- The left preview shows a six-card editorial grid with motion-blur ocean/landscape imagery, making the imported content feel visual rather than purely technical.\n\n### Visual Notes\n- Strong reference for explaining AI integrations through a concrete workflow, not abstract logos.\n- The side-by-side preview and terminal log make the automation outcome easy to understand: WordPress content becomes Framer CMS entries.\n\n### Metadata\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n- 这是 Framer 关于连接外部 AI 工具的功能 section。页面左侧展示网站/blog 网格，右侧展示类似终端的 agent 执行窗口。\n\n### 可见文字\n- Product; Community; Resources; Enterprise; Pricing.\n- Connect to any AI.\n- Take action on your site from anywhere. Update copy from Slack. Trigger CMS changes from the terminal. Ship from a GitHub PR. Drive it all from your Terminal, Codex, Claude Code, Cursor, or any external AI.\n- framer-agent; claude; cursor; codex.\n- Claude Code v2.1.170; Sonnet 4.6; Claude Team; Framer.\n- Extract blog entries from my WordPress site and import them into Framer CMS.\n- WP REST API detected; Framer CMS connected; WordPress credentials verified; 47 posts returned; Import complete; Copy install prompt.\n\n### 布局结构\n- 画面左右分栏：左侧是大型网站预览卡，右侧是较窄的 agent 面板。\n- 左侧卡片展示深色 blog/article 网格和图片缩略图；右侧面板展示命令输出和导入进度。\n\n### 组件拆分\n- 顶部导航、站点预览卡、文章网格、终端/agent 窗口、AI provider tabs、状态圆点、命令日志和 \"Copy install prompt\" 按钮。\n\n### 配色信息\n- 黑色页面背景与深炭灰 UI 面板为主。\n- 绿色状态点表示导入步骤成功。\n- 左侧 blog 缩略图中的蓝绿风景图为深色界面提供视觉对比。\n\n### 视觉记忆点\n- 右侧面板像开发者终端，但标题是 \"framer-agent\"，并且有 Claude、Cursor、Codex tabs。\n- 左侧预览是六张文章卡组成的编辑网格，使用运动模糊的海面/风景图，让导入内容显得更具视觉感。\n\n### 视觉备注\n- 适合参考如何用具体工作流解释 AI integration，而不是只摆放抽象 logo。\n- 预览和终端日志并排展示，让自动化结果很直观：WordPress 内容被导入 Framer CMS。\n\n### 元数据\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1781661539590,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          7,
+          7,
+          7
+        ],
+        "ratio": 90,
+        "$$hashKey": "object:41447"
+      },
+      {
+        "color": [
+          44,
+          45,
+          44
+        ],
+        "ratio": 3.67,
+        "$$hashKey": "object:41448"
+      },
+      {
+        "color": [
+          68,
+          86,
+          92
+        ],
+        "ratio": 2.71,
+        "$$hashKey": "object:41449"
+      },
+      {
+        "color": [
+          31,
+          132,
+          173
+        ],
+        "ratio": 2.13,
+        "$$hashKey": "object:41452"
+      },
+      {
+        "color": [
+          154,
+          174,
+          182
+        ],
+        "ratio": 0.29,
+        "$$hashKey": "object:41450"
+      },
+      {
+        "color": [
+          15,
+          47,
+          43
+        ],
+        "ratio": 0.29,
+        "$$hashKey": "object:41451"
+      }
+    ],
+    "lastModified": 1781663715675,
+    "rank": 8,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQHFA29YIV8YP.info/Framer Create a professional website, free. No code website builder lo.jpg"
+  },
+  {
+    "id": "MQHF9FV2Z32G8",
+    "name": "Framer Create a professional website, free. No code website builder lo",
+    "size": 131362,
+    "btime": 1781661510555,
+    "mtime": 1781661598000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.framer.com/",
+    "annotation": "- 同步于 2026-06-17 10:05 (uibook, section, 462494f4-1612-4a4a-87c1-a1f5e7d3b9bc, sourceItemId=MQHF9FV2Z32G8)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\n- Framer agent feature section emphasizing human-in-the-loop design. It shows generated layout explorations beside a chat-style agent panel.\n\n### Visible Text\n- Product; Community; Resources; Enterprise; Pricing.\n- Agents that work alongside you, not instead of you.\n- Start with agents.\n- Exploration; Exploration — Big Intro; Exploration — Side Nav.\n- Design with an agent.\n- A professional design agent, native to the canvas. It works directly on your site to generate and refine in place, with every change visible, editable, and under your control.\n- Desktop; Create a few layout variations of my site. Keep the content but try some different compositions.; Thinking...; Created a design plan; Placing layout variations side by side.; Add follow up...; GPT 5.5.\n\n### Layout\n- A large headline sits upper left, with a small CTA on the upper right.\n- The main card shows three generated design variations on a canvas, while a separate vertical agent chat panel is attached to the right.\n- Supporting copy appears below the canvas card.\n\n### Components\n- Header nav, CTA button, canvas preview, three layout thumbnails, blue selection outline, agent conversation card, prompt input, status rows, and model selector.\n\n### Color Palette\n- Black background with charcoal cards and white text.\n- Blue outline and blue landscape thumbnails highlight the active design exploration.\n- The agent panel uses dark gray surfaces with muted gray status text.\n\n### Visual Memory Cues\n- The central canvas shows three HÅUS layout variations side by side, making AI output visibly editable and comparable.\n- The right agent panel includes the exact prompt about creating layout variations, then shows \"Created a design plan\" and \"Placing layout variations side by side.\"\n\n### Visual Notes\n- Useful reference for AI design-agent UX where the output is not hidden in chat but placed directly on the design canvas.\n- The section makes control explicit: generated changes are visible, editable, and still under the user's control.\n\n### Metadata\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n- 这是 Framer 的 agent 功能 section，强调 AI 与用户协作而不是替代用户。画面展示了生成的 layout explorations 和右侧聊天式 agent 面板。\n\n### 可见文字\n- Product; Community; Resources; Enterprise; Pricing.\n- Agents that work alongside you, not instead of you.\n- Start with agents.\n- Exploration; Exploration — Big Intro; Exploration — Side Nav.\n- Design with an agent.\n- A professional design agent, native to the canvas. It works directly on your site to generate and refine in place, with every change visible, editable, and under your control.\n- Desktop; Create a few layout variations of my site. Keep the content but try some different compositions.; Thinking...; Created a design plan; Placing layout variations side by side.; Add follow up...; GPT 5.5.\n\n### 布局结构\n- 大标题位于左上，右上有小 CTA。\n- 主卡片中展示三个生成的设计变体，右侧连接一个独立的纵向 agent 聊天面板。\n- 说明文案位于 canvas 卡片下方。\n\n### 组件拆分\n- 顶部导航、CTA 按钮、canvas 预览、三张 layout 缩略图、蓝色选中描边、agent 对话卡、prompt 输入、状态行和模型选择器。\n\n### 配色信息\n- 黑色背景、炭灰卡片和白色文字。\n- 蓝色描边和蓝绿色风景缩略图突出当前设计 exploration。\n- Agent 面板使用深灰表面和低对比状态文字。\n\n### 视觉记忆点\n- 中央 canvas 把三个 HÅUS layout variations 并排放置，让 AI 输出显得可比较、可编辑。\n- 右侧 agent 面板直接显示用户要求创建布局变体的 prompt，并展示 \"Created a design plan\" 和 \"Placing layout variations side by side.\"\n\n### 视觉备注\n- 适合作为 AI design-agent UX 参考：AI 结果不只停留在聊天里，而是直接落到设计画布上。\n- 该模块明确传达控制权：生成变化可见、可编辑，并仍在用户控制之下。\n\n### 元数据\n- analyzedAt: 2026-06-17T10:26:42+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1781661510542,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          7,
+          7,
+          7
+        ],
+        "ratio": 90
+      },
+      {
+        "color": [
+          41,
+          43,
+          46
+        ],
+        "ratio": 3.59
+      },
+      {
+        "color": [
+          29,
+          156,
+          197
+        ],
+        "ratio": 1.45
+      },
+      {
+        "color": [
+          91,
+          91,
+          91
+        ],
+        "ratio": 1.3
+      },
+      {
+        "color": [
+          201,
+          204,
+          205
+        ],
+        "ratio": 1.07
+      },
+      {
+        "color": [
+          19,
+          102,
+          64
+        ],
+        "ratio": 0.85
+      },
+      {
+        "color": [
+          39,
+          140,
+          74
+        ],
+        "ratio": 0.4
+      }
+    ],
+    "lastModified": 1781663715761,
+    "rank": 9,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQHF9FV2Z32G8.info/Framer Create a professional website, free. No code website builder lo.jpg"
+  },
+  {
+    "id": "MQF3GV46WBK8E",
+    "name": "YouMind - AI Creation Studio",
+    "size": 206965,
+    "btime": 1781520769000,
+    "mtime": 1781520834093,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://youmind.com/overview",
+    "annotation": "- 同步于 2026-06-15 19:02 (uibook, section, efa5c55f-d920-47f9-8ac2-b56b2b474c24, sourceItemId=MQF3GV46WBK8E)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\n- YouMind feature section that explains the product's creation loop through three illustrated cards: capturing inspiration, extending thought, and turning output into something shareable.\n- The screenshot is a single desktop section with a persistent header, a large editorial heading, three equal feature cards, and the beginning of the next \"Made with YouMind\" section at the bottom.\n\n### Visible Text\n- YouMind; Overview; Use cases; Skills; Prompts; Pricing; Blog; Updates; Open YouMind.\n- Every idea deserves to take shape. YouMind makes it happen.\n- Capture what sparks you.\n- You stumble on things that matter — articles, videos, fragments of thought that feel like they're leading somewhere. YouMind holds them together, ready for the moment you know what to do with them.\n- Drive the thinking further.\n- YouMind sees what you've collected and where the connections are forming. It asks the question you haven't asked yet, fills in the gap you skipped, and keeps the thread alive — so the idea grows instead of stalling.\n- Shape it into something real.\n- Everything YouMind produces is a starting point. You can rewrite it, rearrange it, refine it until it sounds like you. Articles, slides, videos, webpages — what started as scattered sparks becomes something real, ready to share from right here.\n- Made with YouMind.\n\n### Layout\n- A slim top navigation spans the full width, with the YouMind logo left, section links centered, and app/profile controls on the right.\n- Main content is centered in a wide column with generous whitespace above and around the heading.\n- The feature grid uses three large rounded image cards in one row, each paired with a paragraph directly below it.\n- The next section begins below the fold, visible only as the \"Made with YouMind\" heading at the lower left, creating a clean transition from feature explanation to proof/examples.\n\n### Components\n- Header navigation with active \"Overview\" link and rounded \"Open YouMind\" button.\n- Oversized serif section headline.\n- Three rounded illustration cards with white headline text embedded inside the image.\n- Three explanatory paragraph blocks aligned to the card columns.\n- Partial next-section heading acting as a scroll cue.\n\n### Color Palette\n- The page background is pale warm gray, while most body text uses charcoal and black.\n- The three cards use a shared deep-blue evening palette, creating a coherent visual system.\n- Accent colors appear as warm cream glowing lines, small white stars, muted green grass, peach flower dots, and a rainbow beam in the center card.\n- Header controls stay neutral in black, gray, and white, keeping attention on the illustrated feature cards.\n\n### Visual Memory Cues\n- The first card shows a glowing butterfly net catching pale light trails and floating photo fragments, directly visualizing captured inspiration.\n- The second card shows a luminous triangular prism above tree silhouettes, with a rainbow beam rising through it, suggesting thought expansion and connection.\n- The third card shows a glowing outlined hand reaching across a grassy hill with tiny flowers, turning the abstract idea of creation into a tactile gesture.\n\n### Visual Notes\n- Strong reference for an icon-free feature grid where each benefit is carried by a single atmospheric illustration rather than UI screenshots.\n- The layout is useful when feature points are abstract and emotional: the image titles carry the concept first, then the body copy explains the workflow.\n- The three-card rhythm is clean and premium because all cards share the same proportion, blue palette, serif typography, and soft image treatment.\n\n### Metadata\n- analyzedAt: 2026-06-16T10:09:07+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n- 这是 YouMind 的功能说明 section，用三张插画卡解释产品的创作循环：捕捉灵感、推进思考、把输出塑造成可分享的成果。\n- 截图是单屏桌面 section，包含持续显示的顶部导航、大号编辑感标题、三张等宽功能卡，以及底部露出的下一段 \"Made with YouMind\"。\n\n### 可见文字\n- YouMind; Overview; Use cases; Skills; Prompts; Pricing; Blog; Updates; Open YouMind.\n- Every idea deserves to take shape. YouMind makes it happen.\n- Capture what sparks you.\n- You stumble on things that matter — articles, videos, fragments of thought that feel like they're leading somewhere. YouMind holds them together, ready for the moment you know what to do with them.\n- Drive the thinking further.\n- YouMind sees what you've collected and where the connections are forming. It asks the question you haven't asked yet, fills in the gap you skipped, and keeps the thread alive — so the idea grows instead of stalling.\n- Shape it into something real.\n- Everything YouMind produces is a starting point. You can rewrite it, rearrange it, refine it until it sounds like you. Articles, slides, videos, webpages — what started as scattered sparks becomes something real, ready to share from right here.\n- Made with YouMind.\n\n### 布局结构\n- 顶部是一条细导航，左侧是 YouMind 标志，中间是页面链接，右侧是应用/头像控制和打开产品按钮。\n- 主内容居中放在宽列里，标题上方和周围留白很大。\n- 功能区采用三列大圆角图片卡，每张卡下方直接对应一段说明文字。\n- 下一段内容从屏幕底部露出，只看到左下的 \"Made with YouMind\" 标题，形成自然的向下滚动提示。\n\n### 组件拆分\n- 顶部导航包含 active 状态的 \"Overview\" 链接和圆角 \"Open YouMind\" 按钮。\n- 大号衬线 section 标题。\n- 三张圆角插画卡，卡内嵌入白色标题文字。\n- 三段与卡片列对齐的解释性正文。\n- 底部露出的下一段标题，起到滚动提示作用。\n\n### 配色信息\n- 页面背景是偏暖的浅灰色，正文主要使用炭灰和黑色。\n- 三张卡片共用深蓝夜景色系，形成统一的视觉系统。\n- 辅助色包括暖奶油色发光线、小白星、灰绿色草地、桃色花点和中间卡片里的彩虹光束。\n- 导航控件保持黑、灰、白的中性色，让注意力集中在插画功能卡上。\n\n### 视觉记忆点\n- 第一张卡是一只发光捕蝶网，捕捉浅色光轨和漂浮照片碎片，很直接地把“捕捉灵感”视觉化。\n- 第二张卡是树影上方的发光三角棱镜，一道彩虹光束穿过棱镜向上延伸，暗示思考扩展和连接形成。\n- 第三张卡是一只发光轮廓的手伸向长满小花的草坡，把抽象的“创作成形”变成可触摸的动作。\n\n### 视觉备注\n- 适合作为没有 icon、没有 UI 截图的功能 grid 参考：每个卖点都由一张氛围插画承载。\n- 当功能点很抽象、偏情绪化时，这种布局很有效：图片标题先传达概念，正文再解释工作流。\n- 三卡节奏显得高级，是因为卡片比例、蓝色调、衬线标题和柔和图像处理都保持一致。\n\n### 元数据\n- analyzedAt: 2026-06-16T10:09:07+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1781520769158,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          235,
+          235,
+          235
+        ],
+        "ratio": 74,
+        "$$hashKey": "object:3768"
+      },
+      {
+        "color": [
+          73,
+          105,
+          132
+        ],
+        "ratio": 14,
+        "$$hashKey": "object:3774"
+      },
+      {
+        "color": [
+          155,
+          158,
+          160
+        ],
+        "ratio": 4.37,
+        "$$hashKey": "object:3773"
+      },
+      {
+        "color": [
+          197,
+          170,
+          152
+        ],
+        "ratio": 2.7,
+        "$$hashKey": "object:3769"
+      },
+      {
+        "color": [
+          79,
+          76,
+          54
+        ],
+        "ratio": 1.61,
+        "$$hashKey": "object:3771"
+      },
+      {
+        "color": [
+          191,
+          193,
+          195
+        ],
+        "ratio": 0.98,
+        "$$hashKey": "object:3772"
+      },
+      {
+        "color": [
+          167,
+          135,
+          106
+        ],
+        "ratio": 0.84,
+        "$$hashKey": "object:3770"
+      },
+      {
+        "color": [
+          181,
+          179,
+          180
+        ],
+        "ratio": 0.5,
+        "$$hashKey": "object:3775"
+      }
+    ],
+    "lastModified": 1781576089085,
+    "rank": 10,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQF3GV46WBK8E.info/YouMind - AI Creation Studio.jpg"
+  },
+  {
+    "id": "MQ20AW5MRNRF0",
+    "name": "Buy a Domain Name - Register, Manage, and Save More  Dynadot",
+    "size": 173127,
+    "btime": 1780729391458,
+    "mtime": 1780729462375,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.dynadot.com/",
+    "annotation": "- 同步于 2026-06-06 15:14 (uibook, section, 108da29d-8ffc-44be-b699-99af9065aa88, sourceItemId=MQ20AW5MRNRF0)",
+    "modificationTime": 1780729391434,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          235,
+          242,
+          250
+        ],
+        "ratio": 70,
+        "$$hashKey": "object:77451"
+      },
+      {
+        "color": [
+          56,
+          115,
+          189
+        ],
+        "ratio": 8,
+        "$$hashKey": "object:77454"
+      },
+      {
+        "color": [
+          140,
+          177,
+          216
+        ],
+        "ratio": 4.84,
+        "$$hashKey": "object:77453"
+      },
+      {
+        "color": [
+          219,
+          143,
+          234
+        ],
+        "ratio": 3.81,
+        "$$hashKey": "object:77457"
+      },
+      {
+        "color": [
+          240,
+          197,
+          69
+        ],
+        "ratio": 3.73,
+        "$$hashKey": "object:77460"
+      },
+      {
+        "color": [
+          185,
+          212,
+          231
+        ],
+        "ratio": 2.93,
+        "$$hashKey": "object:77452"
+      },
+      {
+        "color": [
+          21,
+          25,
+          58
+        ],
+        "ratio": 2.59,
+        "$$hashKey": "object:77456"
+      },
+      {
+        "color": [
+          186,
+          105,
+          213
+        ],
+        "ratio": 1.38,
+        "$$hashKey": "object:77458"
+      },
+      {
+        "color": [
+          210,
+          215,
+          164
+        ],
+        "ratio": 0.94,
+        "$$hashKey": "object:77459"
+      },
+      {
+        "color": [
+          90,
+          193,
+          238
+        ],
+        "ratio": 0.73,
+        "$$hashKey": "object:77455"
+      },
+      {
+        "color": [
+          28,
+          39,
+          104
+        ],
+        "ratio": 0.55
+      }
+    ],
+    "lastModified": 1780730092180,
+    "rank": 11,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQ20AW5MRNRF0.info/Buy a Domain Name - Register, Manage, and Save More  Dynadot.jpg"
+  },
+  {
+    "id": "MQ209TO3YTK1L",
+    "name": "Buy a Domain Name - Register, Manage, and Save More  Dynadot",
+    "size": 150523,
+    "btime": 1780729341585,
+    "mtime": 1780729462699,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.dynadot.com/",
+    "annotation": "- 同步于 2026-06-06 15:15 (uibook, section, 75b8c99b-ada6-4cc9-a5c5-a53501b3e919, sourceItemId=MQ209TO3YTK1L)",
+    "modificationTime": 1780729341555,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          238,
+          244,
+          251
+        ],
+        "ratio": 84
+      },
+      {
+        "color": [
+          221,
+          156,
+          247
+        ],
+        "ratio": 3.63
+      },
+      {
+        "color": [
+          73,
+          172,
+          233
+        ],
+        "ratio": 3.51
+      },
+      {
+        "color": [
+          143,
+          179,
+          206
+        ],
+        "ratio": 2.61
+      },
+      {
+        "color": [
+          186,
+          213,
+          233
+        ],
+        "ratio": 2.17
+      },
+      {
+        "color": [
+          229,
+          192,
+          243
+        ],
+        "ratio": 1.72
+      },
+      {
+        "color": [
+          26,
+          36,
+          76
+        ],
+        "ratio": 1.62
+      }
+    ],
+    "lastModified": 1780730105820,
+    "rank": 12,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MQ209TO3YTK1L.info/Buy a Domain Name - Register, Manage, and Save More  Dynadot.jpg"
+  },
+  {
+    "id": "MPXTOD1PUQAB4",
+    "name": "AI powered MEP Design  Endra AI",
+    "size": 130466,
+    "btime": 1780476397897,
+    "mtime": 1780476560000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.endra.ai/",
+    "annotation": "- 同步于 2026-06-03 22:51 (uibook, section, 404448dd-75e6-4a6e-869a-e5f0b9f15fa7, sourceItemId=MPXTOD1PUQAB4)",
+    "modificationTime": 1780476397837,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1780498289120,
+    "palettes": [
+      {
+        "color": [
+          250,
+          250,
+          250
+        ],
+        "ratio": 54,
+        "$$hashKey": "object:7085"
+      },
+      {
+        "color": [
+          16,
+          16,
+          16
+        ],
+        "ratio": 41,
+        "$$hashKey": "object:7086"
+      },
+      {
+        "color": [
+          151,
+          150,
+          149
+        ],
+        "ratio": 1.4,
+        "$$hashKey": "object:7087"
+      },
+      {
+        "color": [
+          97,
+          96,
+          95
+        ],
+        "ratio": 1.14,
+        "$$hashKey": "object:7088"
+      },
+      {
+        "color": [
+          215,
+          193,
+          82
+        ],
+        "ratio": 0.44,
+        "$$hashKey": "object:7089"
+      }
+    ],
+    "rank": 13,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPXTOD1PUQAB4.info/AI powered MEP Design  Endra AI.jpg"
+  },
+  {
+    "id": "MPWSDBDKSS1UA",
+    "name": "Delphi  Scale Your Insight. Stay Focused on What Matters.",
+    "size": 127425,
+    "btime": 1780413736679,
+    "mtime": 1780413742212,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.delphi.ai/",
+    "annotation": "- 同步于 2026-06-02 23:29 (uibook, section, 9eadf782-6d7f-4b8d-b7af-f958719622ee, sourceItemId=MPWSDBDKSS1UA)",
+    "modificationTime": 1780413736664,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          250,
+          246,
+          234
+        ],
+        "ratio": 93,
+        "$$hashKey": "object:52750"
+      },
+      {
+        "color": [
+          216,
+          205,
+          193
+        ],
+        "ratio": 1.4,
+        "$$hashKey": "object:52754"
+      },
+      {
+        "color": [
+          234,
+          223,
+          210
+        ],
+        "ratio": 1.16,
+        "$$hashKey": "object:52752"
+      },
+      {
+        "color": [
+          224,
+          106,
+          51
+        ],
+        "ratio": 1.05,
+        "$$hashKey": "object:52751"
+      },
+      {
+        "color": [
+          182,
+          171,
+          157
+        ],
+        "ratio": 0.72,
+        "$$hashKey": "object:52757"
+      },
+      {
+        "color": [
+          203,
+          196,
+          184
+        ],
+        "ratio": 0.72,
+        "$$hashKey": "object:52755"
+      },
+      {
+        "color": [
+          193,
+          185,
+          175
+        ],
+        "ratio": 0.7,
+        "$$hashKey": "object:52756"
+      },
+      {
+        "color": [
+          221,
+          212,
+          204
+        ],
+        "ratio": 0.59,
+        "$$hashKey": "object:52753"
+      }
+    ],
+    "lastModified": 1780414173293,
+    "rank": 14,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPWSDBDKSS1UA.info/Delphi  Scale Your Insight. Stay Focused on What Matters..jpg"
+  },
+  {
+    "id": "MPUMQXM65OHT4",
+    "name": "Column  The platform bank built for scale",
+    "size": 79336,
+    "btime": 1780283361975,
+    "mtime": 1780283421000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://column.com/",
+    "annotation": "- 同步于 2026-06-01 11:23 (uibook, section, 72da6641-1819-473e-ba4b-99d21857f0c5, sourceItemId=MPUMQXM65OHT4)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nA Column product-feature overview section that organizes financial infrastructure capabilities into three groups of pill cards. It is a feature taxonomy section, not a screenshot-heavy showcase.\n\n### Visible Text\n- PRODUCTS\n- Building blocks for the future of financial products\n- Lightweight payments & deposit products\n- ACH, Checks, Wire, Realtime, Book Transfers, International Wire, Bank Accounts\n- Flexible card products for your program\n- Credit, Debit, Prepaid\n- Scale lending programs faster and cheaper\n- Loan Origination, Loan Purchase, Debt Financing\n\n### Layout\n- The section has a small uppercase label above a large centered headline.\n- Three product groups are stacked vertically or arranged in broad rows, each with a category heading and multiple pill-like tiles.\n- The visual rhythm is grid-based and information-dense, with no photography or large product screenshots.\n\n### Components\n- Section label, headline, grouped feature headings, icon-led product pills, rounded cards, and subtle row spacing.\n- Each product tile combines a small icon, product name, and light card surface.\n- The component is optimized for scanning many abstract product capabilities quickly.\n\n### Color Palette\n- Background is pale lavender-white, softer than pure white.\n- Cards use white or near-white surfaces with light gray borders.\n- Icons and small accents use muted blue, green, orange, and gray tones without dominating the text.\n\n### Visual Memory Cues\n- The visual memory is the large headline sitting above dense rows of small product pills.\n- Because there are no photos or UI screenshots, the icon-only product tiles become the main pattern reference.\n\n### Visual Notes\n- Strong example of an icon-only grid for abstract, numerous, infrastructure-level features.\n- Useful when features are too many or too conceptual for individual illustrations, but still need visible grouping and hierarchy.\n\n### Metadata\n- itemId: MPUMQXM65OHT4\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Column 的产品功能概览模块，把金融基础设施能力整理成三组 pill 卡片。它是功能分类模块，不是以截图或插画为主的展示区。\n\n### 可见文字\n- PRODUCTS\n- Building blocks for the future of financial products\n- Lightweight payments & deposit products\n- ACH、Checks、Wire、Realtime、Book Transfers、International Wire、Bank Accounts\n- Flexible card products for your program\n- Credit、Debit、Prepaid\n- Scale lending programs faster and cheaper\n- Loan Origination、Loan Purchase、Debt Financing\n\n### 布局结构\n- 模块顶部是小号大写标签，下面是居中的大标题。\n- 三组产品能力按纵向或宽行排列，每组有分类标题和多个 pill 风格 tile。\n- 整体是网格化、高信息密度节奏，没有摄影或大型产品截图。\n\n### 组件拆分\n- 包含 section label、headline、分组功能标题、带图标产品 pill、圆角卡片和细微行间距。\n- 每个产品 tile 由小图标、产品名和浅色卡片底组成。\n- 这个组件适合快速扫描大量抽象产品能力。\n\n### 配色信息\n- 背景是很浅的淡紫白，比纯白更柔和。\n- 卡片使用白色或近白色底面，搭配浅灰描边。\n- 图标和小点缀使用低饱和蓝、绿、橙、灰色，不抢正文。\n\n### 视觉记忆点\n- 记忆点是大标题下方密集排列的小型产品 pill。\n- 由于没有照片或 UI 截图，icon-only 产品 tile 本身就是主要 pattern。\n\n### 视觉备注\n- 这是抽象且数量较多的基础设施功能使用 icon-only grid 的强参考。\n- 当功能太多、太抽象，不适合每项都配插画时，这种分组和层级很有效。\n\n### 元数据\n- itemId: MPUMQXM65OHT4\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1780283361966,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          243,
+          243,
+          245
+        ],
+        "ratio": 96,
+        "$$hashKey": "object:97533"
+      },
+      {
+        "color": [
+          82,
+          80,
+          105
+        ],
+        "ratio": 1.45,
+        "$$hashKey": "object:97537"
+      },
+      {
+        "color": [
+          158,
+          158,
+          174
+        ],
+        "ratio": 0.97,
+        "$$hashKey": "object:97536"
+      },
+      {
+        "color": [
+          195,
+          196,
+          209
+        ],
+        "ratio": 0.36,
+        "$$hashKey": "object:97535"
+      },
+      {
+        "color": [
+          216,
+          218,
+          227
+        ],
+        "ratio": 0.33,
+        "$$hashKey": "object:97534"
+      }
+    ],
+    "lastModified": 1780404422965,
+    "rank": 15,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPUMQXM65OHT4.info/Column  The platform bank built for scale.jpg"
+  },
+  {
+    "id": "MPUMQJI9EIDW2",
+    "name": "Column  The platform bank built for scale",
+    "size": 188002,
+    "btime": 1780283343703,
+    "mtime": 1780283422000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://column.com/",
+    "annotation": "- 同步于 2026-06-01 11:24 (uibook, section, 70918771-4d21-49db-9405-01e0af0dc5e1, sourceItemId=MPUMQJI9EIDW2)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nA Column audience/use-case section that presents `Column for` segments with a selected technology-company tab and abstract dotted artwork. It is a segment selector paired with explanatory copy.\n\n### Visible Text\n- COLUMN FOR\n- Technology companies\n- US Banks, International Banks, Real Estate\n- Build financial products that scale\n- Launch fintech apps, real-time payments, programmable bank accounts\n- Get started\n\n### Layout\n- The top nav remains visible above a two-column feature composition.\n- Left side contains the section label, large selectable audience pills, and a paragraph describing the selected segment.\n- Right side is dominated by an abstract dotted green/teal graphic inside a framed rectangular area.\n\n### Components\n- Navigation bar, audience label, selected pill tab, faded unselected audience options, descriptive copy block, CTA, and abstract decorative graphic.\n- The selected `Technology companies` pill is much more prominent than the other segment labels.\n- The artwork uses dotted corners and a patterned center rather than product screenshots.\n\n### Color Palette\n- White background with black headline text and pale gray secondary segment labels.\n- Selected pill uses dark text and a light outlined or filled capsule treatment.\n- Right artwork uses green and teal dots with cool blue-green accents.\n\n### Visual Memory Cues\n- The green dotted abstract square on the right is the main non-text anchor.\n- The audience selector is memorable because only `Technology companies` is fully active while other segments fade into the background.\n\n### Visual Notes\n- Useful reference for segmentation sections where a product serves multiple customer types but one is currently being explained.\n- The layout avoids using separate illustration per segment; the abstract artwork keeps the focus on text and taxonomy.\n\n### Metadata\n- itemId: MPUMQJI9EIDW2\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Column 的受众/场景模块，用 `Column for` 展示不同客户类型，当前选中 Technology companies，并搭配右侧抽象点阵图。它是一个受众选择器加解释文案的结构。\n\n### 可见文字\n- COLUMN FOR\n- Technology companies\n- US Banks、International Banks、Real Estate\n- Build financial products that scale\n- Launch fintech apps、real-time payments、programmable bank accounts\n- Get started\n\n### 布局结构\n- 顶部导航仍可见，下方是左右两栏 feature 构图。\n- 左侧包含模块标签、大号可选受众 pill，以及解释当前受众的段落。\n- 右侧主要是一个带边角点阵框的绿色/青色抽象图形。\n\n### 组件拆分\n- 包含导航栏、受众标签、选中 pill、淡化的未选受众选项、说明文案、CTA 和抽象装饰图。\n- 选中的 `Technology companies` pill 明显比其他受众标签更突出。\n- 右侧视觉使用点阵边角和抽象中心图案，而不是产品截图。\n\n### 配色信息\n- 背景为白色，标题文字黑色，次级受众标签使用浅灰。\n- 选中 pill 使用深色文字和浅色胶囊边框/底色。\n- 右侧图形以绿色、青色点阵和冷色蓝绿点缀为主。\n\n### 视觉记忆点\n- 右侧绿色点阵抽象方块是主要非文字锚点。\n- 受众选择器也很有记忆点，因为只有 `Technology companies` 被完整激活，其他选项都退到背景里。\n\n### 视觉备注\n- 适合作为多客群产品的 segmentation section 参考：多个客户类型存在，但当前只解释一个。\n- 它没有为每个 segment 做单独插画，抽象图保持了文字和分类结构的主导地位。\n\n### 元数据\n- itemId: MPUMQJI9EIDW2\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1780283343681,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          241,
+          242,
+          245
+        ],
+        "ratio": 92,
+        "$$hashKey": "object:97544"
+      },
+      {
+        "color": [
+          150,
+          170,
+          155
+        ],
+        "ratio": 3.11,
+        "$$hashKey": "object:97548"
+      },
+      {
+        "color": [
+          22,
+          41,
+          42
+        ],
+        "ratio": 1.83,
+        "$$hashKey": "object:97546"
+      },
+      {
+        "color": [
+          197,
+          202,
+          199
+        ],
+        "ratio": 1.49,
+        "$$hashKey": "object:97547"
+      },
+      {
+        "color": [
+          184,
+          217,
+          168
+        ],
+        "ratio": 0.71,
+        "$$hashKey": "object:97549"
+      },
+      {
+        "color": [
+          180,
+          179,
+          183
+        ],
+        "ratio": 0.26,
+        "$$hashKey": "object:97545"
+      }
+    ],
+    "lastModified": 1780404423057,
+    "rank": 16,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPUMQJI9EIDW2.info/Column  The platform bank built for scale.jpg"
+  },
+  {
+    "id": "MPUMQ2ADAL8BD",
+    "name": "Column  The platform bank built for scale",
+    "size": 134487,
+    "btime": 1780283321390,
+    "mtime": 1780283422000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://column.com/",
+    "annotation": "- 同步于 2026-06-01 11:24 (uibook, section, a4b92bc8-ba5d-422f-8946-c5f0e5a4ca70, sourceItemId=MPUMQ2ADAL8BD)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nA dark Column infrastructure feature section showing programmable USD building blocks through a layered system diagram, API code, and floating transaction/account cards. It is the most technical and visually dense feature panel in this group.\n\n### Visible Text\n- INFRASTRUCTURE\n- Flexible building blocks built on USD\n- fast, programmable infrastructure for the dollar\n- Company, Column, Federal Reserve\n- Payments products\n- curl https://api.column.com/transfers/ach\n- $3,923.70\n- ACH, Outgoing, Completed\n- Routing Number, Account Number\n\n### Layout\n- The section uses a dark full-width canvas with a top navigation still visible above it.\n- Left side contains label, headline, and explanatory copy, while the right side contains a layered Company-Column-Federal Reserve diagram.\n- The lower portion pairs a payments-products copy block with a large code panel and floating banking UI cards.\n\n### Components\n- Dark hero section, infrastructure label, large headline, layered stack diagram, code snippet block, transaction amount card, ACH status card, routing/account information card, and section copy.\n- The Company/Column/Federal Reserve stack turns backend relationships into a visible architecture object.\n- Floating cards create a mini-dashboard feeling without showing a full app screen.\n\n### Color Palette\n- Primary background is deep navy and teal-black.\n- Text uses white and pale blue-gray for contrast.\n- Cards use dark translucent surfaces, with teal, green, and light blue accents in labels and status indicators.\n\n### Visual Memory Cues\n- The 3D layered stack labeled Company, Column, and Federal Reserve is the dominant visual anchor.\n- The floating `$3,923.70` card and ACH Completed status chip make the infrastructure feel tied to real money movement.\n\n### Visual Notes\n- Strong reference for explaining invisible infrastructure through abstract architecture plus realistic UI fragments.\n- The dark treatment gives technical seriousness and separates this infrastructure section from the lighter product taxonomy sections.\n\n### Metadata\n- itemId: MPUMQ2ADAL8BD\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n\n## AI 页面分析\n\n### 页面概述\n这是 Column 的深色 infrastructure feature 模块，用分层系统图、API 代码和浮动交易/账户卡片展示可编程 USD building blocks。它是这一组中最技术化、视觉密度最高的功能面板。\n\n### 可见文字\n- INFRASTRUCTURE\n- Flexible building blocks built on USD\n- fast, programmable infrastructure for the dollar\n- Company、Column、Federal Reserve\n- Payments products\n- curl https://api.column.com/transfers/ach\n- $3,923.70\n- ACH、Outgoing、Completed\n- Routing Number、Account Number\n\n### 布局结构\n- 模块使用深色全宽画布，顶部仍可见导航。\n- 左侧是标签、标题和说明文案，右侧是 Company-Column-Federal Reserve 分层图。\n- 下半部分把 payments products 文案、代码面板和浮动银行 UI 卡片组合在一起。\n\n### 组件拆分\n- 包含深色 hero、infrastructure 标签、大标题、分层堆叠图、代码片段块、交易金额卡、ACH 状态卡、routing/account 信息卡和模块说明文案。\n- Company/Column/Federal Reserve 堆叠把后端关系转成了可见的架构对象。\n- 浮动卡片制造了 mini-dashboard 的感觉，但没有展示完整 app 界面。\n\n### 配色信息\n- 主背景是深海军蓝和偏青的黑色。\n- 文字使用白色和浅蓝灰形成对比。\n- 卡片是深色半透明表面，标签和状态点缀使用青色、绿色和浅蓝色。\n\n### 视觉记忆点\n- 标有 Company、Column、Federal Reserve 的 3D 分层堆叠是主视觉锚点。\n- 浮动的 `$3,923.70` 金额卡和 ACH Completed 状态让基础设施与真实资金流动联系起来。\n\n### 视觉备注\n- 适合作为解释不可见基础设施的参考：用抽象架构加真实 UI 片段共同表达。\n- 深色处理带来技术严肃感，也把这个 infrastructure 模块与浅色产品分类模块区分开。\n\n### 元数据\n- itemId: MPUMQ2ADAL8BD\n- currentFolder: Section_Featured 产品功能亮点\n- folderAction: keep_locked\n- analyzedAt: 2026-06-02T20:47:01+08:00\n- source: Eagle local image\n- model: Codex conversation vision\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1780283321365,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          6,
+          28,
+          34
+        ],
+        "ratio": 84,
+        "$$hashKey": "object:100345"
+      },
+      {
+        "color": [
+          216,
+          221,
+          222
+        ],
+        "ratio": 10,
+        "$$hashKey": "object:100350"
+      },
+      {
+        "color": [
+          48,
+          69,
+          76
+        ],
+        "ratio": 2.7,
+        "$$hashKey": "object:100346"
+      },
+      {
+        "color": [
+          87,
+          107,
+          113
+        ],
+        "ratio": 1.42,
+        "$$hashKey": "object:100348"
+      },
+      {
+        "color": [
+          132,
+          140,
+          145
+        ],
+        "ratio": 0.52,
+        "$$hashKey": "object:100349"
+      },
+      {
+        "color": [
+          59,
+          82,
+          92
+        ],
+        "ratio": 0.29,
+        "$$hashKey": "object:100347"
+      }
+    ],
+    "lastModified": 1780404423148,
+    "rank": 17,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPUMQ2ADAL8BD.info/Column  The platform bank built for scale.jpg"
+  },
+  {
+    "id": "MPUM7QRHZHF3B",
+    "name": "@ryry__mimi this is a direct copy from @column btw",
+    "size": 4423757,
+    "btime": 1780282466829,
+    "mtime": 1780282466836,
+    "ext": "mp4",
+    "tags": [],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://x.com/ryry__mimi/status/2061095521352294870",
+    "annotation": "",
+    "modificationTime": 1780282466140,
+    "height": 1708,
+    "width": 3096,
+    "resolutionWidth": 3096,
+    "resolutionHeight": 1708,
+    "duration": 10.25,
+    "lastModified": 1780282475185,
+    "palettes": [
+      {
+        "color": [
+          242,
+          243,
+          242
+        ],
+        "ratio": 88
+      },
+      {
+        "color": [
+          158,
+          186,
+          162
+        ],
+        "ratio": 3.34
+      },
+      {
+        "color": [
+          218,
+          227,
+          220
+        ],
+        "ratio": 2.74
+      },
+      {
+        "color": [
+          195,
+          204,
+          198
+        ],
+        "ratio": 2.4
+      },
+      {
+        "color": [
+          74,
+          106,
+          98
+        ],
+        "ratio": 0.71
+      },
+      {
+        "color": [
+          180,
+          179,
+          183
+        ],
+        "ratio": 0.68
+      },
+      {
+        "color": [
+          186,
+          224,
+          171
+        ],
+        "ratio": 0.57
+      }
+    ],
+    "rank": 18,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPUM7QRHZHF3B.info/@ryry__mimi this is a direct copy from @column btw.mp4"
+  },
+  {
+    "id": "MPRTI1E3Q3QWI",
+    "name": "Webflow The agentic web platform for modern businesses",
+    "size": 144696,
+    "btime": 1780113305000,
+    "mtime": 1780113340000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://webflow.com/",
+    "annotation": "- 同步于 2026-05-30 12:01 (uibook, section, 7ae4a47b-4edf-4a48-9420-c8455a960d31, sourceItemId=MPRTI1E3Q3QWI)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Visual Analysis\n\n### Overview\nA Webflow homepage feature section for marketing teams, pairing a role-specific headline, benefit list, and Webflow builder screenshot.\n\n### Visible Text\nVisible text includes \"Everything marketing teams love about Webflow\", \"Agility\", \"Create and launch new sites and pages on your timeline — no waiting for dev resources\", benefit rows \"Build and launch web experiences without filing a ticket\", \"Manage content in a visual, composable CMS\", \"Empower every marketer with templates and page building\", \"Generate production-ready apps and reusable components\", and \"Cut production time with help from Webflow’s AI assistant\".\n\n### Layout\nThe layout is split into a large text area on the left and a tall visual panel on the right. The headline includes an inline dropdown-like pill for \"marketing teams\", the benefits are arranged as separated rows with arrows, and the right side shows a cropped Webflow editor add-panel screenshot over a purple motion background.\n\n### Components\nTop navigation, oversized headline, inline dropdown pill, category label, descriptive paragraph, benefit list rows, arrow icons, large product screenshot panel, editor sidebar, element search, and Made in Webflow badge.\n\n### Color Palette\nThe section is white with black typography and light gray rules. The screenshot introduces dark editor UI, purple/pink background blur, white panel lines, and a small green \"New\" label.\n\n### Visual Memory Cues\nThe inline \"marketing teams\" selector and the dark Webflow editor Add panel are the main visual cues. The editor panel shows elements such as Section, Container, Quick Stack, V Flex, H Flex, and Page Slot, making the feature concrete.\n\n### Visual Notes\nUseful for feature-section references: it combines audience segmentation, benefit rows, and a product screenshot without using a generic icon grid.\n\n### Metadata\nItem ID: MPRTI1E3Q3QWI\nAnalyzed at: 2026-06-01T10:37:04+08:00\nCurrent folder: Section_Featured 产品功能亮点\nFolder action: keep_locked\nEvidence source: visual inspection of the screenshot in this conversation.\n\n## AI 视觉分析\n\n### 概览\n这是 Webflow 首页面向 marketing teams 的功能亮点模块，把角色化标题、利益点列表和 Webflow builder 截图组合在一起。\n\n### 可见文字\n可见文字包括「Everything marketing teams love about Webflow」「Agility」「Create and launch new sites and pages on your timeline — no waiting for dev resources」，利益点行包括「Build and launch web experiences without filing a ticket」「Manage content in a visual, composable CMS」「Empower every marketer with templates and page building」「Generate production-ready apps and reusable components」「Cut production time with help from Webflow’s AI assistant」。\n\n### 布局\n布局左侧是大文本区，右侧是高大的视觉面板。标题中「marketing teams」做成下拉 pill，利益点以分隔行和箭头排列，右侧展示覆盖在紫色动态背景上的 Webflow 编辑器 Add 面板截图。\n\n### 组件\n包含顶部导航、超大标题、内联下拉 pill、分类标签、描述文案、利益点列表、箭头图标、大型产品截图面板、编辑器侧栏、元素搜索和 Made in Webflow badge。\n\n### 色彩\n模块为白底黑字，分割线为浅灰。截图引入深色编辑器 UI、紫粉色背景模糊、白色面板线条和小的绿色「New」标签。\n\n### 视觉记忆点\n内联「marketing teams」选择器和深色 Webflow editor Add 面板是主要视觉线索。编辑器面板中能看到 Section、Container、Quick Stack、V Flex、H Flex、Page Slot 等元素，让功能更具体。\n\n### 视觉笔记\n适合作为 feature section 参考：它把受众分层、利益点行和产品截图组合起来，避免只使用普通 icon grid。\n\n### 元数据\n条目 ID：MPRTI1E3Q3QWI\n分析时间：2026-06-01T10:37:04+08:00\n当前文件夹：Section_Featured 产品功能亮点\n文件夹动作：保持现有归类不变\n证据来源：在当前对话中直接查看截图。\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1780113305739,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          251,
+          251,
+          251
+        ],
+        "ratio": 79
+      },
+      {
+        "color": [
+          55,
+          50,
+          55
+        ],
+        "ratio": 10
+      },
+      {
+        "color": [
+          158,
+          154,
+          166
+        ],
+        "ratio": 2.82
+      },
+      {
+        "color": [
+          170,
+          93,
+          170
+        ],
+        "ratio": 2.59
+      },
+      {
+        "color": [
+          202,
+          206,
+          211
+        ],
+        "ratio": 2.1
+      },
+      {
+        "color": [
+          198,
+          147,
+          194
+        ],
+        "ratio": 1.03
+      },
+      {
+        "color": [
+          106,
+          106,
+          110
+        ],
+        "ratio": 0.59
+      },
+      {
+        "color": [
+          38,
+          112,
+          234
+        ],
+        "ratio": 0.37
+      },
+      {
+        "color": [
+          232,
+          198,
+          175
+        ],
+        "ratio": 0.32
+      }
+    ],
+    "lastModified": 1780281431189,
+    "rank": 19,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPRTI1E3Q3QWI.info/Webflow The agentic web platform for modern businesses.jpg"
+  },
+  {
+    "id": "MPRTHS4N4NAWS",
+    "name": "Webflow The agentic web platform for modern businesses",
+    "size": 161900,
+    "btime": 1780113293000,
+    "mtime": 1780113340000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://webflow.com/",
+    "annotation": "- 同步于 2026-05-30 12:01 (uibook, section, 59f2ec18-57a2-4bf5-8452-c99ff922a100, sourceItemId=MPRTHS4N4NAWS)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Visual Analysis\n\n### Overview\nA Webflow homepage feature section showing build, manage, and optimize capabilities through a large builder screenshot and three explanatory columns.\n\n### Visible Text\nVisible text includes navigation labels, a website preview headline \"Unify your business knowledge with AI\", buttons \"Get started\" and \"Learn more\", builder controls such as \"Theme\", \"Colors\", \"Light\", \"Dark\", labels \"Truth\", \"Spark\", \"Prime\", \"Sense\", \"Version\", and bottom feature headings \"Build\", \"Manage\", \"Optimize\" with copy about creating a site/design system, generating copy and CMS items, and turning traffic into revenue.\n\n### Layout\nThe section is dominated by a wide screenshot panel across the upper half, showing a theme color editor over a Webflow canvas and AI-generated website preview. Below it, three columns explain the platform pillars: Build, Manage, and Optimize.\n\n### Components\nTop navigation, large product screenshot, theme/color settings panel, color swatches, canvas toolbar, website preview frame, plus insertion control, bottom action buttons, three feature columns, and Made in Webflow badge.\n\n### Color Palette\nThe page background is white. The visual panel uses lavender/blue gradients, dark editor overlays, black canvas chrome, blue highlights, and a pale website preview with soft purple imagery.\n\n### Visual Memory Cues\nThe floating Theme > Colors panel with color swatches is the strongest cue. It makes the builder workflow tangible by showing design-token-like controls directly over the canvas.\n\n### Visual Notes\nUseful for product-feature references where the goal is to explain platform breadth through one rich product screenshot plus concise pillar text.\n\n### Metadata\nItem ID: MPRTHS4N4NAWS\nAnalyzed at: 2026-06-01T10:37:04+08:00\nCurrent folder: Section_Featured 产品功能亮点\nFolder action: keep_locked\nEvidence source: visual inspection of the screenshot in this conversation.\n\n## AI 视觉分析\n\n### 概览\n这是 Webflow 首页的功能亮点模块，通过大型 builder 截图和三列说明展示 Build、Manage、Optimize 能力。\n\n### 可见文字\n可见文字包括导航标签，网站预览标题「Unify your business knowledge with AI」，按钮「Get started」「Learn more」，builder 控件「Theme」「Colors」「Light」「Dark」，标签「Truth」「Spark」「Prime」「Sense」「Version」，以及底部功能标题「Build」「Manage」「Optimize」和关于创建站点/设计系统、生成 copy 和 CMS items、将流量转化为收入的说明。\n\n### 布局\n模块上半部分由一张宽幅产品截图主导，展示 Webflow 画布上的主题色编辑器和 AI 生成的网站预览。下方用三列解释平台能力：Build、Manage、Optimize。\n\n### 组件\n包含顶部导航、大型产品截图、主题/颜色设置面板、色彩 swatch、画布工具栏、网站预览框、插入控件、底部操作按钮、三列功能说明和 Made in Webflow badge。\n\n### 色彩\n页面背景是白色。视觉面板使用薰衣草蓝渐变、深色编辑器浮层、黑色画布 chrome、蓝色高亮和浅色网站预览。\n\n### 视觉记忆点\n漂浮的「Theme > Colors」面板和色彩 swatch 是最强视觉线索。它把类似 design token 的设置直接放在画布上，让 builder 工作流更具体。\n\n### 视觉笔记\n适合作为产品功能模块参考：用一张丰富产品截图加简洁能力分栏，解释平台宽度。\n\n### 元数据\n条目 ID：MPRTHS4N4NAWS\n分析时间：2026-06-01T10:37:04+08:00\n当前文件夹：Section_Featured 产品功能亮点\n文件夹动作：保持现有归类不变\n证据来源：在当前对话中直接查看截图。\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1780113293735,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          249,
+          250,
+          250
+        ],
+        "ratio": 56
+      },
+      {
+        "color": [
+          149,
+          157,
+          216
+        ],
+        "ratio": 15
+      },
+      {
+        "color": [
+          21,
+          22,
+          24
+        ],
+        "ratio": 13
+      },
+      {
+        "color": [
+          93,
+          133,
+          227
+        ],
+        "ratio": 7
+      },
+      {
+        "color": [
+          194,
+          172,
+          219
+        ],
+        "ratio": 3.14
+      },
+      {
+        "color": [
+          200,
+          198,
+          218
+        ],
+        "ratio": 2.27
+      },
+      {
+        "color": [
+          96,
+          98,
+          106
+        ],
+        "ratio": 0.98
+      }
+    ],
+    "lastModified": 1780281431457,
+    "rank": 20,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPRTHS4N4NAWS.info/Webflow The agentic web platform for modern businesses.jpg"
+  },
+  {
+    "id": "MPQMUUQI04PVY",
+    "name": "Bevel - The Connected Health Coach",
+    "size": 155246,
+    "btime": 1780041680190,
+    "mtime": 1780041699000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.bevel.health/",
+    "annotation": "- 同步于 2026-05-29 16:19 (uibook, section, 30172844-b9ba-4c80-932b-02cfb42f6647, sourceItemId=MPQMUUQI04PVY)",
+    "modificationTime": 1780041680154,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1780042759216,
+    "palettes": [
+      {
+        "color": [
+          247,
+          248,
+          249
+        ],
+        "ratio": 85
+      },
+      {
+        "color": [
+          34,
+          40,
+          57
+        ],
+        "ratio": 6
+      },
+      {
+        "color": [
+          201,
+          213,
+          222
+        ],
+        "ratio": 4.12
+      },
+      {
+        "color": [
+          160,
+          176,
+          188
+        ],
+        "ratio": 2.52
+      },
+      {
+        "color": [
+          96,
+          112,
+          130
+        ],
+        "ratio": 0.51
+      },
+      {
+        "color": [
+          214,
+          200,
+          161
+        ],
+        "ratio": 0.37
+      }
+    ],
+    "rank": 21,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPQMUUQI04PVY.info/Bevel - The Connected Health Coach.jpg"
+  },
+  {
+    "id": "MPQMU840ENRMJ",
+    "name": "Bevel - The Connected Health Coach",
+    "size": 86969,
+    "btime": 1780041650870,
+    "mtime": 1780041700000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.bevel.health/",
+    "annotation": "- 同步于 2026-05-29 16:19 (uibook, section, 4bc6f422-2a6c-48ec-ad2d-73b4b6e6ec4a, sourceItemId=MPQMU840ENRMJ)",
+    "modificationTime": 1780041650832,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1780042784022,
+    "palettes": [
+      {
+        "color": [
+          249,
+          250,
+          250
+        ],
+        "ratio": 83
+      },
+      {
+        "color": [
+          30,
+          30,
+          37
+        ],
+        "ratio": 13
+      },
+      {
+        "color": [
+          204,
+          216,
+          219
+        ],
+        "ratio": 1.79
+      },
+      {
+        "color": [
+          161,
+          166,
+          169
+        ],
+        "ratio": 0.9
+      },
+      {
+        "color": [
+          102,
+          106,
+          108
+        ],
+        "ratio": 0.29
+      }
+    ],
+    "rank": 22,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPQMU840ENRMJ.info/Bevel - The Connected Health Coach.jpg"
+  },
+  {
+    "id": "MPOVR7355V0O2",
+    "name": "Better customer experiences  Sierra",
+    "size": 106253,
+    "btime": 1779935693740,
+    "mtime": 1779935845000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://sierra.ai/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nSierra homepage feature section for the Agent Data Platform. The section explains how conversations become lasting relationships through four product capability cards: agent memory, customer data, recommendations, and proactive engagement.\n### Visible Text\n- Turn conversations into lasting relationships\n- Agent Data Platform\n- Jess Rivers, jess@acme.co, Member since 2012\n- Reason for calling: Activation, Current sentiment: Positive\n- Strategy: Churn prevention\n- Audience, High churn risk, 100k\n- New iPhone 17, Activating for daughter\n- Agent: Hi Jess, would you like to switch to a family plan?\n- Agent memory\n- Customer data\n- Recommendations\n- Proactive engagement\n- Trust and reliability\n### Layout\n- Header navigation remains visible at the top, keeping the section in page context.\n- A centered headline and small pill label introduce the platform layer.\n- Four large, pale UI cards are arranged horizontally beneath the heading.\n- Each card has a caption and short explanation below it, creating a clean feature grid.\n- The next trust section headline begins at the bottom.\n### Components\n- Top navigation and green learn-more button.\n- Centered section title and “Agent Data Platform” pill.\n- Four product illustration cards.\n- Customer profile/memory card.\n- Data integration icon network card.\n- Strategy/recommendation configuration card.\n- Proactive engagement chat card.\n### Color Palette\n- White background and black text maintain the Sierra product-page language.\n- Pale blue and near-white cards give the UI mockups a soft, technical feel.\n- Blue icons and small colored integration marks add data-platform cues.\n- Gray explanatory text keeps captions subordinate to the visual cards.\n- Sierra green appears only in the top CTA and logo.\n### Visual Memory Cues\n- The four cards act like a horizontal product taxonomy, moving from customer memory to data, strategy, and proactive message.\n- The first card shows “Jess Rivers” and customer details, while the last card contains a proposed family-plan message from the agent.\n- The center-left data card uses integration icons orbiting a database symbol, making the platform layer visually explicit.\n### Visual Notes\n- Useful for studying a feature grid that explains an abstract data layer through small product-state vignettes instead of generic icons.\n### Metadata\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\n这是 Sierra 首页中 Agent Data Platform 的功能 Section。模块说明如何把对话转化为长期关系，并通过四张产品能力卡展示 agent memory、customer data、recommendations、proactive engagement。\n### 可见文字\n- Turn conversations into lasting relationships\n- Agent Data Platform\n- Jess Rivers, jess@acme.co, Member since 2012\n- Reason for calling: Activation, Current sentiment: Positive\n- Strategy: Churn prevention\n- Audience, High churn risk, 100k\n- New iPhone 17, Activating for daughter\n- Agent: Hi Jess, would you like to switch to a family plan?\n- Agent memory\n- Customer data\n- Recommendations\n- Proactive engagement\n- Trust and reliability\n### 布局结构\n- 顶部导航仍然可见，让这一屏保持在页面上下文中。\n- 居中标题和小胶囊标签介绍 platform layer。\n- 标题下方横向排列四张浅色 UI 卡片。\n- 每张卡下方都有标题和短说明，形成干净的功能网格。\n- 底部露出下一段 trust section 的标题。\n### 组件拆分\n- 顶部导航和绿色 Learn more 按钮。\n- 居中 Section 标题和 “Agent Data Platform” 胶囊。\n- 四张产品插图卡。\n- 客户 profile / memory 卡。\n- 数据集成 icon network 卡。\n- Strategy / recommendation 配置卡。\n- Proactive engagement 对话卡。\n### 配色信息\n- 白色背景和黑色文字延续 Sierra 产品页语言。\n- 浅蓝和近白色卡片让 UI mockup 显得柔和、技术化。\n- 蓝色图标和少量彩色集成标识提供 data-platform 线索。\n- 灰色说明文字让卡片标题和视觉保持优先。\n- Sierra 绿色只出现在顶部 CTA 和 logo 中。\n### 视觉记忆点\n- 四张卡像一条横向产品能力分类，从客户记忆、数据、策略到主动消息。\n- 第一张卡显示 “Jess Rivers” 和客户信息，最后一张卡是 agent 推荐家庭套餐的消息。\n- 中左的数据卡用多个集成图标围绕数据库符号，直观表达平台层。\n### 视觉备注\n- 适合参考功能网格如何不用通用图标，而是用小型产品状态片段解释抽象数据层能力。\n### 元数据\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-05-28 13:39 (uibook, section, 0602a547-48f4-465b-af41-03368b472263, sourceItemId=MPOVR7355V0O2)",
+    "modificationTime": 1779935693729,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1779946775324,
+    "palettes": [
+      {
+        "color": [
+          251,
+          251,
+          251
+        ],
+        "ratio": 95
+      },
+      {
+        "color": [
+          207,
+          209,
+          210
+        ],
+        "ratio": 0.88
+      },
+      {
+        "color": [
+          192,
+          192,
+          192
+        ],
+        "ratio": 0.68
+      },
+      {
+        "color": [
+          227,
+          230,
+          230
+        ],
+        "ratio": 0.64
+      },
+      {
+        "color": [
+          220,
+          219,
+          220
+        ],
+        "ratio": 0.56
+      },
+      {
+        "color": [
+          68,
+          118,
+          124
+        ],
+        "ratio": 0.52
+      },
+      {
+        "color": [
+          169,
+          178,
+          181
+        ],
+        "ratio": 0.44
+      }
+    ],
+    "rank": 23,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPOVR7355V0O2.info/Better customer experiences  Sierra.jpg"
+  },
+  {
+    "id": "MPOVR3WZ0LZ2U",
+    "name": "Better customer experiences  Sierra",
+    "size": 96798,
+    "btime": 1779935689629,
+    "mtime": 1779935845000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://sierra.ai/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nSierra homepage Insights feature section titled “Use AI to improve your AI.” It shows four analytics and observability capabilities that help teams review conversations, monitor issues, test experiments, and understand agent behavior.\n### Visible Text\n- Use AI to improve your AI\n- Insights\n- Why are conversations being transferred to human agents?\n- Conversation highlights\n- Package stuck in transit\n- Great sNPS, 32%\n- Agent: Hey Scott, how can I help?\n- Hello Scott, how are you this evening?\n- Agent reasoning\n- Supervisors, Decisions, Responses\n- Explorer, Monitors, Experiments, Observability\n- Turn conversations into lasting relationships\n### Layout\n- The top edge includes the end of the previous Ghostwriter section, then the Insights section centers its headline and pill.\n- Four pale product cards sit in a horizontal row, each paired with a title and explanatory caption beneath.\n- The cards mix text analysis, charts, conversation snippets, and checklist-style reasoning UI.\n- The bottom of the screenshot previews the next Agent Data Platform section.\n### Components\n- Centered feature title and “Insights” pill.\n- Explorer card with conversation-analysis prompt and extracted highlight.\n- Monitors card with bar chart and floating “32%” score card.\n- Experiments card with two agent message variants.\n- Observability card with agent reasoning checklist.\n- Four captions describing each feature.\n### Color Palette\n- White background and black headings keep the analytic section minimal.\n- UI cards use pale blue-gray fills and thin gray outlines.\n- Chart accents are soft blue and green.\n- Status checkmarks in the observability card use small green circles.\n- Text hierarchy uses dark gray headings and lighter gray descriptions.\n### Visual Memory Cues\n- The Monitors card is memorable because a “Great sNPS 32%” mini chart floats over a bar chart.\n- The Observability card contains a checklist of agent reasoning steps with small green check icons.\n- The four-card row reads like a compact analytics suite rather than a marketing illustration.\n### Visual Notes\n- Useful for studying a product analytics section where each capability is represented by a realistic miniature UI state: research prompt, metric chart, experiment variant, and reasoning trace.\n### Metadata\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\n这是 Sierra 首页的 Insights 功能 Section，标题是 “Use AI to improve your AI”。模块展示四种分析与可观测能力，用于复盘对话、监控问题、做实验测试和理解 agent 行为。\n### 可见文字\n- Use AI to improve your AI\n- Insights\n- Why are conversations being transferred to human agents?\n- Conversation highlights\n- Package stuck in transit\n- Great sNPS, 32%\n- Agent: Hey Scott, how can I help?\n- Hello Scott, how are you this evening?\n- Agent reasoning\n- Supervisors, Decisions, Responses\n- Explorer, Monitors, Experiments, Observability\n- Turn conversations into lasting relationships\n### 布局结构\n- 顶部边缘露出上一段 Ghostwriter 的尾部，然后 Insights Section 居中展示标题和胶囊标签。\n- 四张浅色产品卡横向排列，每张下方配标题和说明。\n- 卡片内容混合文本分析、图表、对话片段和 checklist 式 reasoning UI。\n- 截图底部预览下一段 Agent Data Platform Section。\n### 组件拆分\n- 居中功能标题和 “Insights” 胶囊。\n- Explorer 卡，包含对话分析问题和提取出的 highlight。\n- Monitors 卡，包含柱状图和浮动 “32%” 分数卡。\n- Experiments 卡，包含两条 agent 消息版本。\n- Observability 卡，包含 agent reasoning checklist。\n- 四个功能说明 caption。\n### 配色信息\n- 白色背景和黑色标题让分析模块保持极简。\n- UI 卡使用浅蓝灰填充和细灰描边。\n- 图表强调色为柔和蓝色和绿色。\n- Observability 卡中的状态勾选使用小绿色圆点。\n- 文字层级使用深灰标题和浅灰说明。\n### 视觉记忆点\n- Monitors 卡最容易记住，因为 “Great sNPS 32%” 小图表浮在柱状图之上。\n- Observability 卡中有 agent reasoning 步骤清单和小绿色勾选图标。\n- 四张卡整体像紧凑的分析套件，而不是普通营销插图。\n### 视觉备注\n- 适合参考产品分析 Section 如何用真实微型 UI 状态表达能力：研究问题、指标图表、实验变体和 reasoning trace。\n### 元数据\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-05-28 13:39 (uibook, section, 31930319-019f-4f5c-8ff6-7f282d57c1c5, sourceItemId=MPOVR3WZ0LZ2U)",
+    "modificationTime": 1779935689619,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1779946788684,
+    "palettes": [
+      {
+        "color": [
+          251,
+          251,
+          251
+        ],
+        "ratio": 96,
+        "$$hashKey": "object:58982"
+      },
+      {
+        "color": [
+          189,
+          192,
+          196
+        ],
+        "ratio": 0.99,
+        "$$hashKey": "object:58988"
+      },
+      {
+        "color": [
+          217,
+          222,
+          224
+        ],
+        "ratio": 0.75,
+        "$$hashKey": "object:58985"
+      },
+      {
+        "color": [
+          228,
+          229,
+          228
+        ],
+        "ratio": 0.48,
+        "$$hashKey": "object:58983"
+      },
+      {
+        "color": [
+          124,
+          125,
+          124
+        ],
+        "ratio": 0.42,
+        "$$hashKey": "object:58984"
+      },
+      {
+        "color": [
+          204,
+          204,
+          205
+        ],
+        "ratio": 0.4,
+        "$$hashKey": "object:58987"
+      },
+      {
+        "color": [
+          211,
+          212,
+          212
+        ],
+        "ratio": 0.34,
+        "$$hashKey": "object:58986"
+      }
+    ],
+    "rank": 24,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPOVR3WZ0LZ2U.info/Better customer experiences  Sierra.jpg"
+  },
+  {
+    "id": "MPOVR0OY6XHX5",
+    "name": "Better customer experiences  Sierra",
+    "size": 110925,
+    "btime": 1779935685454,
+    "mtime": 1779935846000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://sierra.ai/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nSierra homepage Ghostwriter feature section titled “The agent-building agent.” It explains how a user can build and optimize agents through a builder interface, with one large Ghostwriter progress panel and one recommendations panel.\n### Visible Text\n- The agent-building agent\n- Ghostwriter\n- Create a retail support agent for Vintage Guitars to track orders\n- Using Journey generation, Tool generation, and Integration generation\n- Updating agent · View changes\n- Researching\n- Creating tests\n- Running tests\n- What can I help you with?\n- Recommendations\n- Build empathetic support for cancellations, disputes, and refunds.\n- Add secure subscription management for plans and billing.\n- Implement all three recommendations to strengthen the billing experience.\n- Compare findings, Show all conversations\n- Build, Optimize\n### Layout\n- Header navigation is visible above a centered feature headline and Ghostwriter pill.\n- Two large pale-blue panels sit side by side: builder progress on the left, recommendations on the right.\n- Captions below the panels split the use case into Build and Optimize explanations.\n- The composition is section-level and focused, with ample white margins around the paired product mockups.\n### Components\n- Top navigation and learn-more button.\n- Centered feature title and product pill.\n- Ghostwriter builder panel with prompt box, progress checklist, input field, and merge button.\n- Recommendations panel with stacked suggestion cards.\n- Secondary action buttons for comparing findings and showing conversations.\n- Two explanatory text blocks.\n### Color Palette\n- White background and black headings keep focus on the product UI.\n- Pale blue panels and light gray borders create a soft software-demo surface.\n- Blue check icons and blue send button show progress and action.\n- Recommendation cards use very light gray and pale blue highlight states.\n- Sierra green remains limited to the site navigation button.\n### Visual Memory Cues\n- The left Ghostwriter panel is recognizable by the checklist: updating agent, researching, creating tests, and running tests.\n- The right recommendations panel stacks three AI suggestions and two rounded action buttons underneath.\n- The prompt about “Vintage Guitars” gives the section a concrete builder scenario instead of an abstract automation claim.\n### Visual Notes\n- Useful for studying a feature section that visualizes AI-assisted product building as a transparent process with progress states and reviewable recommendations.\n### Metadata\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\n这是 Sierra 首页的 Ghostwriter 功能 Section，标题为 “The agent-building agent”。它说明用户如何通过 builder 界面构建和优化 agent，画面由左侧 Ghostwriter 进度面板和右侧 recommendations 面板组成。\n### 可见文字\n- The agent-building agent\n- Ghostwriter\n- Create a retail support agent for Vintage Guitars to track orders\n- Using Journey generation, Tool generation, and Integration generation\n- Updating agent · View changes\n- Researching\n- Creating tests\n- Running tests\n- What can I help you with?\n- Recommendations\n- Build empathetic support for cancellations, disputes, and refunds.\n- Add secure subscription management for plans and billing.\n- Implement all three recommendations to strengthen the billing experience.\n- Compare findings, Show all conversations\n- Build, Optimize\n### 布局结构\n- 顶部导航位于居中功能标题和 Ghostwriter 胶囊之上。\n- 两张大型浅蓝面板左右并排：左侧是 builder 进度，右侧是 recommendations。\n- 面板下方的 caption 把场景拆成 Build 和 Optimize 两个说明。\n- 整体是聚焦的 Section 级构图，成对产品 mockup 周围留白充足。\n### 组件拆分\n- 顶部导航和 Learn more 按钮。\n- 居中功能标题和产品胶囊。\n- Ghostwriter builder 面板，包含 prompt box、进度 checklist、输入框和 merge 按钮。\n- Recommendations 面板，包含堆叠建议卡。\n- Compare findings 和 Show all conversations 次级按钮。\n- 两段解释文字。\n### 配色信息\n- 白色背景和黑色标题让视线集中在产品 UI 上。\n- 浅蓝面板和浅灰描边形成柔和的软件演示表面。\n- 蓝色勾选图标和蓝色发送按钮表示进度和操作。\n- Recommendation 卡使用极浅灰和浅蓝高亮状态。\n- Sierra 绿色仅保留在站点导航按钮中。\n### 视觉记忆点\n- 左侧 Ghostwriter 面板因为 checklist 很有识别度：updating agent、researching、creating tests、running tests。\n- 右侧 recommendations 面板堆叠三条 AI 建议，下方有两个圆角操作按钮。\n- “Vintage Guitars” 这个 prompt 让构建场景具体，而不是抽象自动化说法。\n### 视觉备注\n- 适合参考功能 Section 如何把 AI 辅助构建产品表现为透明流程：有进度状态，也有可审查的建议。\n### 元数据\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-05-28 13:40 (uibook, section, 8cf57ad7-08a9-47af-94de-8b30ca515d84, sourceItemId=MPOVR0OY6XHX5)",
+    "modificationTime": 1779935685442,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1779946805573,
+    "palettes": [
+      {
+        "color": [
+          250,
+          251,
+          251
+        ],
+        "ratio": 94,
+        "$$hashKey": "object:58998"
+      },
+      {
+        "color": [
+          206,
+          216,
+          226
+        ],
+        "ratio": 1.7,
+        "$$hashKey": "object:58999"
+      },
+      {
+        "color": [
+          226,
+          238,
+          243
+        ],
+        "ratio": 1.3,
+        "$$hashKey": "object:59000"
+      },
+      {
+        "color": [
+          193,
+          193,
+          195
+        ],
+        "ratio": 0.48,
+        "$$hashKey": "object:59002"
+      },
+      {
+        "color": [
+          220,
+          220,
+          222
+        ],
+        "ratio": 0.44,
+        "$$hashKey": "object:59001"
+      },
+      {
+        "color": [
+          175,
+          183,
+          192
+        ],
+        "ratio": 0.4,
+        "$$hashKey": "object:59003"
+      }
+    ],
+    "rank": 25,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPOVR0OY6XHX5.info/Better customer experiences  Sierra.jpg"
+  },
+  {
+    "id": "MPOVQGUXKKNFX",
+    "name": "Better customer experiences  Sierra",
+    "size": 118112,
+    "btime": 1779935659763,
+    "mtime": 1779935846000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://sierra.ai/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nSierra homepage “Transform your customer experience” feature cluster. The section combines one large green product panel and three saturated benefit cards that explain personalization, team empowerment, channel unification, and outcome-based pricing.\n### Visible Text\n- Transform your customer experience\n- Increase the lifetime value of your customers\n- AI Agent: Hi, Nicholas! Ready to reorder your usual?\n- Atelier Playa Mujeres\n- Check-in Fri. Sep 5 3:00 PM, Check-out Sun. Sep 7 11:00 AM\n- Deliver truly personalized experiences across every moment that matters.\n- Empower every team\n- Build powerful AI agents quickly—with or without engineering support.\n- Unify your channels\n- Deploy a single agent across chat, SMS, WhatsApp, email, voice, and ChatGPT.\n- Pay for a job well done\n- Ensure you only pay for the value Sierra delivers with outcome-based pricing.\n### Layout\n- Header navigation remains at the top, above a centered content column.\n- A large green translucent product panel spans the section width, showing layered customer journey UI fragments.\n- Three equal benefit cards sit below in a row: blue, magenta, and terracotta.\n- Each card uses a large headline, central icon/visual motif, and short supporting copy near the bottom.\n### Components\n- Top navigation.\n- Large product-story panel with hotel booking details, AI agent message, and progress/metric overlays.\n- Blue team-empowerment card with profile avatars around a Sierra mark.\n- Magenta channel-unification card with six communication/channel icons.\n- Terracotta outcome-pricing card with star-rating motif.\n### Color Palette\n- White background frames the colorful feature cluster.\n- The large top panel uses muted green overlays with translucent white UI elements.\n- Lower cards use saturated blue, rose-magenta, and clay/terracotta blocks.\n- White typography and line icons sit over the colored cards.\n- Sierra green appears in the logo and main brand panel.\n### Visual Memory Cues\n- The top green panel is anchored by the AI message “Hi, Nicholas! Ready to reorder your usual?” and a hotel booking card for Atelier Playa Mujeres.\n- The blue card uses a ring of small profile portraits around the Sierra mark, making the “Empower every team” idea immediately visual.\n- The magenta card’s six channel icons and the terracotta card’s star rating give the bottom row a clear feature-card rhythm.\n### Visual Notes\n- Useful for studying a feature cluster that uses color-block cards and product-story overlays to explain multiple product benefits within one compact section.\n### Metadata\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\n这是 Sierra 首页的 “Transform your customer experience” 功能卡组。模块由一张大型绿色产品面板和三张高饱和 benefit 卡组成，解释个性化、团队赋能、渠道统一和结果定价。\n### 可见文字\n- Transform your customer experience\n- Increase the lifetime value of your customers\n- AI Agent: Hi, Nicholas! Ready to reorder your usual?\n- Atelier Playa Mujeres\n- Check-in Fri. Sep 5 3:00 PM, Check-out Sun. Sep 7 11:00 AM\n- Deliver truly personalized experiences across every moment that matters.\n- Empower every team\n- Build powerful AI agents quickly—with or without engineering support.\n- Unify your channels\n- Deploy a single agent across chat, SMS, WhatsApp, email, voice, and ChatGPT.\n- Pay for a job well done\n- Ensure you only pay for the value Sierra delivers with outcome-based pricing.\n### 布局结构\n- 顶部导航仍然位于上方，下面是居中的内容列。\n- 一张大型绿色半透明产品面板横跨 Section 宽度，里面叠加 customer journey UI 片段。\n- 下方横向排列三张等宽 benefit 卡：蓝色、洋红色和陶土橙色。\n- 每张卡都有大标题、中央图标/视觉 motif 和底部短说明。\n### 组件拆分\n- 顶部导航。\n- 大型产品故事面板，包含酒店预订信息、AI agent 消息和进度/指标叠层。\n- 蓝色团队赋能卡，多个头像围绕 Sierra 标记。\n- 洋红色渠道统一卡，包含六个通信/渠道图标。\n- 陶土橙结果定价卡，包含星级评分 motif。\n### 配色信息\n- 白色背景承托彩色功能卡组。\n- 顶部大面板使用低饱和绿色遮罩和半透明白色 UI 元素。\n- 下方卡片使用高饱和蓝、玫瑰洋红和陶土橙色块。\n- 白色文字和线性图标叠在彩色卡上。\n- Sierra 绿色出现在 logo 和主品牌面板中。\n### 视觉记忆点\n- 顶部绿色面板最醒目的是 AI 消息 “Hi, Nicholas! Ready to reorder your usual?” 和 Atelier Playa Mujeres 酒店预订卡。\n- 蓝色卡中多个小头像围绕 Sierra 标记，直接把 “Empower every team” 可视化。\n- 洋红卡的六个渠道图标和陶土橙卡的星级评分，让下方三卡形成清晰功能节奏。\n### 视觉备注\n- 适合参考功能卡组如何用色块卡片和产品故事叠层，在一个紧凑 Section 中解释多种产品收益。\n### 元数据\n- analyzedAt: 2026-05-28T13:22:49+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-05-28 13:40 (uibook, section, d6161875-ca45-46f4-9910-ad45b6171034, sourceItemId=MPOVQGUXKKNFX)",
+    "modificationTime": 1779935659737,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1779946820274,
+    "palettes": [
+      {
+        "color": [
+          251,
+          251,
+          251
+        ],
+        "ratio": 48,
+        "$$hashKey": "object:59037"
+      },
+      {
+        "color": [
+          135,
+          126,
+          95
+        ],
+        "ratio": 31,
+        "$$hashKey": "object:59040"
+      },
+      {
+        "color": [
+          55,
+          130,
+          187
+        ],
+        "ratio": 7,
+        "$$hashKey": "object:59043"
+      },
+      {
+        "color": [
+          85,
+          118,
+          83
+        ],
+        "ratio": 4.8,
+        "$$hashKey": "object:59041"
+      },
+      {
+        "color": [
+          168,
+          113,
+          136
+        ],
+        "ratio": 3.8,
+        "$$hashKey": "object:59044"
+      },
+      {
+        "color": [
+          170,
+          76,
+          75
+        ],
+        "ratio": 1.46,
+        "$$hashKey": "object:59039"
+      },
+      {
+        "color": [
+          139,
+          170,
+          163
+        ],
+        "ratio": 1.29,
+        "$$hashKey": "object:59042"
+      },
+      {
+        "color": [
+          193,
+          165,
+          157
+        ],
+        "ratio": 0.74,
+        "$$hashKey": "object:59038"
+      }
+    ],
+    "rank": 26,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPOVQGUXKKNFX.info/Better customer experiences  Sierra.jpg"
+  },
+  {
+    "id": "MPNUXPJMITDRM",
+    "name": "Liveblocks  Realtime infrastructure for multiplayer apps and agents",
+    "size": 109251,
+    "btime": 1779872639000,
+    "mtime": 1779873977000,
+    "ext": "jpg",
+    "tags": [
+      "imported by Autoscreenshot",
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://liveblocks.io/",
+    "annotation": "- 同步于 2026-05-27 17:45 (uibook, section, ccd62020-4b37-4a2a-a0a1-65982a93edc1, sourceItemId=MPNUXPJMITDRM)\n\n<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nThis screenshot is a Liveblocks feature section explaining collaboration capabilities and their business outcomes. It uses a large bordered dark card with a feature list, icon-led benefit grid, and a bottom visual metaphor of human and AI cursor labels.\n\n### Visible Text\n- Collaboration features, ready to ship.\n- Liveblocks enables faster growth through ready-made, fully customizable features—helping your team drive engagement and unlock new revenue.\n- Collaborative features your users already expect.\n- Multiplayer\n- Realtime collaboration\n- Comments\n- Contextual commenting\n- Notifications\n- Smart alerts for your app\n- AI Copilots\n- Individual AI assistants\n- Keep your users engaged\n- Collaborative products keep your users active, invested, and coming back.\n- Onboard users faster, drive adoption\n- AI copilots help your users succeed from day one—shortening time to value.\n- Unlock new revenue opportunities\n- Monetize collaboration and AI with premium or usage-based plans.\n- Ship faster, stay focused\n- Skip months of engineering work. Liveblocks handles it all for you.\n- Magic happens when humans and AI collaborate.\n- AI\n- Human\n\n### Layout\n- A centered section intro appears above a large bordered card.\n- Inside the card, the upper area uses a two-column layout: a large headline on the left and a vertical feature list with icons on the right.\n- The middle area is a two-by-two benefit grid with each cell separated by thin borders.\n- The bottom area contains a very large low-contrast statement with two floating cursor labels, visually connecting human and AI collaboration.\n\n### Components\n- Section heading and explanatory paragraph.\n- Bordered feature card.\n- Icon list for Multiplayer, Comments, Notifications, and AI Copilots.\n- Four benefit cards with small line icons.\n- Floating cursor labels for `AI` and `Human`.\n- Thin grid dividers and dark textured background treatment.\n\n### Color Palette\n- The palette is nearly monochrome: black background, white headings, and muted gray body text.\n- Borders use dark gray, creating a subtle technical grid.\n- The cursor labels are light gray/white pills with black text, making them stand out from the dark card.\n- Icons use soft gray strokes with a slight glow.\n\n### Visual Memory Cues\n- The strongest non-text anchor is the bottom-right cursor interaction: one pointer is labeled `AI` and another is labeled `Human`, turning the abstract collaboration claim into a visible UI metaphor.\n- The feature list icons on the upper-right look like small glowing 3D glyphs against the dark panel.\n\n### Visual Notes\n- Good reference for an icon-and-grid feature module where abstract product capabilities are grouped by expected user features and business benefits.\n- The bottom cursor motif adds personality without requiring a product screenshot or full illustration.\n\n### Metadata\n- analyzedAt: 2026-05-28T10:02:41+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n\n## AI 页面分析\n\n### 页面概述\n这张截图是 Liveblocks 的功能模块，用来说明协作能力及其带来的业务结果。它使用一个大型深色描边卡片，内部包含功能列表、图标化收益网格，以及底部用人类和 AI 光标标签构成的视觉隐喻。\n\n### 可见文字\n- Collaboration features, ready to ship.\n- Liveblocks enables faster growth through ready-made, fully customizable features—helping your team drive engagement and unlock new revenue.\n- Collaborative features your users already expect.\n- Multiplayer\n- Realtime collaboration\n- Comments\n- Contextual commenting\n- Notifications\n- Smart alerts for your app\n- AI Copilots\n- Individual AI assistants\n- Keep your users engaged\n- Collaborative products keep your users active, invested, and coming back.\n- Onboard users faster, drive adoption\n- AI copilots help your users succeed from day one—shortening time to value.\n- Unlock new revenue opportunities\n- Monetize collaboration and AI with premium or usage-based plans.\n- Ship faster, stay focused\n- Skip months of engineering work. Liveblocks handles it all for you.\n- Magic happens when humans and AI collaborate.\n- AI\n- Human\n\n### 布局结构\n- 顶部是居中的模块标题和说明文字，下方是大型描边卡片。\n- 卡片上半区是左右两列：左侧为大标题，右侧为带图标的纵向功能列表。\n- 中间区域是 2x2 收益卡片网格，每个单元用细边框分隔。\n- 底部是一句超大低对比度文案，并叠加两个漂浮光标标签，用来视觉化人和 AI 的协作关系。\n\n### 组件拆分\n- 模块标题和说明段落。\n- 描边功能卡片。\n- Multiplayer、Comments、Notifications、AI Copilots 图标列表。\n- 四个带线性小图标的收益卡片。\n- `AI` 与 `Human` 漂浮光标标签。\n- 细网格分割线和深色纹理背景。\n\n### 配色信息\n- 配色几乎是单色系统：黑色背景、白色标题、灰色正文。\n- 边框使用深灰色，形成轻微的技术网格感。\n- 光标标签是浅灰/白色胶囊，配黑色文字，因此能从深色卡片中跳出。\n- 图标使用柔和灰色描边并带一点发光感。\n\n### 视觉记忆点\n- 最强的非文字视觉锚点是右下角的光标互动：一个指针标记为 `AI`，另一个标记为 `Human`，把抽象协作主张转化成可见的 UI 隐喻。\n- 右上角功能列表中的图标像小型发光 3D 符号，嵌在深色面板上。\n\n### 视觉备注\n- 这是图标加网格型功能模块的好参考，能把抽象产品能力按用户预期功能和业务收益两层组织起来。\n- 底部光标母题增加了品牌个性，不需要额外产品截图或完整插画。\n\n### 元数据\n- analyzedAt: 2026-05-28T10:02:41+08:00\n- source: Eagle local image\n- model: gpt-5-codex\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1779873851797,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          4,
+          4,
+          4
+        ],
+        "ratio": 94
+      },
+      {
+        "color": [
+          83,
+          83,
+          83
+        ],
+        "ratio": 1.13
+      },
+      {
+        "color": [
+          39,
+          39,
+          39
+        ],
+        "ratio": 1.13
+      },
+      {
+        "color": [
+          20,
+          20,
+          20
+        ],
+        "ratio": 0.96
+      },
+      {
+        "color": [
+          28,
+          28,
+          28
+        ],
+        "ratio": 0.72
+      },
+      {
+        "color": [
+          181,
+          181,
+          181
+        ],
+        "ratio": 0.55
+      },
+      {
+        "color": [
+          52,
+          52,
+          52
+        ],
+        "ratio": 0.37
+      }
+    ],
+    "lastModified": 1780117133409,
+    "rank": 27,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPNUXPJMITDRM.info/Liveblocks  Realtime infrastructure for multiplayer apps and agents.jpg"
+  },
+  {
+    "id": "MPMHT7PRQUCSX",
+    "name": "Giza",
+    "size": 228272,
+    "btime": 1779791340919,
+    "mtime": 1779791534000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.gizatech.xyz/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nGiza “Intelligent optimization” feature section. The screenshot explains a three-step agent workflow through large visual cards: depositing funds, configuring strategy, and watching the agent act.\n\n### Visible Text\n- Intelligent optimization\n- Deposit your Funds\n- Connect your wallet, select assets and deposit to your agent.\n- Configure Your Strategy\n- Choose specific markets or enable automatic selection, agents dynamically route capital for optimal returns.\n- Watch Giza in Action\n- Track every decision as Giza dynamically manages risks, rebalances, and adapts in real time.\n- 10,304.00 USDC\n- Morpho Gauntlet USDC P..., 9.55% APR, AAVE USDC, 10.21% APR, Fluid USDC, 8.30% APR\n- Giza executing now...\n- Meet The Intelligent Layer\n\n### Layout\n- The Giza nav appears in a floating black header at the upper left.\n- A large section title sits above three equal-width feature columns.\n- Each column pairs a small heading and description with a large pale landscape-texture card.\n- White UI cards are overlaid inside each visual card to show the step’s interface state.\n\n### Components\n- Floating header navigation.\n- Three-column feature explainer.\n- Deposit amount input card.\n- Market-selection list card with APR values and “Next” actions.\n- Agent execution text card.\n- Pale glitch-landscape background panels.\n\n### Color Palette\n- Black page background frames the entire feature row.\n- The visual cards use pale blue, gray, and off-white landscape textures.\n- Overlaid UI cards are white with black text and soft shadows.\n- Blue protocol icons and a few colored APR/market accents add financial-state detail.\n- Bottom text and dividers use subdued gray.\n\n### Visual Memory Cues\n- The three huge pale panels form a clear step-by-step triptych.\n- The middle card is recognizable by the stacked Morpho, AAVE, and Fluid USDC market list.\n- The right card contains the conversational line “We started from 13.42% APR...” inside a white agent-status panel.\n\n### Visual Notes\n- Useful for studying a feature section where process explanation is not icon-only; each step gets a large atmospheric product-state card with enough UI detail to feel tangible.\n\n### Metadata\n- analyzedAt: 2026-05-28T10:19:23+08:00\n- source: Eagle local image\n- model: gpt-5\n\n## AI 页面分析\n\n### 页面概述\n这是 Giza 的 “Intelligent optimization” 功能模块。截图用三张大型视觉卡说明 agent 工作流：存入资金、配置策略、观察 Giza 自动执行。\n\n### 可见文字\n- Intelligent optimization\n- Deposit your Funds\n- Connect your wallet, select assets and deposit to your agent.\n- Configure Your Strategy\n- Choose specific markets or enable automatic selection, agents dynamically route capital for optimal returns.\n- Watch Giza in Action\n- Track every decision as Giza dynamically manages risks, rebalances, and adapts in real time.\n- 10,304.00 USDC\n- Morpho Gauntlet USDC P..., 9.55% APR, AAVE USDC, 10.21% APR, Fluid USDC, 8.30% APR\n- Giza executing now...\n- Meet The Intelligent Layer\n\n### 布局结构\n- Giza 导航以黑色浮动头部形式出现在左上方。\n- 大标题位于三列功能说明之上。\n- 每一列由小标题、说明文字和一张大面积浅色风景纹理卡组成。\n- 每张视觉卡内叠加白色 UI 卡片，展示对应步骤的界面状态。\n\n### 组件拆分\n- 浮动顶部导航。\n- 三列流程说明模块。\n- 存款金额输入卡。\n- 带 APR 数值和 “Next” 操作的市场选择列表卡。\n- agent 执行状态文字卡。\n- 浅蓝灰故障风景纹理背景面板。\n\n### 配色信息\n- 黑色页面背景包裹整个功能行。\n- 视觉卡使用浅蓝、灰色和米白风景纹理。\n- 叠加 UI 卡为白底黑字，并带柔和阴影。\n- 蓝色协议图标和少量市场状态色提供金融信息细节。\n- 底部文字与分割线使用低对比灰色。\n\n### 视觉记忆点\n- 三张巨大的浅色面板形成明确的步骤三联画。\n- 中间卡片因为 Morpho、AAVE、Fluid USDC 市场列表而很容易识别。\n- 右侧卡片里有 “We started from 13.42% APR...” 这句对话式执行反馈。\n\n### 视觉备注\n- 适合参考功能模块如何不只使用图标解释流程，而是让每一步都有带氛围背景和具体 UI 细节的大型产品状态卡。\n\n### 元数据\n- analyzedAt: 2026-05-28T10:19:23+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1779791340879,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          218,
+          221,
+          220
+        ],
+        "ratio": 51
+      },
+      {
+        "color": [
+          7,
+          7,
+          6
+        ],
+        "ratio": 40
+      },
+      {
+        "color": [
+          162,
+          175,
+          179
+        ],
+        "ratio": 3.54
+      },
+      {
+        "color": [
+          116,
+          120,
+          121
+        ],
+        "ratio": 1.94
+      },
+      {
+        "color": [
+          95,
+          96,
+          95
+        ],
+        "ratio": 1.01
+      },
+      {
+        "color": [
+          180,
+          179,
+          178
+        ],
+        "ratio": 0.51
+      },
+      {
+        "color": [
+          152,
+          151,
+          150
+        ],
+        "ratio": 0.37
+      }
+    ],
+    "lastModified": 1779934793822,
+    "rank": 28,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPMHT7PRQUCSX.info/Giza.jpg"
+  },
+  {
+    "id": "MPMHT2MHBXV50",
+    "name": "Giza",
+    "size": 163429,
+    "btime": 1779791334000,
+    "mtime": 1779791535000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.gizatech.xyz/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n\n### Overview\nGiza “Agents as Interface” product section. It frames the interface as an intent layer for market agents and shows a large portfolio dashboard embedded in a pale landscape-like visual field.\n\n### Visible Text\n- Agents as Interface\n- The interface is no longer where you perceive. It’s where you specify intent and agents act on markets.\n- Self Custodial\n- You maintain complete ownership while agents optimize positions.\n- Verifiable by Design\n- All autonomous actions are provable, auditable, and explainable.\n- Continuous Execution\n- Agents continuously evaluate, decide, and execute at scale.\n- Hey, Giza routed your capital to top yield\n- Current value $500,299.35\n- Total deposited $500,000.00, Net earned $299.35, Total APR %16.43\n- Markets, Performance, Agent, Active markets, 4 markets\n- Intelligent optimization\n\n### Layout\n- The upper band splits left section copy and right three-column benefits on a black background.\n- A large dashboard mockup sits below, centered inside a wide pale-blue landscape panel.\n- The dashboard uses a big current-value number, compact metrics, top utility actions, and a tabbed market table.\n- The next section title “Intelligent optimization” peeks at the bottom, showing this as a transitional product section.\n\n### Components\n- Section headline and explanatory copy.\n- Three benefit text blocks.\n- Large dashboard mockup.\n- Utility actions for Deposit, Withdraw, Base, and wallet address.\n- Tabs for Markets, Performance, and Agent.\n- Market table with protocol icons, allocation bars, values, and APR columns.\n\n### Color Palette\n- Black background contrasts with the bright dashboard stage.\n- The embedded landscape panel uses pale sky blue, white, and washed gray.\n- Dashboard UI is white with black typography and hairline separators.\n- Allocation bars introduce purple, cyan, orange, red, and blue accents.\n- Benefit text uses subdued gray for descriptions.\n\n### Visual Memory Cues\n- The enormous “$500,299.35” value dominates the dashboard and is the easiest recall point.\n- The pale landscape texture surrounding the white UI makes the product screen feel like a window into another layer.\n- The small cluster of market icons beside “4 markets” and the colored allocation bar add financial dashboard specificity.\n\n### Visual Notes\n- Useful for studying a product-section pattern where strategic positioning text is paired with one oversized interface screenshot that makes the abstract agent concept legible.\n\n### Metadata\n- analyzedAt: 2026-05-28T10:19:23+08:00\n- source: Eagle local image\n- model: gpt-5\n\n## AI 页面分析\n\n### 页面概述\n这是 Giza 的 “Agents as Interface” 产品模块。它把界面定义为市场 agent 的意图层，并展示一个嵌入浅色风景视觉场中的大型资产 dashboard。\n\n### 可见文字\n- Agents as Interface\n- The interface is no longer where you perceive. It’s where you specify intent and agents act on markets.\n- Self Custodial\n- You maintain complete ownership while agents optimize positions.\n- Verifiable by Design\n- All autonomous actions are provable, auditable, and explainable.\n- Continuous Execution\n- Agents continuously evaluate, decide, and execute at scale.\n- Hey, Giza routed your capital to top yield\n- Current value $500,299.35\n- Total deposited $500,000.00, Net earned $299.35, Total APR %16.43\n- Markets, Performance, Agent, Active markets, 4 markets\n- Intelligent optimization\n\n### 布局结构\n- 上方黑底区域左侧是模块文案，右侧是三列 benefit 文本。\n- 下方大型 dashboard mockup 居中嵌入一块宽幅浅蓝风景面板。\n- dashboard 内部使用大号当前价值数字、紧凑指标、顶部工具操作和标签式市场表格。\n- 底部露出下一段 “Intelligent optimization” 标题，说明这是承上启下的产品模块。\n\n### 组件拆分\n- 模块标题和解释文案。\n- 三个 benefit 文本块。\n- 大型 dashboard mockup。\n- Deposit、Withdraw、Base、钱包地址等工具操作。\n- Markets、Performance、Agent 标签。\n- 带协议图标、分配条、价值和 APR 列的市场表格。\n\n### 配色信息\n- 黑色背景与明亮 dashboard 舞台形成对比。\n- 嵌入式风景面板使用浅天蓝、白色和水洗灰。\n- dashboard UI 是白底黑字和细分割线。\n- 分配条引入紫、青、橙、红、蓝等强调色。\n- benefit 描述文字使用低对比灰色。\n\n### 视觉记忆点\n- dashboard 中巨大的 “$500,299.35” 是最容易被记住的元素。\n- 白色 UI 周围的浅色风景纹理让产品界面像通向另一层系统的窗口。\n- “4 markets” 旁的小协议图标组和彩色分配条带来明确的金融 dashboard 特征。\n\n### 视觉备注\n- 适合参考产品模块如何把战略型定位文案和一张超大界面截图配对，让抽象 agent 概念变得可理解。\n\n### 元数据\n- analyzedAt: 2026-05-28T10:19:23+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->",
+    "modificationTime": 1779791334281,
+    "height": 2160,
+    "width": 3840,
+    "palettes": [
+      {
+        "color": [
+          237,
+          245,
+          247
+        ],
+        "ratio": 42
+      },
+      {
+        "color": [
+          4,
+          4,
+          4
+        ],
+        "ratio": 38
+      },
+      {
+        "color": [
+          172,
+          218,
+          235
+        ],
+        "ratio": 12
+      },
+      {
+        "color": [
+          134,
+          159,
+          167
+        ],
+        "ratio": 2.42
+      },
+      {
+        "color": [
+          98,
+          97,
+          94
+        ],
+        "ratio": 1.82
+      },
+      {
+        "color": [
+          61,
+          61,
+          60
+        ],
+        "ratio": 1.79
+      },
+      {
+        "color": [
+          163,
+          158,
+          155
+        ],
+        "ratio": 0.92
+      }
+    ],
+    "lastModified": 1780117175464,
+    "rank": 29,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPMHT2MHBXV50.info/Giza.jpg"
+  },
+  {
+    "id": "MPKL8E1ZAVCBY",
+    "name": "Hostinger - Bring Your Idea Online With a Website",
+    "size": 124780,
+    "btime": 1779676155000,
+    "mtime": 1779676337000,
+    "ext": "jpg",
+    "tags": [
+      "已图压压缩",
+      "已同步UIBook"
+    ],
+    "folders": [
+      "K60RMBANRMW95"
+    ],
+    "isDeleted": false,
+    "url": "https://www.hostinger.com/",
+    "annotation": "<!-- UIBOOK_AI_ANALYSIS_START -->\n## AI Screen Analysis\n### Overview\nHostinger dark feature-and-stats section. The screenshot pairs two accordion-like feature columns with a row of four large purple metric cards.\n### Visible Text\n- HOSTINGER\n- More power & control\n- Automate the busywork\n- Turn hard work into smart work with n8n hosting.\n- Learn more\n- Performance you can rely on\n- More flexible growth\n- Hosting that grows with you\n- Cloud hosting offers scalable resources that ensure you never reach a limit.\n- Hosting for agencies\n- 5M+\n- Clients trust Hostinger\n- 150+\n- Countries served\n- 20+\n- Years of experience\n- 10M+\n- Websites created with us\n### Layout\n- The section sits on a deep navy background with a vertical divider splitting two feature columns.\n- Each column has a large icon, a heading, an expanded feature row with body copy and a minus icon, then a collapsed row with a plus icon.\n- Along the bottom is a four-card metric grid using bright purple blocks and oversized numbers.\n- The navigation remains pinned visually at the top on a white bar.\n### Components\n- Top navigation, two-column feature accordion, icon marks, expand/collapse controls, text links, vertical divider, and metric cards.\n### Color Palette\n- Deep navy fills the section background.\n- White and pale gray text are used for high-contrast headings and descriptions.\n- Purple is used for abstract feature icons, “Learn more” links, and the large metric cards.\n- Thin light-gray divider lines separate accordion rows and columns.\n### Visual Memory Cues\n- The section is recognizable by its strict two-column symmetry and the bright purple statistic cards that line up like tiles along the bottom.\n- Minimal abstract icons above each column echo Hostinger’s brand geometry without using screenshots or photography.\n### Visual Notes\n- Useful reference for feature sections that combine explanatory accordions with credibility metrics.\n- The pattern works when two broad product value propositions need detail while still ending with quantitative proof.\n- The dark background and purple cards create a high-contrast SaaS feature block with strong visual rhythm.\n### Metadata\n- analyzedAt: 2026-05-25T10:44:51+08:00\n- source: Eagle local image\n- model: gpt-5\n## AI 页面分析\n### 页面概述\n这是 Hostinger 的深色功能与数据证明模块。截图上半部分是两个类似 accordion 的功能列，下方是一排四张大型紫色数据卡片。\n### 可见文字\n- HOSTINGER\n- More power & control\n- Automate the busywork\n- Turn hard work into smart work with n8n hosting.\n- Learn more\n- Performance you can rely on\n- More flexible growth\n- Hosting that grows with you\n- Cloud hosting offers scalable resources that ensure you never reach a limit.\n- Hosting for agencies\n- 5M+\n- Clients trust Hostinger\n- 150+\n- Countries served\n- 20+\n- Years of experience\n- 10M+\n- Websites created with us\n### 布局结构\n- 模块位于深海军蓝背景上，中间用竖线分成左右两个功能列。\n- 每列顶部有大图标和标题，下方是展开状态的功能行，包含正文和减号图标，再下面是带加号的折叠行。\n- 底部是一排四个数据卡片，使用亮紫色块和超大数字。\n- 顶部白色导航在视觉上保持固定。\n### 组件拆分\n- 顶部导航、两列功能 accordion、图标标记、展开/收起控件、文字链接、竖向分隔线和数据指标卡片。\n### 配色信息\n- 深海军蓝填充模块背景。\n- 白色和浅灰文字用于高对比标题和描述。\n- 紫色用于抽象功能图标、Learn more 链接和大型数据卡片。\n- 细浅灰线用于分隔 accordion 行和左右列。\n### 视觉记忆点\n- 这个模块最容易被记住的是严格的左右两列对称结构，以及底部像瓷砖一样排列的亮紫色统计卡片。\n- 每列顶部的极简抽象图标延续了 Hostinger 的几何品牌感，没有使用截图或摄影素材。\n### 视觉备注\n- 适合参考把功能解释 accordion 和可信数据指标放在同一模块中的 feature section。\n- 当两个大的产品价值主张需要展开说明，并且希望以量化证明收尾时，这种结构很有效。\n- 深色背景和紫色数据卡形成高对比 SaaS 功能区，视觉节奏明确。\n### 元数据\n- analyzedAt: 2026-05-25T10:44:51+08:00\n- source: Eagle local image\n- model: gpt-5\n<!-- UIBOOK_AI_ANALYSIS_END -->\n- 同步于 2026-05-25 10:57 (uibook, section, a0ca550a-a04d-4457-a27c-01ffc71c01eb, sourceItemId=MPKL8E1ZAVCBY)",
+    "modificationTime": 1779676155431,
+    "height": 2160,
+    "width": 3840,
+    "lastModified": 1780117413976,
+    "palettes": [
+      {
+        "color": [
+          19,
+          12,
+          37
+        ],
+        "ratio": 75
+      },
+      {
+        "color": [
+          107,
+          75,
+          232
+        ],
+        "ratio": 14
+      },
+      {
+        "color": [
+          238,
+          235,
+          245
+        ],
+        "ratio": 7
+      },
+      {
+        "color": [
+          98,
+          93,
+          113
+        ],
+        "ratio": 1.14
+      },
+      {
+        "color": [
+          48,
+          30,
+          95
+        ],
+        "ratio": 0.62
+      },
+      {
+        "color": [
+          58,
+          54,
+          79
+        ],
+        "ratio": 0.55
+      }
+    ],
+    "rank": 30,
+    "filePath": "/Users/chiboyce/Library/Mobile Documents/com~apple~CloudDocs/池彬.library/images/MPKL8E1ZAVCBY.info/Hostinger - Bring Your Idea Online With a Website.jpg"
+  }
+]

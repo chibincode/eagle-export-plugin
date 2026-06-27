@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UIBook Pattern Layer Framework</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f3;
+      --paper: #ffffff;
+      --ink: #17191f;
+      --muted: #666d7a;
+      --soft: #ecefe8;
+      --line: #d8ddd2;
+      --teal: #1d7c70;
+      --blue: #2f63a8;
+      --coral: #c95d42;
+      --amber: #9b6c16;
+      --green: #557b2f;
+      --shadow: 0 18px 45px rgba(29, 35, 42, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.72), rgba(246,247,243,0.92) 42%, var(--bg)),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 32px 24px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 12px 0 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .mark {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--ink);
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 36px;
+      align-items: stretch;
+      padding: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0;
+      max-width: 760px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(44px, 7vw, 84px);
+      line-height: 0.92;
+      letter-spacing: 0;
+      font-weight: 600;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .hero-map {
+      display: grid;
+      gap: 10px;
+      align-content: center;
+    }
+
+    .map-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .map-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .map-node {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      background: var(--paper);
+      font-weight: 700;
+    }
+
+    .map-row:nth-child(2) .map-node { border-left-color: var(--coral); }
+    .map-row:nth-child(3) .map-node { border-left-color: var(--blue); }
+    .map-row:nth-child(4) .map-node { border-left-color: var(--amber); }
+
+    .section {
+      margin-top: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 36px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subcopy {
+      margin: 8px 0 0;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .number {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      margin-bottom: 16px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .split-panel {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .decision-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .decision-item {
+      display: grid;
+      grid-template-columns: 178px 1fr;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .decision-key {
+      color: var(--teal);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .decision-copy {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-card {
+      min-height: 148px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .field-card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .field-card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .builder {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 0.78fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .builder-intro {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0 18px;
+    }
+
+    .intro-step {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcf8;
+    }
+
+    .intro-step strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .intro-step span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .builder-note {
+      margin: 10px 0 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--teal);
+      background: #f5faf7;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 18px;
+    }
+
+    .field-option-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-option-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .field-option-title {
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .field-option-hint {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .option-card {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items: start;
+      min-height: 0;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      padding: 12px;
+      color: var(--ink);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+    }
+
+    .option-card:hover {
+      border-color: #b7c2b4;
+      box-shadow: 0 10px 24px rgba(29, 35, 42, 0.07);
+      transform: translateY(-1px);
+    }
+
+    .option-card.active {
+      border-color: var(--ink);
+      background: #fbfcf8;
+      box-shadow: 0 0 0 2px rgba(23, 25, 31, 0.08);
+    }
+
+    .thumb {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 1px solid #d7ded4;
+      border-radius: 7px;
+      background: #f9faf7;
+      background-image: var(--thumb-image);
+      background-position: var(--thumb-x) var(--thumb-y);
+      background-repeat: no-repeat;
+      background-size: 200% 400%;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    }
+
+    .option-copy {
+      display: block;
+    }
+
+    .option-name {
+      display: block;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .option-description {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .selected-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0 12px;
+    }
+
+    .selected-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 5px 8px;
+      border: 1px solid #bdd0cb;
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      overflow-wrap: anywhere;
+    }
+
+    .signature-box {
+      min-height: 100%;
+      padding: 18px;
+      border: 1px solid #c9d7d2;
+      border-radius: var(--radius);
+      background: #f7fbf9;
+    }
+
+    .signature {
+      display: block;
+      margin: 12px 0 16px;
+      padding: 14px;
+      border: 1px solid #bdd0cb;
+      border-radius: var(--radius);
+      background: var(--paper);
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .note-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .case-sheet {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .case-image {
+      margin: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .case-image img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    .case-legend {
+      display: grid;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .legend-number {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .legend-copy strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .legend-copy span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .scenario {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .scenario code,
+    .inline-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--coral);
+      font-size: 13px;
+    }
+
+    .scenario p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .template-wrap {
+      position: relative;
+    }
+
+    pre {
+      margin: 0;
+      max-height: 540px;
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #15191f;
+      color: #edf3ea;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .rule {
+      border-top: 3px solid var(--teal);
+      padding: 14px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .rule:nth-child(2) { border-top-color: var(--coral); }
+    .rule:nth-child(3) { border-top-color: var(--blue); }
+    .rule:nth-child(4) { border-top-color: var(--amber); }
+
+    .footer {
+      padding: 24px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .split-panel,
+      .builder,
+      .case-sheet,
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .field-grid,
+      .rules {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 18px 14px 52px;
+      }
+
+      .topbar,
+      .section-header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .hero,
+      .section {
+        padding: 20px;
+      }
+
+      .map-row,
+      .decision-item,
+      .field-grid,
+      .builder-intro,
+      .option-grid,
+      .scenario-grid,
+      .rules {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topbar">
+      <div class="brand"><span class="mark">UI</span> UIBook Research System</div>
+      <div>Static framework page · last updated 2026-06-25</div>
+    </div>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title">Pattern Layer Framework</h1>
+        <p>
+          把 Eagle 里的 section 灵感，从“截图好看”拆成可检索的设计模式。它不替代现有 taxonomy，而是在经典分类之上记录意图、结构、素材策略和相似性签名。
+        </p>
+        <div class="hero-actions" aria-label="Framework status">
+          <span class="chip">Sections first</span>
+          <span class="chip">Eagle only</span>
+          <span class="chip">Smart Discovery ready</span>
+          <span class="chip">No DB / no product route</span>
+        </div>
+      </div>
+
+      <div class="hero-map" aria-label="Pattern abstraction flow">
+        <div class="map-row">
+          <div class="map-label">Input</div>
+          <div class="map-node">Visible screenshot evidence</div>
+        </div>
+        <div class="map-row">
+          <div class="map-label">Abstraction</div>
+          <div class="map-node">Intent + structure + material</div>
+        </div>
+        <div class="map-row">
+          <div class="map-label">Signature</div>
+          <div class="map-node">Stable similarity key</div>
+        </div>
+        <div class="map-row">
+          <div class="map-label">Outcome</div>
+          <div class="map-node">Intent-based discovery</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="why-title">
+      <div class="section-header">
+        <div>
+          <h2 id="why-title">Classic taxonomy stays. Pattern Layer explains the why and shape.</h2>
+          <p class="subcopy">现有 taxonomy 负责“它属于什么分类”。Pattern Layer 负责“这个 section 用什么认知路径表达内容”。</p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <article class="card">
+          <span class="number">1</span>
+          <h3>Evidence Layer</h3>
+          <p>先记录可见文字、布局、组件、颜色、视觉记忆点。所有 pattern 判断必须从截图证据出发。</p>
+        </article>
+        <article class="card">
+          <span class="number">2</span>
+          <h3>Pattern Layer</h3>
+          <p>再判断 message_intent、structure_pattern、layout_skeleton 和 content_style。截图里的具体画面线索统一进入 evidence。</p>
+        </article>
+        <article class="card">
+          <span class="number">3</span>
+          <h3>Discovery Layer</h3>
+          <p>最后生成 similarity signature，让未来可以按设计意图找相似 section，而不是只靠标签筛选。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="decision-title">
+      <div class="split-panel">
+        <div>
+          <h2 id="decision-title">Decision Stack</h2>
+          <p class="subcopy">
+            这个顺序很关键：不要先问“icon-led 还是 screenshot-led”。先判断 section 要帮用户理解什么，再选择结构和素材。
+          </p>
+        </div>
+
+        <div class="decision-stack">
+          <div class="decision-item">
+            <div class="decision-key">section_type</div>
+            <div class="decision-copy">经典模块类别，例如 Hero / Features / Pricing / CTA。</div>
+          </div>
+          <div class="decision-item">
+            <div class="decision-key">message_intent</div>
+            <div class="decision-copy">为什么存在：这个 section 要完成的认知任务，例如解释流程、建立信任、推动行动。</div>
+          </div>
+          <div class="decision-item">
+            <div class="decision-key">structure_pattern</div>
+            <div class="decision-copy">可复用结构形状，例如等权卡片网格、横向步骤流、居中行动条带。</div>
+          </div>
+          <div class="decision-item">
+            <div class="decision-key">layout_skeleton</div>
+            <div class="decision-copy">骨架，例如 centered、split、grid、bento、timeline、carousel。</div>
+          </div>
+          <div class="decision-item">
+            <div class="decision-key">content_style</div>
+            <div class="decision-copy">媒体 / 素材策略，例如 screenshot-led、icon-led、photo-led、data-led。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="fields-title">
+      <div class="section-header">
+        <div>
+          <h2 id="fields-title">Pattern Profile Fields</h2>
+          <p class="subcopy">每张 section 图的最终记录字段。它们是未来 Smart Discovery 的原料，不是直接暴露给用户的一排 filters。</p>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field-card"><strong>section_type</strong><span>沿用现有 UIBook taxonomy。</span></div>
+        <div class="field-card"><strong>message_intent</strong><span>为什么存在：这个 section 的认知任务。</span></div>
+        <div class="field-card"><strong>structure_pattern</strong><span>如何组织：最核心的可复用结构形状。</span></div>
+        <div class="field-card"><strong>layout_skeleton</strong><span>内容被如何组织和排列。</span></div>
+        <div class="field-card"><strong>information_sequence</strong><span>信息阅读顺序，例如 headline → proof → CTA。</span></div>
+        <div class="field-card"><strong>content_style</strong><span>媒体 / 素材策略，只是 modifier。</span></div>
+        <div class="field-card"><strong>interaction_implication</strong><span>可见或暗示的交互模型。</span></div>
+        <div class="field-card"><strong>design_language_modifier</strong><span>视觉语言气质，例如 dense-dashboard。</span></div>
+        <div class="field-card"><strong>similarity_signature</strong><span>五个核心字段组成的稳定组合键。</span></div>
+        <div class="field-card"><strong>discovery_note</strong><span>什么搜索意图应该命中它。</span></div>
+        <div class="field-card"><strong>evidence / confidence</strong><span>至少 3 条可见证据，并标注置信度。</span></div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="builder-title">
+      <div class="section-header">
+        <div>
+          <h2 id="builder-title">Pattern 组合演示区</h2>
+          <p class="subcopy">这个区块不是产品功能，也不是让你手动给真实素材打标签。它用一组可点选的缩略图，模拟“一张 Eagle section 截图最终会被拆成哪些 Pattern 字段”。</p>
+        </div>
+      </div>
+
+      <div class="builder-intro" aria-label="How to read the pattern playground">
+        <div class="intro-step">
+          <strong>1. 左侧是判断维度</strong>
+          <span>每一组卡片代表一个核心签名字段，例如 section 类型、表达意图、结构形状、素材策略。</span>
+        </div>
+        <div class="intro-step">
+          <strong>2. 点击卡片是在模拟一张截图</strong>
+          <span>假设某张截图命中了这些选项，右侧就会把它们组合成一个模式签名。</span>
+        </div>
+        <div class="intro-step">
+          <strong>3. 右侧结果用于校准命名</strong>
+          <span>我们看组合后的 5 字段 signature 是否像一个可复用模式，而不是保存任何数据。</span>
+        </div>
+      </div>
+
+      <p class="builder-note">
+        可以把这里理解成 Pattern 语法练习器：左边是词库，右边是把这些词拼成一句“这类 section 是什么模式”。真实 Eagle 分析时，这个组合会由 AI 根据截图证据写进备注；具体画面主角、截图细节和记忆点统一写进 evidence。
+      </p>
+
+      <div class="builder">
+        <div class="controls" id="optionGroups" aria-label="Signature option thumbnails">
+        </div>
+
+        <aside class="signature-box">
+          <h3>当前模拟出来的 Pattern signature</h3>
+          <div class="selected-strip" id="selectedStrip" aria-label="Current selected values"></div>
+          <code class="signature" id="signatureOutput"></code>
+          <ul class="note-list" id="signatureNotes"></ul>
+        </aside>
+      </div>
+
+    </section>
+
+    <section class="section" aria-labelledby="case-sheet-title">
+      <div class="section-header">
+        <div>
+          <h2 id="case-sheet-title">Generated Case Sheet</h2>
+          <p class="subcopy">用统一风格的案例图把六类典型组合先视觉化。图片本身不承担字段判断，真正的判断仍来自核心 signature 和截图证据。</p>
+        </div>
+        <span class="chip">image-generated reference</span>
+      </div>
+
+      <div class="case-sheet">
+        <figure class="case-image">
+          <img src="assets/pattern-layer-example-sheet.png" alt="A generated 2 by 3 sheet showing six abstract UI pattern examples: feature grid, step flow, product showcase, logo wall, pricing matrix, and CTA band.">
+        </figure>
+
+        <div class="case-legend" aria-label="Generated case sheet legend">
+          <div class="legend-item">
+            <div class="legend-number">1</div>
+            <div class="legend-copy">
+              <strong>Features grid</strong>
+              <span><code class="inline-code">capability-overview / equal-card-grid</code></span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-number">2</div>
+            <div class="legend-copy">
+              <strong>How it works</strong>
+              <span><code class="inline-code">process-explainer / horizontal-step-flow</code></span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-number">3</div>
+            <div class="legend-copy">
+              <strong>Screenshot showcase</strong>
+              <span><code class="inline-code">deep-dive-showcase / annotated-mockup-panel</code></span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-number">4</div>
+            <div class="legend-copy">
+              <strong>Logo wall</strong>
+              <span><code class="inline-code">trust-building / uniform-logo-grid</code></span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-number">5</div>
+            <div class="legend-copy">
+              <strong>Pricing</strong>
+              <span><code class="inline-code">comparison / three-plan-card-matrix</code></span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-number">6</div>
+            <div class="legend-copy">
+              <strong>CTA</strong>
+              <span><code class="inline-code">conversion-push / centered-action-band</code></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="scenarios-title">
+      <div class="section-header">
+        <div>
+          <h2 id="scenarios-title">Scenario Checks</h2>
+          <p class="subcopy">这些是我们后续分析 Eagle 图时用来防止“只看风格、不看本质”的测试样例。</p>
+        </div>
+      </div>
+
+      <div class="scenario-grid">
+        <article class="scenario">
+          <h3>Features grid</h3>
+          <code>capability-overview / equal-card-grid</code>
+          <p>多张等权卡片应被识别为能力概览，而不是泛泛地记录为 icon-led。</p>
+        </article>
+        <article class="scenario">
+          <h3>How it works</h3>
+          <code>process-explainer / horizontal-step-flow</code>
+          <p>步骤、箭头、流程图或有序解释，应优先按流程表达判断。</p>
+        </article>
+        <article class="scenario">
+          <h3>Screenshot showcase</h3>
+          <code>deep-dive-showcase / annotated-mockup-panel</code>
+          <p>大产品截图加 callout，是深度功能展示，不只是 screenshot-led。</p>
+        </article>
+        <article class="scenario">
+          <h3>Logo wall</h3>
+          <code>trust-building / uniform-logo-grid</code>
+          <p>客户或集成 logo 阵列，本质是信任证明。</p>
+        </article>
+        <article class="scenario">
+          <h3>Pricing</h3>
+          <code>comparison / three-plan-card-matrix</code>
+          <p>套餐卡片与价格差异，本质是帮助用户比较和决策。</p>
+        </article>
+        <article class="scenario">
+          <h3>CTA</h3>
+          <code>conversion-push / centered-action-band</code>
+          <p>短标题加行动按钮，应记录为转化推动，而不是普通 hero。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="template-title">
+      <div class="section-header">
+        <div>
+          <h2 id="template-title">Eagle Note Template</h2>
+          <p class="subcopy">这是当前网页里的讨论草案；这次不更新 `$eagle-uibook-vision-notes` 输出规范，等字段边界稳定后再同步。</p>
+        </div>
+      </div>
+
+      <div class="template-wrap">
+        <button class="copy-button" type="button" id="copyTemplate">Copy template</button>
+        <pre id="templateText"><code>## UIBook Pattern Layer
+
+### Pattern Profile
+- section_type:
+- message_intent:
+- structure_pattern:
+- layout_skeleton:
+- information_sequence:
+- content_style:
+- interaction_implication:
+- design_language_modifier:
+
+### Similarity Signature
+`section_type / message_intent / structure_pattern / layout_skeleton / content_style`
+
+### Discovery Note
+- match_when:
+- avoid_when:
+
+### Evidence
+- ...
+- ...
+- ...
+
+### Confidence
+- pattern_confidence:
+- reason:</code></pre>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="rules-title">
+      <div class="section-header">
+        <div>
+          <h2 id="rules-title">Operating Rules</h2>
+          <p class="subcopy">这四条是后续调整框架时不要打破的核心原则。</p>
+        </div>
+      </div>
+
+      <div class="rules">
+        <div class="rule"><strong>Evidence first.</strong><br>Pattern 判断必须先来自截图可见内容。</div>
+        <div class="rule"><strong>Intent before material.</strong><br>先判断 message_intent，再判断 content_style。</div>
+        <div class="rule"><strong>No false proof.</strong><br>不写转化更好、一定有效这类无数据结论。</div>
+        <div class="rule"><strong>Evidence carries subjects.</strong><br>具体画面主角只进入 evidence，不进入核心相似聚类。</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Source file: <span class="inline-code">docs/pattern-layer-framework.html</span>. This is a local framework page for discussion and iteration.
+    </footer>
+  </main>
+
+  <script>
+    const fieldGroups = [
+      {
+        key: "sectionType",
+        label: "section_type",
+        hint: "模块类别",
+        sprite: "section-type",
+        options: [
+          { value: "Features", description: "并列能力点或功能集合" },
+          { value: "Hero", description: "页面第一印象与主价值主张" },
+          { value: "How it works", description: "步骤、流程、工作方式" },
+          { value: "Pricing", description: "套餐、价格、方案比较" },
+          { value: "Testimonials", description: "用户评价、头像、引用" },
+          { value: "CTA", description: "聚焦转化动作" },
+          { value: "Logos", description: "客户或集成 logo 阵列" },
+          { value: "Stats & Metrics", description: "数据、指标、增长证明" }
+        ]
+      },
+      {
+        key: "messageIntent",
+        label: "message_intent",
+        hint: "用户认知任务",
+        sprite: "message-intent",
+        options: [
+          { value: "capability-overview", description: "快速扫清功能范围" },
+          { value: "process-explainer", description: "解释流程如何工作" },
+          { value: "deep-dive-showcase", description: "展示复杂功能细节" },
+          { value: "trust-building", description: "建立信任与背书" },
+          { value: "comparison", description: "帮助比较与决策" },
+          { value: "conversion-push", description: "推动下一步行动" },
+          { value: "attention-capture", description: "制造第一眼记忆点" }
+        ]
+      },
+      {
+        key: "structurePattern",
+        label: "structure_pattern",
+        hint: "可复用结构",
+        sprite: "structure-pattern",
+        options: [
+          { value: "equal-card-grid", description: "等权卡片网格" },
+          { value: "horizontal-step-flow", description: "横向步骤流程" },
+          { value: "annotated-mockup-panel", description: "产品画面加标注" },
+          { value: "uniform-logo-grid", description: "统一网格阵列" },
+          { value: "three-plan-card-matrix", description: "三方案卡片矩阵" },
+          { value: "centered-action-band", description: "居中行动条带" },
+          { value: "centered-product-panel", description: "居中产品展示面板" }
+        ]
+      },
+      {
+        key: "layoutSkeleton",
+        label: "layout_skeleton",
+        hint: "结构骨架",
+        sprite: "layout-skeleton",
+        options: [
+          { value: "grid", description: "等权网格结构" },
+          { value: "centered", description: "单焦点居中结构" },
+          { value: "split", description: "左右分栏结构" },
+          { value: "bento", description: "大小混排模块" },
+          { value: "timeline", description: "时间线/步骤线" },
+          { value: "carousel", description: "横向滚动队列" },
+          { value: "stacked", description: "纵向堆叠叙事" }
+        ]
+      },
+      {
+        key: "contentStyle",
+        label: "content_style",
+        hint: "素材策略",
+        sprite: "content-style",
+        options: [
+          { value: "icon-led", description: "图标承担主要表达" },
+          { value: "screenshot-led", description: "真实产品截图为主" },
+          { value: "illustration-led", description: "插画/抽象图形为主" },
+          { value: "photo-led", description: "真实摄影为主" },
+          { value: "data-led", description: "图表数字为主" },
+          { value: "logo-led", description: "Logo 阵列为主" },
+          { value: "mixed-media", description: "多种素材并重" }
+        ]
+      }
+    ];
+
+    const state = Object.fromEntries(
+      fieldGroups.map((group) => [group.key, group.options[0].value])
+    );
+
+    const optionGroups = document.getElementById("optionGroups");
+    const output = document.getElementById("signatureOutput");
+    const notes = document.getElementById("signatureNotes");
+    const selectedStrip = document.getElementById("selectedStrip");
+
+    const noteMap = {
+      "capability-overview": "适合用户想快速扫清能力点、卖点或功能范围时命中。",
+      "process-explainer": "适合用户想理解一个流程如何工作时命中。",
+      "deep-dive-showcase": "适合用户想看复杂功能如何被产品截图解释时命中。",
+      "trust-building": "适合用户想找信任证明、客户背书或品牌阵列时命中。",
+      "comparison": "适合用户需要比较方案、套餐、前后差异时命中。",
+      "conversion-push": "适合用户想找短促、明确的行动召唤模块时命中。",
+      "attention-capture": "适合用户想找页面第一印象或强视觉开场时命中。"
+    };
+
+    function thumbStyleFor(sprite, index) {
+      const row = Math.floor(index / 2);
+      const col = index % 2;
+      const yPositions = ["0%", "33.3333%", "66.6667%", "100%"];
+      return [
+        `--thumb-image: url("assets/pattern-bitmaps/${sprite}.png")`,
+        `--thumb-x: ${col === 0 ? "0%" : "100%"}`,
+        `--thumb-y: ${yPositions[row] || "0%"}`
+      ].join("; ");
+    }
+
+    function renderOptionGroups() {
+      optionGroups.innerHTML = "";
+      for (const group of fieldGroups) {
+        const section = document.createElement("section");
+        section.className = "field-option-group";
+        section.setAttribute("aria-label", group.label);
+
+        const header = document.createElement("div");
+        header.className = "field-option-header";
+
+        const title = document.createElement("div");
+        title.className = "field-option-title";
+        title.textContent = group.label;
+
+        const hint = document.createElement("div");
+        hint.className = "field-option-hint";
+        hint.textContent = `${group.hint} · ${group.options.length} options`;
+
+        header.append(title, hint);
+        section.appendChild(header);
+
+        const grid = document.createElement("div");
+        grid.className = "option-grid";
+
+        group.options.forEach((option, optionIndex) => {
+          const button = document.createElement("button");
+          const isActive = state[group.key] === option.value;
+          button.type = "button";
+          button.className = `option-card${isActive ? " active" : ""}`;
+          button.setAttribute("aria-pressed", String(isActive));
+          button.setAttribute("aria-label", `${group.label}: ${option.value}`);
+
+          const thumb = document.createElement("span");
+          thumb.className = "thumb";
+          thumb.style.cssText = thumbStyleFor(group.sprite, optionIndex);
+
+          const copy = document.createElement("span");
+          copy.className = "option-copy";
+          const name = document.createElement("span");
+          name.className = "option-name";
+          name.textContent = option.value;
+          const description = document.createElement("span");
+          description.className = "option-description";
+          description.textContent = option.description;
+          copy.append(name, description);
+
+          button.append(thumb, copy);
+          button.addEventListener("click", () => {
+            state[group.key] = option.value;
+            renderOptionGroups();
+            updateSignature();
+          });
+          grid.appendChild(button);
+        });
+
+        section.appendChild(grid);
+        optionGroups.appendChild(section);
+      }
+    }
+
+    function updateSignature() {
+      const signature = [
+        state.sectionType,
+        state.messageIntent,
+        state.structurePattern,
+        state.layoutSkeleton,
+        state.contentStyle
+      ].join(" / ");
+
+      output.textContent = signature;
+      notes.innerHTML = "";
+      selectedStrip.innerHTML = "";
+
+      for (const group of fieldGroups) {
+        const chip = document.createElement("span");
+        chip.className = "selected-chip";
+        chip.textContent = `${group.label}: ${state[group.key]}`;
+        selectedStrip.appendChild(chip);
+      }
+
+      const items = [
+        noteMap[state.messageIntent] || "适合按设计意图检索相似结构时命中。",
+        "structure_pattern 只描述可复用结构形状，不重复 message_intent 的 why。",
+        "content_style 只是媒体/素材策略；具体画面主角统一进入 evidence。"
+      ];
+
+      for (const item of items) {
+        const li = document.createElement("li");
+        li.textContent = item;
+        notes.appendChild(li);
+      }
+    }
+
+    renderOptionGroups();
+    updateSignature();
+
+    document.getElementById("copyTemplate").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const text = document.getElementById("templateText").innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        button.textContent = "Copied";
+      } catch {
+        button.textContent = "Select manually";
+      }
+      window.setTimeout(() => {
+        button.textContent = "Copy template";
+      }, 1400);
+    });
+  </script>
+</body>
+</html>

@@ -7,6 +7,8 @@ description: Find recent Eagle image items and recent UIBook-synced screenshots 
 
 Use this skill when analysis must come from the current conversation, not from a separate API-driven script.
 
+This workflow writes an Eagle-only UIBook Pattern Layer for section-level screenshots. The Pattern Layer sits above the existing UIBook taxonomy: it captures design intent, reusable structure, material strategy, and a future Smart Discovery signature without changing UIBook database fields or frontend filters.
+
 ## First Question
 
 Before running `scan`, first get the current counts for each time window, then ask which time window to use unless the user already specified one.
@@ -41,12 +43,14 @@ Default conversation behavior:
 6. Ask for the scan window if the user did not already specify it.
 7. Use the scan command to get candidate item IDs and local image paths.
 8. Let the current Codex conversation inspect the chosen screenshot and draft the analysis block.
-9. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
-10. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
-11. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
-12. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
-13. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
-14. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
+9. For section-level screenshots only, append `## UIBook Pattern Layer` inside the same replaceable AI block.
+   For long page or full-page screenshots, do not append Pattern Layer in v1 unless the user explicitly asks for experimental page-level pattern analysis.
+10. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
+11. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
+12. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
+13. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
+14. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
+15. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
 
 ## Default Processing Order
 
@@ -55,13 +59,14 @@ Once the user picks a time window, treat the end-to-end flow as:
 1. `scan`
 2. inspect the image in this conversation
 3. draft the AI analysis block from observed screenshot evidence only
-4. run the quality gate before writing
-5. `apply` the annotation only if the block passes the quality gate
-6. evaluate the semantically best existing folder path
-7. for unfiled items, inspect the image visually before assigning any folder
-8. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
-9. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
-10. only enter correction mode for already-filed items when the user explicitly asks for folder correction
+4. for section-level screenshots only, append `UIBook Pattern Layer` from the same visual evidence
+5. run the quality gate before writing
+6. `apply` the annotation only if the block passes the quality gate
+7. evaluate the semantically best existing folder path
+8. for unfiled items, inspect the image visually before assigning any folder
+9. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
+10. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
+11. only enter correction mode for already-filed items when the user explicitly asks for folder correction
 
 Do not treat folder assignment as a separate follow-up task. It is part of the default completion criteria for each processed candidate.
 
@@ -77,6 +82,7 @@ Hard rules before writing any AI block:
 - If the original image is too large or too hard to inspect in one pass, inspect key regions or skip the item and report it as `needs_manual_review`.
 - If you cannot name at least 3 concrete visible details from the screenshot, do not write the block.
 - If the screenshot is a long page, include page-specific section evidence, not only "long scroll page" structure.
+- If the screenshot is a long page, full-page scroll capture, or contains multiple stacked page sections, do not append `## UIBook Pattern Layer` in v1. Write the normal bilingual page analysis only, unless the user explicitly asked for experimental page-level pattern analysis.
 - Never prioritize completion count over note quality. It is better to process fewer images than to write unreliable notes.
 
 Each finished block must include screenshot-specific evidence:
@@ -87,6 +93,20 @@ Each finished block must include screenshot-specific evidence:
 - `Color Palette`: concrete colors and where they are used.
 - `Visual Memory Cues`: concrete visual anchors, such as portraits, clothing, photos, product mockups, diagrams, decorative motifs, textures, or specific image treatments.
 - `Visual Notes`: what makes this specific screenshot useful as a UI/design reference.
+
+For section-level screenshots, each finished block must also include `## UIBook Pattern Layer` with:
+- `Pattern Profile`: `section_type`, `message_intent`, `structure_pattern`, `layout_skeleton`, `information_sequence`, `content_style`, `interaction_implication`, and `design_language_modifier`.
+- `Similarity Signature`: exactly `section_type / message_intent / structure_pattern / layout_skeleton / content_style`.
+- `Discovery Note`: `match_when` and `avoid_when`, focused on Smart Discovery intent rather than proof of effectiveness.
+- `Evidence`: at least 3 concrete visible details from the screenshot.
+- `Confidence`: `pattern_confidence` as `high`, `medium`, or `low`, plus a short reason.
+
+Pattern Layer decision rules:
+- Decide `message_intent` before `content_style`; `content_style` is a material strategy, not the final pattern.
+- Do not write claims such as "better conversion", "more effective", or "proven" unless the screenshot visibly contains data supporting the claim.
+- Similarity should group sections by intent and structure before visual style.
+- If evidence is too weak to support 3 concrete bullets, mark `pattern_confidence: low` or skip writing for manual review.
+- For long page screenshots, full-page scroll captures, or screenshots containing multiple stacked page sections, skip Pattern Layer entirely in v1 unless the user explicitly asks for experimental page-level patterns.
 
 Forbidden template phrases:
 - `It captures the page as a design reference`
@@ -224,6 +244,8 @@ Supported image formats for conversation analysis:
 
 The block format is documented in [references/output-format.md](references/output-format.md).
 
+The section Pattern Layer is documented in [references/pattern-layer.md](references/pattern-layer.md).
+
 ## Conversation Rules
 
 - Use the scan output to identify the exact item ID and image path.
@@ -237,11 +259,12 @@ The block format is documented in [references/output-format.md](references/outpu
 - Use the current conversation's vision ability to inspect the screenshot.
 - Never draft notes from a reusable brand/page-type template. Every section must be grounded in visible screenshot evidence.
 - Do not let a contact sheet be the only evidence for detailed notes unless all required details are clearly readable there.
-- For long screenshots, inspect enough of the original image to identify actual top, middle, and bottom content before writing.
+- For long screenshots, inspect enough of the original image to identify actual top, middle, and bottom content before writing, but do not append `## UIBook Pattern Layer` by default.
 - Before applying, check that the block names concrete visible text, concrete layout regions, concrete components, concrete colors, and concrete visual memory cues.
 - If the draft could plausibly apply to several different screenshots from the same brand, it is too generic and must be rewritten.
 - If a candidate cannot be analyzed with sufficient specificity in the current run, skip writing for that item and report it instead of writing a generic block.
 - Separate each analysis into three layers before drafting: visible text, UI structure, and visual subject cues.
+- For section-level screenshots, add a fourth layer before drafting: pattern intent and reusable structure.
 - Draft the block as two full passes:
   - English version first
   - Chinese version second
@@ -255,6 +278,12 @@ The block format is documented in [references/output-format.md](references/outpu
 - Keep `Color Palette` focused on colors only; do not use it to carry photography or subject descriptions.
 - If the image area is a dominant part of the card or page, write at least two sentences in `Visual Memory Cues`; if it is a small supporting image, one sentence is enough as long as it explains the role it plays.
 - The Chinese pass should mirror the English pass faithfully, not introduce a second different interpretation.
+- For section-level screenshots, always append `## UIBook Pattern Layer` after the Chinese pass.
+- In `UIBook Pattern Layer`, use `message_intent` for what the section helps the user understand or do, `structure_pattern` for the reusable structure, and `content_style` for the dominant material type.
+- Put concrete screenshot subjects, such as dashboard mockups, avatar grids, photos, diagrams, and logo arrays, in `Evidence` or `Visual Memory Cues`; do not promote them into the similarity signature.
+- Use `none-visible` for `interaction_implication` when no carousel, tabs, chat flow, command input, onboarding choice, progress state, or before-after behavior is visible.
+- Write `Discovery Note` as search intent guidance, not as an effectiveness argument.
+- Treat low-confidence pattern output as research-only; it is not a formal UIBook pattern candidate.
 - When an item has no Eagle folder, fetch the current full folder tree first and classify against existing folders only.
 - If an item already has any folder, treat that folder state as locked and user-owned in the default flow, but do not treat the item as fully processed until the AI analysis block is written or refreshed.
 - Prefer the semantically most accurate existing folder path based on visual content first, then page type, URL, file name, and folder naming.

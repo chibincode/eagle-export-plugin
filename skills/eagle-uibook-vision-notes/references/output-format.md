@@ -24,6 +24,8 @@ Default output is bilingual and non-interleaved:
 - English analysis first
 - Chinese analysis second
 - Do not alternate languages section by section
+- For section-level screenshots, append `## UIBook Pattern Layer` after the Chinese analysis.
+- For long page screenshots, full-page scroll captures, or screenshots containing multiple stacked page sections, do not append `## UIBook Pattern Layer` in v1 unless the user explicitly asks for experimental page-level pattern analysis.
 
 Recommended block layout:
 
@@ -84,6 +86,34 @@ Recommended block layout:
 - analyzedAt: 2026-04-16T13:05:00+08:00
 - source: Eagle local image
 - model: gpt-4.1-mini
+
+## UIBook Pattern Layer
+
+### Pattern Profile
+- section_type:
+- message_intent:
+- structure_pattern:
+- layout_skeleton:
+- information_sequence:
+- content_style:
+- interaction_implication:
+- design_language_modifier:
+
+### Similarity Signature
+`section_type / message_intent / structure_pattern / layout_skeleton / content_style`
+
+### Discovery Note
+- match_when:
+- avoid_when:
+
+### Evidence
+- ...
+- ...
+- ...
+
+### Confidence
+- pattern_confidence:
+- reason:
 <!-- UIBOOK_AI_ANALYSIS_END -->
 ```
 
@@ -103,6 +133,14 @@ Recommended block layout:
 - If there are no people, describe the strongest non-text visual anchor instead, such as charts, device frames, 3D objects, illustrations, gradients, patterns, or decorative motifs.
 - Keep `Color Palette` / `配色信息` focused on color usage only; do not hide subject or photography details there.
 - The Chinese version should be a faithful translation/adaptation of the English version, not a second different analysis.
+- For section-level screenshots, include `## UIBook Pattern Layer` after the Chinese pass using the exact field names shown in the template.
+- For long page screenshots, write the normal bilingual analysis only. Do not force one combined Pattern Layer across multiple visible sections.
+- Decide `message_intent` before `content_style`. `content_style` is a material strategy, not the final pattern.
+- Do not claim conversion, performance, or design effectiveness unless the screenshot itself contains supporting data.
+- Keep `similarity_signature` stable and compact: `section_type / message_intent / structure_pattern / layout_skeleton / content_style`.
+- Put concrete screenshot subjects in `Evidence` or `Visual Memory Cues`; do not add a separate subject field to the Pattern Layer signature.
+- Use `interaction_implication: none-visible` when no interaction is visible or strongly implied.
+- Detailed Pattern Layer rules live in [pattern-layer.md](pattern-layer.md).
 
 ## Quality Gate
 
@@ -114,6 +152,10 @@ Before writing to Eagle, the block must pass this specificity check:
 - `Components` must name visible components, such as portrait cards, pricing tables, article cards, code blocks, product mockups, video players, logo walls, footer columns, compliance badges, or specific form fields.
 - `Color Palette` must connect colors to visible usage, such as black footer, pale mint hero background, purple gradient stats card, red CTA, or gray document sidebar.
 - `Visual Memory Cues` must include concrete visual anchors that would help the user remember the asset later.
+- For section-level screenshots, `UIBook Pattern Layer` must include all fields from `section_type` through `confidence`.
+- `Evidence` in `UIBook Pattern Layer` must contain at least 3 screenshot-specific visible details.
+- `message_intent`, `structure_pattern`, and `content_style` must not all say the same thing; they describe intent, structure, and material respectively.
+- Low-confidence Pattern Layer output is allowed in the note, but it must be marked `pattern_confidence: low` and should not be treated as a candidate formal pattern.
 - If the draft could apply to multiple screenshots from the same brand, it is too generic and must be rewritten.
 - If the image cannot be inspected with enough detail, do not write the AI block. Report the item as needing manual review instead.
 
