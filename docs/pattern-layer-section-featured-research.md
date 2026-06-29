@@ -25,6 +25,7 @@ Current local read-only scan:
 - 29 are image screenshots; 1 is an mp4 item.
 - Most screenshots are `3840x2160` single-screen sections, which are suitable for section-level Pattern Layer analysis.
 - Raw item snapshot: [section-featured-recent30.json](assets/section-featured-recent30.json)
+- Read-only matrix: [pattern-layer-section-featured-discovery-matrix.md](pattern-layer-section-featured-discovery-matrix.md)
 
 ![Recent 30 Section Featured samples](assets/section-featured-recent30-contact-sheet.jpg)
 
