@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Section Featured Pattern Discovery</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f1;
+      --paper: #ffffff;
+      --ink: #151820;
+      --muted: #666f7e;
+      --line: #d8ded2;
+      --soft: #edf2ea;
+      --soft-blue: #eaf1f9;
+      --teal: #1d7c70;
+      --blue: #2f63a8;
+      --coral: #c65e46;
+      --amber: #a56f18;
+      --plum: #7252a3;
+      --green: #557b2f;
+      --shadow: 0 18px 44px rgba(25, 32, 42, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(244,246,241,0.95) 42%, var(--bg)),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 30px 24px 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 10px 0 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--ink);
+      border-radius: 7px;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .toplinks {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .toplinks a {
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(380px, 1.05fr);
+      gap: 28px;
+      align-items: stretch;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.82);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--teal);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(42px, 7vw, 82px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      font-weight: 650;
+    }
+
+    .lead {
+      max-width: 720px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 26px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .hero-panel {
+      display: grid;
+      gap: 12px;
+      align-content: center;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #ffffff, #eef4f5);
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .flow-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .flow-node {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--teal);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.9);
+      font-weight: 800;
+    }
+
+    .flow-row:nth-child(2) .flow-node { border-left-color: var(--coral); }
+    .flow-row:nth-child(3) .flow-node { border-left-color: var(--blue); }
+    .flow-row:nth-child(4) .flow-node { border-left-color: var(--amber); }
+
+    .section {
+      margin-top: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.76);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .section-header p {
+      max-width: 680px;
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .signature {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .signature-step {
+      min-height: 92px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .signature-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: var(--blue);
+    }
+
+    .signature-step span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cluster-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .cluster-card {
+      display: grid;
+      gap: 12px;
+      min-height: 245px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .cluster-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .cluster-count {
+      display: grid;
+      place-items: center;
+      min-width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: white;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .cluster-key {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .cluster-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .rank-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .rank-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 24px;
+      padding: 0 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 20px;
+    }
+
+    .filter-button {
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .filter-button[aria-pressed="true"] {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: white;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .item-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 12px 28px rgba(25, 32, 42, 0.06);
+    }
+
+    .thumb {
+      position: relative;
+      aspect-ratio: 1.42 / 1;
+      background-image: url("assets/section-featured-recent30-contact-sheet.jpg");
+      background-size: 500% 600%;
+      background-position: var(--x) var(--y);
+      background-repeat: no-repeat;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.38));
+      pointer-events: none;
+    }
+
+    .rank-badge {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: white;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .confidence {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      z-index: 1;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.9);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .item-body {
+      padding: 18px;
+    }
+
+    .item-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .item-id {
+      margin-top: 6px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.intent { background: #e9f4f1; color: var(--teal); }
+    .tag.pattern { background: #eef1fb; color: var(--blue); }
+    .tag.layout { background: #fff4df; color: var(--amber); }
+    .tag.style { background: #f8ece7; color: var(--coral); }
+
+    .summary {
+      margin: 14px 0 0;
+      color: #303742;
+    }
+
+    .evidence {
+      margin: 14px 0 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfa;
+    }
+
+    .evidence strong,
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .evidence ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .contact-sheet {
+      width: 100%;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+    }
+
+    .footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .inline-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--ink);
+    }
+
+    @media (max-width: 1040px) {
+      .hero,
+      .matrix-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cluster-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .signature {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 18px 14px 52px;
+      }
+
+      .topbar,
+      .section-header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .hero,
+      .section {
+        padding: 20px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-row {
+        grid-template-columns: 1fr;
+      }
+
+      .cluster-grid,
+      .signature {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topbar">
+      <div class="brand"><span class="mark">UI</span> Pattern Discovery</div>
+      <div class="toplinks">
+        <a href="pattern-layer-framework.html">Framework</a>
+        <a href="pattern-layer-section-featured-discovery-matrix.md">Raw matrix</a>
+        <a href="assets/section-featured-recent30.json">Sample JSON</a>
+      </div>
+    </div>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Section_Featured 产品功能亮点</p>
+        <h1 id="page-title">Pattern Discovery Matrix</h1>
+        <p class="lead">
+          这页把最近 30 张 Eagle 截图变成可读的研究板。我们先不写回 Eagle，只看真实截图里哪些结构反复出现，再决定哪些模式值得进入正式候选。
+        </p>
+        <div class="hero-meta" aria-label="Research scope">
+          <span class="pill">30 recent items</span>
+          <span class="pill">29 images + 1 video placeholder</span>
+          <span class="pill">Read-only</span>
+          <span class="pill">No DB / no Eagle writeback</span>
+        </div>
+      </div>
+
+      <div class="hero-panel" aria-label="Discovery method">
+        <div class="flow-row">
+          <div class="flow-label">Evidence</div>
+          <div class="flow-node">先看截图可见事实</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">Intent</div>
+          <div class="flow-node">判断它想帮用户理解什么</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">Structure</div>
+          <div class="flow-node">抽出可复用结构形状</div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">Promotion</div>
+          <div class="flow-node">出现 3 次以上再作为候选模式</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="signature-title">
+      <div class="section-header">
+        <div>
+          <h2 id="signature-title">Reading Model</h2>
+          <p>这次研究先按五段 signature 读图。`content_style` 是素材策略，不负责定义核心模式。</p>
+        </div>
+      </div>
+
+      <div class="signature" aria-label="Pattern signature fields">
+        <div class="signature-step">
+          <strong>section_type</strong>
+          <span>这里固定为 Features，因为样本来自产品功能亮点 folder。</span>
+        </div>
+        <div class="signature-step">
+          <strong>message_intent</strong>
+          <span>这块 section 想完成的认知任务，例如 overview、deep-dive、proof。</span>
+        </div>
+        <div class="signature-step">
+          <strong>structure_pattern</strong>
+          <span>真正要聚类的复用结构，例如 equal-card-grid。</span>
+        </div>
+        <div class="signature-step">
+          <strong>layout_skeleton</strong>
+          <span>页面骨架，例如 grid、split、centered、bento。</span>
+        </div>
+        <div class="signature-step">
+          <strong>content_style</strong>
+          <span>素材承载方式，例如 screenshot-led、data-led、mixed-media。</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="clusters-title">
+      <div class="section-header">
+        <div>
+          <h2 id="clusters-title">Candidate Clusters</h2>
+          <p>按 `message_intent + structure_pattern` 计数。下面四类已经达到 3 次以上，适合进入下一轮命名讨论。</p>
+        </div>
+      </div>
+      <div class="cluster-grid" id="clusterGrid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="matrix-title">
+      <div class="section-header">
+        <div>
+          <h2 id="matrix-title">30-Item Research Board</h2>
+          <p>每张卡片上方是从 contact sheet 裁出来的截图，下方是这一张的模式判断和证据。点击筛选可以只看某个候选 cluster。</p>
+        </div>
+        <span class="pill" id="visibleCount">30 visible</span>
+      </div>
+      <div class="filters" id="filters" aria-label="Cluster filters"></div>
+      <div class="matrix-grid" id="matrixGrid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="sheet-title">
+      <div class="section-header">
+        <div>
+          <h2 id="sheet-title">Contact Sheet</h2>
+          <p>原始缩略图总览保留在这里，方便回到整体样本感受。</p>
+        </div>
+      </div>
+      <img class="contact-sheet" src="assets/section-featured-recent30-contact-sheet.jpg" alt="Recent 30 Section Featured samples contact sheet">
+    </section>
+
+    <footer class="footer">
+      Source file: <span class="inline-code">docs/pattern-layer-section-featured-discovery.html</span>. Research source: <span class="inline-code">docs/pattern-layer-section-featured-discovery-matrix.md</span>.
+    </footer>
+  </main>
+
+  <script>
+    const clusters = [
+      {
+        key: "capability-overview / equal-card-grid",
+        count: 9,
+        ranks: [10, 11, 15, 20, 21, 23, 26, 27, 30],
+        tone: "teal",
+        read: "多张等权卡片快速说明一组产品能力。素材可以是插画、截图、文字、数据或混合媒体。"
+      },
+      {
+        key: "workflow-explainer / multi-panel-workflow-dashboard",
+        count: 5,
+        ranks: [3, 8, 13, 25, 28],
+        tone: "blue",
+        read: "用多个面板解释复杂功能如何工作，不一定需要明确的 1-2-3 步骤。"
+      },
+      {
+        key: "single-capability-deep-dive / centered-product-panel",
+        count: 4,
+        ranks: [2, 7, 17, 22],
+        tone: "coral",
+        read: "一个核心能力由大产品面板承载，用户主要通过产品画面理解这个功能点。"
+      },
+      {
+        key: "proof-backed-benefit / dashboard-proof-panel",
+        count: 3,
+        ranks: [1, 24, 29],
+        tone: "amber",
+        read: "功能利益点通过指标、图表、金额或 dashboard 变得可感知。"
+      }
+    ];
+
+    const items = [
+      {
+        rank: 1,
+        id: "MQROJRH9ICY25",
+        title: "Factory - token savings proof",
+        summary: "Factory 用大型分析面板支撑“buy fewer tokens”的功能利益点。",
+        intent: "proof-backed-benefit",
+        pattern: "dashboard-proof-panel",
+        layout: "split",
+        style: "data-led",
+        confidence: "High",
+        evidence: ["左侧 headline 是明确的节省 claim", "右侧是深色 dashboard card", "柱状图和 KPI row 作为 proof object"],
+        note: "强候选 dashboard-proof-panel；不要按 tokens 这种产品细节命名。"
+      },
+      {
+        rank: 2,
+        id: "MQROJJ59IXJNK",
+        title: "Factory - every surface",
+        summary: "一个产品跨 CLI、desktop、mobile、Slack、Jira 等工作表面的展示。",
+        intent: "single-capability-deep-dive",
+        pattern: "centered-product-panel",
+        layout: "centered",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["居中 headline", "surface selector row 暗示上下文切换", "desktop + phone mockup 承载核心承诺"],
+        note: "按产品舞台结构聚类，不按设备组合聚类。"
+      },
+      {
+        rank: 3,
+        id: "MQROJ8CW5FY7X",
+        title: "Factory - software factory definition",
+        summary: "用三个技术面板定义 Software Factory 概念。",
+        intent: "workflow-explainer",
+        pattern: "multi-panel-workflow-dashboard",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["三个等宽技术面板", "包含 radar chart、deployment list、node map", "section 文案在解释一个系统概念"],
+        note: "也像 overview，但 Defining 和系统面板让 workflow-explainer 更强。"
+      },
+      {
+        rank: 4,
+        id: "MQQ8X495WZIHB",
+        title: "Vercel - Apps",
+        summary: "Vercel Apps 用集成产品 UI 和 Zapier proof 解释生态能力。",
+        intent: "ecosystem-capability",
+        pattern: "app-ecosystem-grid",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["大标题是 Apps", "有 Zapier 使用量证明", "嵌入式 app UI 是视觉主体"],
+        note: "暂作观察，等更多 ecosystem 样本再提升。"
+      },
+      {
+        rank: 5,
+        id: "MQQ2U1D8NQU6R",
+        title: "CoTrain - intelligent tools",
+        summary: "用一组柔和 UI preview cards 展示内置智能工具。",
+        intent: "ecosystem-capability",
+        pattern: "app-ecosystem-grid",
+        layout: "grid",
+        style: "mixed-media",
+        confidence: "High",
+        evidence: ["headline 写 Coupled with Intelligent tools", "多个 card 展示 AI response、interview、matching、earnings", "整体像工具生态集合"],
+        note: "后续可能拆成 connected-tools-card-grid。"
+      },
+      {
+        rank: 6,
+        id: "MQHFERHNEVEQY",
+        title: "Framer - announcements",
+        summary: "多个 announcement visual tiles 组成的更新/场景展示区。",
+        intent: "use-case-gallery",
+        pattern: "visual-example-grid",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "Medium",
+        evidence: ["可见 Read more about the announcements", "多个视觉 tile", "每个 tile 预览一个更新或场景"],
+        note: "证据更像 editorial gallery，不像稳定功能解释。"
+      },
+      {
+        rank: 7,
+        id: "MQHFAFA3C5PCF",
+        title: "Framer - full platform",
+        summary: "用深色产品界面证明 Framer 不只是 vibes，而是完整平台。",
+        intent: "single-capability-deep-dive",
+        pattern: "centered-product-panel",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["大产品 UI 占主导", "周围有 performance、CMS、collaboration、uptime", "platform claim 由产品画面承载"],
+        note: "虽然有多个 panel，但核心是一个产品 surface 深挖。"
+      },
+      {
+        rank: 8,
+        id: "MQHFA29YIV8YP",
+        title: "Framer - agents alongside you",
+        summary: "用内容卡片和右侧 chat/sidebar 表达 AI agent 工作流。",
+        intent: "workflow-explainer",
+        pattern: "multi-panel-workflow-dashboard",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["headline 直接说 agents work alongside you", "左侧内容 cards", "右侧 prompt/chat panel 暗示工作流"],
+        note: "没有编号步骤，但流程暗示很强。"
+      },
+      {
+        rank: 9,
+        id: "MQHF9FV2Z32G8",
+        title: "Framer - Haus example",
+        summary: "通过具体网站项目示例展示 Framer 的应用场景。",
+        intent: "use-case-gallery",
+        pattern: "visual-example-grid",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "Medium",
+        evidence: ["可见 Haus 品牌示例", "多张 project preview", "右侧 sidebar 像上下文工作区"],
+        note: "如果原页面证明它是单功能介绍，可再改 deep-dive。"
+      },
+      {
+        rank: 10,
+        id: "MQF3GV46WBK8E",
+        title: "YouMind - creation states",
+        summary: "三张卡表达从灵感、探索到成形的创作能力范围。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "illustration-led",
+        confidence: "High",
+        evidence: ["三张等权卡片", "每张卡有 title 和 image", "整体解释一组创作能力"],
+        note: "证明 equal-card-grid 不必是 screenshot-led。"
+      },
+      {
+        rank: 11,
+        id: "MQ20AW5MRNRF0",
+        title: "Dynadot - domain building cards",
+        summary: "四张高卡展示域名相关的建站、邮箱、Logo、移动管理能力。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "mixed-media",
+        confidence: "High",
+        evidence: ["headline 是 Build on Your Domain Names", "多张 tall cards", "每张卡代表一个能力点"],
+        note: "卡片等权比具体四列数量更重要。"
+      },
+      {
+        rank: 12,
+        id: "MQ209TO3YTK1L",
+        title: "Dynadot - buy vs transfer",
+        summary: "用两张大卡帮助用户在买域名和转移域名之间理解选择。",
+        intent: "comparison-support",
+        pattern: "two-card-comparison-panel",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["两张等权大卡", "一个 Buy a Domain Name，一个 Transfer a Domain Name", "CTA 在下方收束"],
+        note: "不要先并入 overview，主任务是选择比较。"
+      },
+      {
+        rank: 13,
+        id: "MPXTOD1PUQAB4",
+        title: "Endra AI - heavy lifting",
+        summary: "三张深色 feature panels 拆解 MEP design 的复杂工作流。",
+        intent: "workflow-explainer",
+        pattern: "multi-panel-workflow-dashboard",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["三个 panel 位于同一个 claim 下", "分别显示 integration、collaboration、documentation", "每张有说明 caption"],
+        note: "可和 Factory、Giza 的复杂系统解释聚在一起。"
+      },
+      {
+        rank: 14,
+        id: "MPWSDBDKSS1UA",
+        title: "Delphi - insight process",
+        summary: "用中心过程图和支持卡解释 insight 与 opportunity。",
+        intent: "workflow-explainer",
+        pattern: "process-diagram-panel",
+        layout: "split",
+        style: "data-led",
+        confidence: "Medium",
+        evidence: ["中心是浅色 UI diagram", "有连接线/步骤关系", "周围卡片承载 insight 和 opportunity"],
+        note: "当前样本里是 one-off，先不提升为正式模式。"
+      },
+      {
+        rank: 15,
+        id: "MPUMQXM65OHT4",
+        title: "Column - financial building blocks",
+        summary: "模块化网格展示金融产品 building blocks。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "text-led",
+        confidence: "High",
+        evidence: ["headline 写 building blocks", "重复模块行和标签", "覆盖 ACH、Checks、Wires 等能力集合"],
+        note: "右侧 UI 很抽象，仍按 modular capability grid 判断。"
+      },
+      {
+        rank: 16,
+        id: "MPUMQJI9EIDW2",
+        title: "Column - customer segments",
+        summary: "左侧文字解释客群，右侧用技术图形承载概念。",
+        intent: "single-capability-deep-dive",
+        pattern: "split-copy-product-panel",
+        layout: "split",
+        style: "illustration-led",
+        confidence: "Medium",
+        evidence: ["左列列出用户类型", "右侧是银行/架构感图形", "整段聚焦一个解释对象"],
+        note: "如果后续更多架构图出现，可以拆 architecture-specific pattern。"
+      },
+      {
+        rank: 17,
+        id: "MPUMQ2ADAL8BD",
+        title: "Column - USD building blocks",
+        summary: "深色舞台中聚焦 flexible USD building blocks 能力。",
+        intent: "single-capability-deep-dive",
+        pattern: "centered-product-panel",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["深色 section", "一个 feature headline", "UI/product panel 和技术对象承载解释"],
+        note: "视觉风格不同，但结构上和 ranks 2、7、22 同类。"
+      },
+      {
+        rank: 18,
+        id: "MPUM7QRHZHF3B",
+        title: "Video placeholder",
+        summary: "recent sample 里的 mp4，当前 contact sheet 只显示 placeholder。",
+        intent: "needs-manual-review",
+        pattern: "unsupported-video",
+        layout: "unknown",
+        style: "unknown",
+        confidence: "Low",
+        evidence: ["不是静态截图", "contact sheet 无可靠 frame", "本轮不能做 section-level pattern 判断"],
+        note: "排除 promotion，等抽 representative frame 后再看。"
+      },
+      {
+        rank: 19,
+        id: "MPRTI1E3Q3QWI",
+        title: "Webflow - marketing teams",
+        summary: "左侧文案/accordion + 右侧产品 UI 解释某个 audience-specific 能力。",
+        intent: "single-capability-deep-dive",
+        pattern: "split-copy-product-panel",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["左侧 copy 和 accordion", "右侧产品 UI screenshot", "聚焦 marketing teams 这一个使用对象"],
+        note: "和 rank 16 结构相近，只是素材从插画变截图。"
+      },
+      {
+        rank: 20,
+        id: "MPRTHS4N4NAWS",
+        title: "Webflow - AI knowledge",
+        summary: "上方 mockup 加下方三张能力卡，说明 AI knowledge base 能力。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["上方大产品图", "下方 Build、Manage、Optimize 三卡", "卡片定义能力集合"],
+        note: "底部三卡比 mockup 更决定 pattern。"
+      },
+      {
+        rank: 21,
+        id: "MPQMUUQI04PVY",
+        title: "Bevel - health cards",
+        summary: "三张手机 app 卡解释 strain、sleep、recovery 能力。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["三张等权卡片", "每张有手机截图", "标签对应 Strain、Sleep、Recovery"],
+        note: "可叫 mobile-screen-trio，但 discovery 阶段先归 equal-card-grid。"
+      },
+      {
+        rank: 22,
+        id: "MPQMU840ENRMJ",
+        title: "Bevel - and that's not all",
+        summary: "功能列表配一个 phone mockup，解释同一产品上下文里的更多能力。",
+        intent: "single-capability-deep-dive",
+        pattern: "centered-product-panel",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["左侧是功能列表", "右侧是 phone mockup", "围绕一个产品上下文继续深挖"],
+        note: "非深色风格也可以属于 centered-product-panel。"
+      },
+      {
+        rank: 23,
+        id: "MPOVR7355V0O2",
+        title: "Sierra - customer experiences",
+        summary: "用多张 feature cards 说明 customer experience 能力，并附带 trust/reliability。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "Medium-high",
+        evidence: ["多个 feature cards", "中心有产品式 panel", "下方 trust and reliability 是辅助证明"],
+        note: "上方能力网格是主结构，信任证明是次层。"
+      },
+      {
+        rank: 24,
+        id: "MPOVR3WZ0LZ2U",
+        title: "Sierra - improve your AI",
+        summary: "用指标卡和图表支撑“Use AI to improve your AI”的功能利益点。",
+        intent: "proof-backed-benefit",
+        pattern: "dashboard-proof-panel",
+        layout: "grid",
+        style: "data-led",
+        confidence: "High",
+        evidence: ["可见 metric/chart card", "周围卡片是 monitor/evaluate/optimize", "benefit 由 measurable UI 支撑"],
+        note: "也有 workflow 感，但 data proof 的检索价值更强。"
+      },
+      {
+        rank: 25,
+        id: "MPOVR0OY6XHX5",
+        title: "Sierra - agent-building agent",
+        summary: "两个产品面板解释 agent-building agent 的流程能力。",
+        intent: "workflow-explainer",
+        pattern: "multi-panel-workflow-dashboard",
+        layout: "split",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["两个大 panel", "显示 builder 和 optimization states", "headline 描述 agent-building process"],
+        note: "没有显式 step numbers，但流程关系明确。"
+      },
+      {
+        rank: 26,
+        id: "MPOVQGUXKKNFX",
+        title: "Sierra - outcome cards",
+        summary: "多张彩色卡用头像、图标、评价展示客户场景和能力结果。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "bento",
+        style: "mixed-media",
+        confidence: "High",
+        evidence: ["彩色 cards 等权", "包含 team support、workflow、job completion、rating", "每卡表达一个 customer-facing capability"],
+        note: "也像 use-case gallery，但功能概览更强。"
+      },
+      {
+        rank: 27,
+        id: "MPNUXPJMITDRM",
+        title: "Liveblocks - collaborative features",
+        summary: "深色卡片布局列出用户期待的 collaborative features。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "text-led",
+        confidence: "High",
+        evidence: ["主 headline 是 broad feature set", "多张小 capability blocks", "内容以功能列表为主"],
+        note: "不要因为 dark style 把它归到 deep-dive。"
+      },
+      {
+        rank: 28,
+        id: "MPMHT7PRQUCSX",
+        title: "Giza - intelligent optimization",
+        summary: "三栏产品/故事面板解释 intelligent optimization。",
+        intent: "workflow-explainer",
+        pattern: "multi-panel-workflow-dashboard",
+        layout: "grid",
+        style: "screenshot-led",
+        confidence: "High",
+        evidence: ["三张等权 panel", "每张结合场景图、截图 overlay 和 caption", "整体暗示从动作到优化的过程"],
+        note: "和 ranks 3、8、13、25 是同一 workflow family。"
+      },
+      {
+        rank: 29,
+        id: "MPMHT2MHBXV50",
+        title: "Giza - agents as interface",
+        summary: "一个巨大 transaction/dashboard panel 让 agents as interface 的概念具体化。",
+        intent: "proof-backed-benefit",
+        pattern: "dashboard-proof-panel",
+        layout: "split",
+        style: "data-led",
+        confidence: "High",
+        evidence: ["dashboard 中有巨大金额", "table-like transaction UI", "claim 通过金融数据界面具体化"],
+        note: "它看起来是 screenshot-led，但更重要的是 proof-panel。"
+      },
+      {
+        rank: 30,
+        id: "MPKL8E1ZAVCBY",
+        title: "Hostinger - power and growth",
+        summary: "两列功能说明和底部四张 metric cards 表达 power/control 与 growth。",
+        intent: "capability-overview",
+        pattern: "equal-card-grid",
+        layout: "grid",
+        style: "data-led",
+        confidence: "High",
+        evidence: ["两列 feature bands", "有 expandable rows", "底部四张 metric cards 非常突出"],
+        note: "data-led overview 仍然按 equal-card-grid 聚类。"
+      }
+    ];
+
+    const clusterMap = new Map(clusters.map((cluster) => [cluster.key, cluster]));
+    const clusterGrid = document.querySelector("#clusterGrid");
+    const matrixGrid = document.querySelector("#matrixGrid");
+    const filters = document.querySelector("#filters");
+    const visibleCount = document.querySelector("#visibleCount");
+    let activeFilter = "all";
+
+    function clusterKey(item) {
+      return `${item.intent} / ${item.pattern}`;
+    }
+
+    function positionForRank(rank) {
+      const col = (rank - 1) % 5;
+      const row = Math.floor((rank - 1) / 5);
+      return {
+        x: `${(col / 4) * 100}%`,
+        y: `${(row / 5) * 100}%`
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderClusters() {
+      clusterGrid.innerHTML = clusters.map((cluster) => `
+        <article class="cluster-card">
+          <div class="cluster-top">
+            <p class="cluster-key">${escapeHtml(cluster.key)}</p>
+            <div class="cluster-count">${cluster.count}</div>
+          </div>
+          <p>${escapeHtml(cluster.read)}</p>
+          <div class="rank-list" aria-label="Ranks in cluster">
+            ${cluster.ranks.map((rank) => `<span class="rank-chip">#${rank}</span>`).join("")}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderFilters() {
+      const buttons = [
+        { key: "all", label: "All 30" },
+        ...clusters.map((cluster) => ({ key: cluster.key, label: cluster.key }))
+      ];
+
+      filters.innerHTML = buttons.map((button) => `
+        <button class="filter-button" type="button" data-filter="${escapeHtml(button.key)}" aria-pressed="${button.key === activeFilter}">
+          ${escapeHtml(button.label)}
+        </button>
+      `).join("");
+    }
+
+    function renderItems() {
+      const visibleItems = activeFilter === "all"
+        ? items
+        : items.filter((item) => clusterKey(item) === activeFilter);
+
+      visibleCount.textContent = `${visibleItems.length} visible`;
+
+      matrixGrid.innerHTML = visibleItems.map((item) => {
+        const position = positionForRank(item.rank);
+        const key = clusterKey(item);
+        const promoted = clusterMap.has(key);
+        return `
+          <article class="item-card">
+            <div class="thumb" style="--x: ${position.x}; --y: ${position.y};" role="img" aria-label="Thumbnail for rank ${item.rank}">
+              <div class="rank-badge">${item.rank}</div>
+              <div class="confidence">${escapeHtml(item.confidence)}</div>
+            </div>
+            <div class="item-body">
+              <h3 class="item-title">${escapeHtml(item.title)}</h3>
+              <div class="item-id">${escapeHtml(item.id)}${promoted ? " · promoted-candidate" : ""}</div>
+              <div class="tag-row">
+                <span class="tag intent">${escapeHtml(item.intent)}</span>
+                <span class="tag pattern">${escapeHtml(item.pattern)}</span>
+                <span class="tag layout">${escapeHtml(item.layout)}</span>
+                <span class="tag style">${escapeHtml(item.style)}</span>
+              </div>
+              <p class="summary">${escapeHtml(item.summary)}</p>
+              <div class="evidence">
+                <strong>Visible evidence</strong>
+                <ul>
+                  ${item.evidence.map((point) => `<li>${escapeHtml(point)}</li>`).join("")}
+                </ul>
+              </div>
+              <p class="note"><strong>Naming note</strong>${escapeHtml(item.note)}</p>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    filters.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-filter]");
+      if (!button) return;
+      activeFilter = button.dataset.filter;
+      renderFilters();
+      renderItems();
+    });
+
+    renderClusters();
+    renderFilters();
+    renderItems();
+  </script>
+</body>
+</html>
