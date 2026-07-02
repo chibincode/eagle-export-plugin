@@ -58,6 +58,19 @@ confidence:
 - Avoid one-off poetic pattern names. Prefer compact, reusable nouns that could group at least 3 examples later.
 - If the evidence cannot support 3 concrete bullets, set `pattern_confidence: low` and do not treat the item as a candidate formal pattern.
 
+## Section Featured Research
+
+For feature-section screenshots, especially images from `Section_Featured 产品功能亮点`, also consult [section-featured-patterns.md](section-featured-patterns.md).
+
+The first real-sample pass found these candidate clusters:
+
+- `capability-overview / equal-card-grid`
+- `workflow-explainer / multi-panel-workflow-dashboard`
+- `single-capability-deep-dive / centered-product-panel`
+- `proof-backed-benefit / dashboard-proof-panel`
+
+Use these as working candidates only when the visible screenshot evidence supports them. They should guide consistent naming, but they are not final product taxonomy values.
+
 ## Standard Output
 
 ```md
