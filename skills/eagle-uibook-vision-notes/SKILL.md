@@ -246,6 +246,8 @@ The block format is documented in [references/output-format.md](references/outpu
 
 The section Pattern Layer is documented in [references/pattern-layer.md](references/pattern-layer.md).
 
+The dynamic Pattern Learning System is documented in [references/pattern-learning-system.md](references/pattern-learning-system.md).
+
 ## Conversation Rules
 
 - Use the scan output to identify the exact item ID and image path.
@@ -258,6 +260,7 @@ The section Pattern Layer is documented in [references/pattern-layer.md](referen
 - Ask the user to confirm the target image or paste the full local image path if needed for inspection.
 - Use the current conversation's vision ability to inspect the screenshot.
 - Never draft notes from a reusable brand/page-type template. Every section must be grounded in visible screenshot evidence.
+- When the user asks for dynamic pattern learning, daily synthesis, category-level pattern summaries, or ongoing pattern research, keep Eagle annotations as per-image evidence and write cross-image synthesis into `docs/pattern-research/` using the Pattern Learning System reference.
 - Do not let a contact sheet be the only evidence for detailed notes unless all required details are clearly readable there.
 - For long screenshots, inspect enough of the original image to identify actual top, middle, and bottom content before writing, but do not append `## UIBook Pattern Layer` by default.
 - Before applying, check that the block names concrete visible text, concrete layout regions, concrete components, concrete colors, and concrete visual memory cues.

@@ -71,6 +71,12 @@ The first real-sample pass found these candidate clusters:
 
 Use these as working candidates only when the visible screenshot evidence supports them. They should guide consistent naming, but they are not final product taxonomy values.
 
+## Dynamic Learning Loop
+
+Pattern Layer outputs are per-image evidence. Cross-image synthesis belongs in the Pattern Learning System, documented in [pattern-learning-system.md](pattern-learning-system.md).
+
+Use daily reviews and registry entries to decide whether a repeated `message_intent + structure_pattern` should become an observation, candidate, adopted pattern, or deprecated name.
+
 ## Standard Output
 
 ```md
