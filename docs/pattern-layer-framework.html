@@ -757,7 +757,7 @@
         <article class="card">
           <span class="number">2</span>
           <h3>Pattern Layer</h3>
-          <p>再判断 message_intent、structure_pattern、layout_skeleton 和 content_style。截图里的具体画面线索统一进入 evidence。</p>
+          <p>再判断 message_intent 和 structure_pattern；layout_variant 与 content_style 作为 modifiers。截图里的具体画面线索统一进入 evidence。</p>
         </article>
         <article class="card">
           <span class="number">3</span>
@@ -790,8 +790,8 @@
             <div class="decision-copy">可复用结构形状，例如等权卡片网格、横向步骤流、居中行动条带。</div>
           </div>
           <div class="decision-item">
-            <div class="decision-key">layout_skeleton</div>
-            <div class="decision-copy">骨架，例如 centered、split、grid、bento、timeline、carousel。</div>
+            <div class="decision-key">layout_variant</div>
+            <div class="decision-copy">摆放变体，例如 3-column grid、split、centered、bento；不是核心聚类字段。</div>
           </div>
           <div class="decision-item">
             <div class="decision-key">content_style</div>
@@ -813,12 +813,12 @@
         <div class="field-card"><strong>section_type</strong><span>沿用现有 UIBook taxonomy。</span></div>
         <div class="field-card"><strong>message_intent</strong><span>为什么存在：这个 section 的认知任务。</span></div>
         <div class="field-card"><strong>structure_pattern</strong><span>如何组织：最核心的可复用结构形状。</span></div>
-        <div class="field-card"><strong>layout_skeleton</strong><span>内容被如何组织和排列。</span></div>
+        <div class="field-card"><strong>layout_variant</strong><span>摆放变体，只作为 modifier。</span></div>
         <div class="field-card"><strong>information_sequence</strong><span>信息阅读顺序，例如 headline → proof → CTA。</span></div>
         <div class="field-card"><strong>content_style</strong><span>媒体 / 素材策略，只是 modifier。</span></div>
         <div class="field-card"><strong>interaction_implication</strong><span>可见或暗示的交互模型。</span></div>
         <div class="field-card"><strong>design_language_modifier</strong><span>视觉语言气质，例如 dense-dashboard。</span></div>
-        <div class="field-card"><strong>similarity_signature</strong><span>五个核心字段组成的稳定组合键。</span></div>
+        <div class="field-card"><strong>similarity_signature</strong><span>三个核心字段组成的稳定组合键。</span></div>
         <div class="field-card"><strong>discovery_note</strong><span>什么搜索意图应该命中它。</span></div>
         <div class="field-card"><strong>evidence / confidence</strong><span>至少 3 条可见证据，并标注置信度。</span></div>
       </div>
@@ -984,14 +984,14 @@
 - section_type:
 - message_intent:
 - structure_pattern:
-- layout_skeleton:
+- layout_variant:
 - information_sequence:
 - content_style:
 - interaction_implication:
 - design_language_modifier:
 
 ### Similarity Signature
-`section_type / message_intent / structure_pattern / layout_skeleton / content_style`
+`section_type / message_intent / structure_pattern`
 
 ### Discovery Note
 - match_when:
@@ -1078,9 +1078,9 @@
         ]
       },
       {
-        key: "layoutSkeleton",
-        label: "layout_skeleton",
-        hint: "结构骨架",
+        key: "layoutVariant",
+        label: "layout_variant",
+        hint: "摆放变体",
         sprite: "layout-skeleton",
         options: [
           { value: "grid", description: "等权网格结构" },
@@ -1203,9 +1203,7 @@
       const signature = [
         state.sectionType,
         state.messageIntent,
-        state.structurePattern,
-        state.layoutSkeleton,
-        state.contentStyle
+        state.structurePattern
       ].join(" / ");
 
       output.textContent = signature;
@@ -1222,6 +1220,7 @@
       const items = [
         noteMap[state.messageIntent] || "适合按设计意图检索相似结构时命中。",
         "structure_pattern 只描述可复用结构形状，不重复 message_intent 的 why。",
+        "layout_variant 只记录摆放变体，不进入核心 similarity signature。",
         "content_style 只是媒体/素材策略；具体画面主角统一进入 evidence。"
       ];
 

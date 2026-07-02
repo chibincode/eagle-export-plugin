@@ -123,6 +123,7 @@ Do not promote patterns only because they share:
 
 - dark mode
 - screenshot-led material
+- a layout variant such as grid, split, centered, or bento
 - a similar product category
 - one brand's repeated design system
 - a concrete subject such as phone mockups or dashboards
@@ -150,4 +151,3 @@ Which reusable patterns are stable enough to remember and search later?
 ```
 
 Keep these layers separate.
-

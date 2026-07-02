@@ -77,7 +77,7 @@ First-pass clustering may use:
 message_intent + structure_pattern
 ```
 
-Use modifiers such as `layout_skeleton`, `content_style`, `design_language_modifier`, and concrete visual subjects as supporting evidence. Do not let them split a pattern too early.
+Use modifiers such as `layout_variant`, `content_style`, `design_language_modifier`, and concrete visual subjects as supporting evidence. Do not let them split a pattern too early.
 
 ## Daily Review Rule
 
@@ -90,4 +90,3 @@ Every daily review should separate:
 - items that need manual review
 
 Do not update the registry automatically when confidence is low.
-

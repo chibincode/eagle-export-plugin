@@ -35,7 +35,7 @@ Current local read-only scan:
 Keep the core similarity signature compact:
 
 ```text
-section_type / message_intent / structure_pattern / layout_skeleton / content_style
+section_type / message_intent / structure_pattern
 ```
 
 Concrete screenshot subjects such as dashboard mockups, app screens, avatar grids, workflow diagrams, and logo arrays should stay in `Evidence` or `Visual Memory Cues`, not in the core signature.
@@ -89,7 +89,7 @@ item_id
 visible_summary
 message_intent
 structure_pattern
-layout_skeleton
+ layout_variant
 content_style
 evidence
 confidence

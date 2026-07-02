@@ -93,14 +93,14 @@ Recommended block layout:
 - section_type:
 - message_intent:
 - structure_pattern:
-- layout_skeleton:
+- layout_variant:
 - information_sequence:
 - content_style:
 - interaction_implication:
 - design_language_modifier:
 
 ### Similarity Signature
-`section_type / message_intent / structure_pattern / layout_skeleton / content_style`
+`section_type / message_intent / structure_pattern`
 
 ### Discovery Note
 - match_when:
@@ -137,7 +137,8 @@ Recommended block layout:
 - For long page screenshots, write the normal bilingual analysis only. Do not force one combined Pattern Layer across multiple visible sections.
 - Decide `message_intent` before `content_style`. `content_style` is a material strategy, not the final pattern.
 - Do not claim conversion, performance, or design effectiveness unless the screenshot itself contains supporting data.
-- Keep `similarity_signature` stable and compact: `section_type / message_intent / structure_pattern / layout_skeleton / content_style`.
+- Keep `similarity_signature` stable and compact: `section_type / message_intent / structure_pattern`.
+- Use `layout_variant` as a modifier for placement details such as `3-column grid`, `split`, `centered`, or `bento`. Do not use it as a core clustering field.
 - Put concrete screenshot subjects in `Evidence` or `Visual Memory Cues`; do not add a separate subject field to the Pattern Layer signature.
 - Use `interaction_implication: none-visible` when no interaction is visible or strongly implied.
 - Detailed Pattern Layer rules live in [pattern-layer.md](pattern-layer.md).

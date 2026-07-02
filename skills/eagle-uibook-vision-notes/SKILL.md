@@ -95,14 +95,15 @@ Each finished block must include screenshot-specific evidence:
 - `Visual Notes`: what makes this specific screenshot useful as a UI/design reference.
 
 For section-level screenshots, each finished block must also include `## UIBook Pattern Layer` with:
-- `Pattern Profile`: `section_type`, `message_intent`, `structure_pattern`, `layout_skeleton`, `information_sequence`, `content_style`, `interaction_implication`, and `design_language_modifier`.
-- `Similarity Signature`: exactly `section_type / message_intent / structure_pattern / layout_skeleton / content_style`.
+- `Pattern Profile`: `section_type`, `message_intent`, `structure_pattern`, `layout_variant`, `information_sequence`, `content_style`, `interaction_implication`, and `design_language_modifier`.
+- `Similarity Signature`: exactly `section_type / message_intent / structure_pattern`.
 - `Discovery Note`: `match_when` and `avoid_when`, focused on Smart Discovery intent rather than proof of effectiveness.
 - `Evidence`: at least 3 concrete visible details from the screenshot.
 - `Confidence`: `pattern_confidence` as `high`, `medium`, or `low`, plus a short reason.
 
 Pattern Layer decision rules:
 - Decide `message_intent` before `content_style`; `content_style` is a material strategy, not the final pattern.
+- Treat `layout_variant` as a modifier, not part of the core similarity signature. Use it to note placement variants such as `3-column grid`, `split`, `centered`, or `bento` only after choosing `structure_pattern`.
 - Do not write claims such as "better conversion", "more effective", or "proven" unless the screenshot visibly contains data supporting the claim.
 - Similarity should group sections by intent and structure before visual style.
 - If evidence is too weak to support 3 concrete bullets, mark `pattern_confidence: low` or skip writing for manual review.
@@ -283,6 +284,7 @@ The dynamic Pattern Learning System is documented in [references/pattern-learnin
 - The Chinese pass should mirror the English pass faithfully, not introduce a second different interpretation.
 - For section-level screenshots, always append `## UIBook Pattern Layer` after the Chinese pass.
 - In `UIBook Pattern Layer`, use `message_intent` for what the section helps the user understand or do, `structure_pattern` for the reusable structure, and `content_style` for the dominant material type.
+- Use `layout_variant` only as a modifier for placement details. Do not put layout into `Similarity Signature`.
 - Put concrete screenshot subjects, such as dashboard mockups, avatar grids, photos, diagrams, and logo arrays, in `Evidence` or `Visual Memory Cues`; do not promote them into the similarity signature.
 - Use `none-visible` for `interaction_implication` when no carousel, tabs, chat flow, command input, onboarding choice, progress state, or before-after behavior is visible.
 - Write `Discovery Note` as search intent guidance, not as an effectiveness argument.

@@ -19,7 +19,7 @@ Every section-level Pattern Layer must include these fields:
 section_type:
 message_intent:
 structure_pattern:
-layout_skeleton:
+layout_variant:
 information_sequence:
 content_style:
 interaction_implication:
@@ -35,7 +35,7 @@ confidence:
 - `section_type`: existing UIBook taxonomy, such as `Hero`, `Features`, `Pricing`, `Testimonials`, `CTA`, `Stats & Metrics`, `Logos`, or `How it works`.
 - `message_intent`: the user's cognition task, such as `attention-capture`, `value-proposition`, `process-explainer`, `capability-overview`, `trust-building`, `comparison`, `conversion-push`, `complexity-reduction`, or `deep-dive-showcase`.
 - `structure_pattern`: the reusable structural shape, such as `horizontal-step-flow`, `equal-card-grid`, `centered-product-panel`, `annotated-mockup-panel`, `uniform-logo-grid`, `three-plan-card-matrix`, or `centered-action-band`.
-- `layout_skeleton`: the structural arrangement, such as `centered`, `split`, `grid`, `bento`, `timeline`, `carousel`, `full-bleed`, or `stacked`.
+- `layout_variant`: the placement variant or spatial arrangement, such as `3-column grid`, `split`, `centered`, `bento`, `timeline`, `carousel`, `full-bleed`, or `stacked`. This is a modifier, not a core clustering field.
 - `information_sequence`: the visible order of meaning, such as `headline -> proof -> CTA`, `image -> caption -> details`, or `step label -> explanation -> visual proof`.
 - `content_style`: the primary material strategy, such as `text-led`, `icon-led`, `illustration-led`, `screenshot-led`, `photo-led`, `data-led`, `logo-led`, `video-led`, `3d-led`, or `mixed-media`.
 - `interaction_implication`: visible or implied interaction, such as `tabs`, `carousel`, `chat-flow`, `command-input`, `onboarding-selection`, `before-after`, `progress-loading`, or `none-visible`.
@@ -49,6 +49,8 @@ confidence:
 
 - Decide `message_intent` before `content_style`. The same screenshot-led visual can support a process explainer, a deep feature showcase, or trust proof.
 - `content_style` is a material strategy, not the final pattern.
+- `layout_variant` is also a modifier. Use it to describe where the structure sits, not to define the core pattern.
+- Core similarity should use `section_type / message_intent / structure_pattern`.
 - Never claim the pattern is proven to convert, perform better, or be more effective unless data is visible in the screenshot.
 - Use visible screenshot evidence first. URL, file name, and Eagle folder are secondary hints only.
 - Long pages are out of scope for v1 Pattern Layer. Do not compress multiple page sections into one fake `section_type`, `message_intent`, or `structure_pattern`.
@@ -86,14 +88,14 @@ Use daily reviews and registry entries to decide whether a repeated `message_int
 - section_type:
 - message_intent:
 - structure_pattern:
-- layout_skeleton:
+- layout_variant:
 - information_sequence:
 - content_style:
 - interaction_implication:
 - design_language_modifier:
 
 ### Similarity Signature
-`section_type / message_intent / structure_pattern / layout_skeleton / content_style`
+`section_type / message_intent / structure_pattern`
 
 ### Discovery Note
 - match_when:

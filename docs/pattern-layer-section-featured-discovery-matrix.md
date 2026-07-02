@@ -11,13 +11,13 @@ This pass is meant to test the Pattern Layer against real screenshots, not to ex
 
 - what the section is trying to help the viewer understand (`message_intent`)
 - what reusable structural shape it uses (`structure_pattern`)
-- how the layout is arranged (`layout_skeleton`)
+- how the structure is placed on the page (`layout_variant`)
 - what media strategy carries the message (`content_style`)
 
 The working signature stays compact:
 
 ```text
-section_type / message_intent / structure_pattern / layout_skeleton / content_style
+section_type / message_intent / structure_pattern
 ```
 
 For this folder, `section_type` is assumed to be `Features`. Concrete subjects such as dashboards, phones, app screens, diagrams, charts, and avatar cards are treated as evidence, not as clustering fields.
@@ -50,7 +50,7 @@ Working interpretation:
 
 ## Full Matrix
 
-| Rank | Item ID | Visible summary | message_intent | structure_pattern | layout_skeleton | content_style | evidence | Confidence | Naming note |
+| Rank | Item ID | Visible summary | message_intent | structure_pattern | layout_variant | content_style | evidence | Confidence | Naming note |
 |---:|---|---|---|---|---|---|---|---|---|
 | 1 | `MQROJRH9ICY25` | Factory feature claim about buying fewer tokens, supported by a large analytics dashboard. | `proof-backed-benefit` | `dashboard-proof-panel` | `split` | `data-led` | Headline makes a concrete savings claim; right side is a dark dashboard card; bar chart and KPI row act as proof object. | High | Strong candidate for `dashboard-proof-panel`; do not name it after "tokens" because that is product-specific. |
 | 2 | `MQROJJ59IXJNK` | Factory presents one product across multiple work surfaces with desktop and mobile mockups. | `single-capability-deep-dive` | `centered-product-panel` | `centered` | `screenshot-led` | Centered headline; surface selector row; desktop-plus-phone mockup carries the cross-surface promise. | High | This should cluster by product stage structure, not by the device pair itself. |
@@ -126,7 +126,7 @@ Ranks 16 and 19 suggest a recurring split layout for one capability, but two exa
 For Eagle analysis, the Pattern Layer should use this order:
 
 ```text
-visible evidence -> message_intent -> structure_pattern -> layout_skeleton -> content_style -> confidence
+visible evidence -> message_intent -> structure_pattern -> layout_variant -> content_style -> confidence
 ```
 
 Do not start from `content_style`. In this sample, the same structural pattern appears as screenshot-led, illustration-led, data-led, text-led, and mixed-media. Starting from material would split apart examples that are actually useful to retrieve together.

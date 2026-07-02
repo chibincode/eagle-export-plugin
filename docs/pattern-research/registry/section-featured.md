@@ -24,7 +24,7 @@ Evidence board: [Section Featured Pattern Discovery](../../pattern-layer-section
 - first_seen: `2026-06-29`
 - sample_count: `9`
 - evidence_ranks: `10, 11, 15, 20, 21, 23, 26, 27, 30`
-- common_layouts: `grid`, `bento`
+- layout_variants_seen: `grid`, `bento`
 - content_styles_seen: `illustration-led`, `screenshot-led`, `text-led`, `data-led`, `mixed-media`
 
 Definition:
@@ -51,7 +51,7 @@ Avoid when:
 - first_seen: `2026-06-29`
 - sample_count: `5`
 - evidence_ranks: `3, 8, 13, 25, 28`
-- common_layouts: `grid`, `split`
+- layout_variants_seen: `grid`, `split`
 - content_styles_seen: `screenshot-led`
 
 Definition:
@@ -78,7 +78,7 @@ Avoid when:
 - first_seen: `2026-06-29`
 - sample_count: `4`
 - evidence_ranks: `2, 7, 17, 22`
-- common_layouts: `centered`, `grid`, `split`
+- layout_variants_seen: `centered`, `grid`, `split`
 - content_styles_seen: `screenshot-led`
 
 Definition:
@@ -105,7 +105,7 @@ Avoid when:
 - first_seen: `2026-06-29`
 - sample_count: `3`
 - evidence_ranks: `1, 24, 29`
-- common_layouts: `split`, `grid`
+- layout_variants_seen: `split`, `grid`
 - content_styles_seen: `data-led`
 
 Definition:

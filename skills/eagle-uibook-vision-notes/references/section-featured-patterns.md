@@ -37,7 +37,7 @@ Do not split the first-pass cluster by `content_style`, visual style, product ca
 For `Section_Featured` or similar feature sections, decide in this order:
 
 ```text
-visible evidence -> message_intent -> structure_pattern -> layout_skeleton -> content_style -> confidence
+visible evidence -> message_intent -> structure_pattern -> layout_variant -> content_style -> confidence
 ```
 
 Use these guardrails:
@@ -79,4 +79,3 @@ Keep these as observations until they appear at least 3 times across sufficientl
 ## Long Page Reminder
 
 Do not apply this reference to a long full-page screenshot as a single Pattern Layer signature. For long pages, write the normal visual analysis only in v1, unless the user explicitly asks for experimental page-level pattern analysis.
-
