@@ -7,6 +7,11 @@ description: Find recent Eagle image items and recent UIBook-synced screenshots 
 
 Use this skill when analysis must come from the current conversation, not from a separate API-driven script.
 
+The sole completion target is UIBook preparation. An Eagle item is not complete
+unless it has all three persisted outputs: the AI analysis block, a validated
+schema-v2 `## UIBook Mirror Data` payload, and the exact corresponding UIBook
+managed tags on the Eagle item. Annotation-only output is never a valid result.
+
 This workflow writes an Eagle-only UIBook Pattern Layer for section-level screenshots. The Pattern Layer sits above the existing UIBook taxonomy: it captures design intent, reusable structure, material strategy, and a future Smart Discovery signature without changing UIBook database fields or frontend filters.
 
 ## First Question
@@ -45,7 +50,7 @@ Default conversation behavior:
 8. Let the current Codex conversation inspect the chosen screenshot and draft the analysis block.
 9. For section-level screenshots only, append `## UIBook Pattern Layer` inside the same replaceable AI block.
    For long page or full-page screenshots, do not append Pattern Layer in v1 unless the user explicitly asks for experimental page-level pattern analysis.
-10. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
+10. Use the apply command with the required schema-v2 mirror and taxonomy snapshot; it reconciles UIBook managed tags, replaces only the prior AI block, and appends the updated block at the bottom of `annotation`.
 11. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
 12. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
 13. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
@@ -70,6 +75,12 @@ Once the user picks a time window, treat the end-to-end flow as:
 
 Do not treat folder assignment as a separate follow-up task. It is part of the default completion criteria for each processed candidate.
 
+Process every `analysisActionNeeded=true` candidate in the selected window,
+using internal batches only for execution safety. Do not pause after 10 items or
+ask whether to continue. Stop only when the rescan reports
+`needsAnalysis=0`, a concrete blocker occurs, or an item must be reported as
+manual review because its image cannot be analyzed reliably.
+
 ## AI Notes Quality Gate
 
 This skill is only useful if the annotation contains real visual understanding. A formally valid block is not enough.
@@ -79,9 +90,19 @@ Hard rules before writing any AI block:
 - Do not write an AI block from file name, URL, folder name, dimensions, or scan metadata alone.
 - Do not write generic claims such as "clean SaaS palette", "visual proof", or "multiple stacked sections" unless tied to specific observed content in the screenshot.
 - If a contact sheet or thumbnail is not detailed enough, open the original image before drafting.
-- If the original image is too large or too hard to inspect in one pass, inspect key regions or skip the item and report it as `needs_manual_review`.
+- If the original image is too large or too hard to inspect in one pass, follow
+  the long-image coverage protocol below; if that still cannot establish real
+  coverage, skip the item and report it as `needs_manual_review`.
 - If you cannot name at least 3 concrete visible details from the screenshot, do not write the block.
 - If the screenshot is a long page, include page-specific section evidence, not only "long scroll page" structure.
+- Long-image coverage protocol: treat an image as long when
+  `height / width >= 3` or `height > 8192 px`. Inspect one full-image overview,
+  then inspect vertically ordered slices from top to bottom with 10–20%
+  overlap between adjacent slices. The resulting `Content Map` must cite
+  concrete visible evidence from the real top, at least one middle region, and
+  the real bottom/footer region. A thumbnail, contact sheet, or overview alone
+  is never enough. If any of those three coverage gates is missing or unreadable,
+  do not write or tag the item.
 - If the screenshot is a long page, full-page scroll capture, or contains multiple stacked page sections, do not append `## UIBook Pattern Layer` in v1. Write the normal bilingual page analysis only, unless the user explicitly asked for experimental page-level pattern analysis.
 - Never prioritize completion count over note quality. It is better to process fewer images than to write unreliable notes.
 
@@ -171,21 +192,122 @@ python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py windows
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py windows --repo "$PWD" --only-unfiled
 ```
 
-Write a prepared AI block back to Eagle:
+Write a complete UIBook preparation result back to Eagle:
 
 ```bash
-python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py apply --repo "$PWD" --item-id ITEM_ID --analysis-file /absolute/path/to/block.md
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py apply \
+  --repo "$PWD" \
+  --item-id ITEM_ID \
+  --analysis-file /absolute/path/to/block.md \
+  --mirror-file /absolute/path/to/mirror.json \
+  --taxonomy-file /absolute/path/to/taxonomy.json \
+  --dry-run
 ```
 
-Or pipe the block through stdin:
+`--mirror-file` and `--taxonomy-file` are mandatory. `apply` rejects
+annotation-only calls and rejects schema v1; always dry-run this exact complete
+command before removing `--dry-run` for the verified write.
 
-```bash
-python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py apply --repo "$PWD" --item-id ITEM_ID <<'EOF'
-<!-- UIBOOK_AI_ANALYSIS_START -->
-...
-<!-- UIBOOK_AI_ANALYSIS_END -->
-EOF
-```
+### Required UIBook taxonomy mirror
+
+Every analysis must validate its machine-readable result against a read-only
+snapshot of UIBook `config_options`.
+
+The mirror file must include `schemaVersion`, `taxonomySnapshot`, `sourceItemId`,
+`imageFingerprint`, `entityType`, `uiContext`, `contentMap`, `classification`,
+`confidence`, `evidence`, and `unmapped`; schema v2 also requires
+`colorWeights`. `imageFingerprint` must be
+`sha256:<64 hex characters>` for the exact Eagle source image. Before dry-run
+or write, `apply` confirms both the item ID and the current local image hash.
+`taxonomySnapshot` must equal the taxonomy file's content-derived
+`snapshotHash`; the script recomputes that hash before trusting it.
+
+`schemaVersion: 1` remains readable by the validator for historical data, but
+the current `apply` command rejects it. New and refreshed analyses must use
+schema v2. Historical v1 used these four managed categories:
+
+- `uibook:page:`
+- `uibook:section:`
+- `uibook:contains-section:`
+- `uibook:style:<dimension>:`
+
+V1 never manages any other tag. If its target already contains a v2-only
+managed tag, it fails closed instead of silently preserving or partially
+overwriting a newer analysis.
+
+Use `schemaVersion: 2` for the full public UIBook taxonomy mirror. Its
+`classification` object must contain exactly these nine fields:
+`pageType`, `sectionTypes`, `containedSectionTypes`, `industries`, `layouts`,
+`elements`, `styles`, `colors`, and `typography`. V2 manages:
+
+- `uibook:page:` / `uibook:section:` / `uibook:contains-section:`
+- `uibook:industry:`
+- `uibook:layout:`
+- `uibook:elements:`
+- `uibook:style:<dimension>:`
+- `uibook:colors:`
+- `uibook:typography:`
+
+Page mirrors require one `pageType`, require empty `sectionTypes` and
+`layouts`, and may use `containedSectionTypes` as an Eagle-only discovery
+field. Section mirrors require 1–2 `sectionTypes`, `pageType: null`, and empty
+`containedSectionTypes`. Both entities may use industries (max 3), elements
+(max 20), colors (max 8), and typography (max 2); Section alone may use layouts
+(max 3). Styles are capped at 6 for Page and 4 for Section.
+
+V2 `confidence` must include `contentCoverage`, `pageType`, and a map for every
+list field. Each map key is the canonical taxonomy value; Style keys use
+`dimension:value`. `evidence` mirrors those keys and gives each value at least
+one concrete evidence string. Additional evidence-only research fields such as
+positive `searchConcepts` and top/middle/bottom `coverage` may be kept, but do
+not store absent, excluded, or negated concepts because the embedded JSON is
+searchable in Eagle.
+Only `high` and `medium` values may appear in `classification`; a low-confidence
+term must instead be an `unmapped` object with `category`, `term`,
+`confidence: "low"`, `reason`, and `evidence`. Use `unmapped` only for a
+visibly present concept that lacks an exact taxonomy option, never to list
+things that are absent from the image.
+
+Never derive official tags from free-form model text. Every value resolves
+against its own category allowlist, so collisions such as `Grid` in Layout and
+Elements or `Illustration` in Elements and Style remain separate. Style
+dimension always comes from the taxonomy and any supplied dimension must match
+it exactly.
+
+V2 stores all allowlisted colors covering at least 1% in `classification.colors`
+plus top-level `colorWeights`, ordered by coverage. An Eagle color tag is
+created only when Black, White, or Gray covers at least 15%, or any other color
+covers at least 3%. Valid mirror colors below the tag threshold are reported in
+`suppressedColorTags`, not discarded.
+
+With `--dry-run`, print `managedPrefixes`, `desiredByCategory`, `desired`,
+`toAdd`, `toRemove`, `preserved`, `unmapped`, `suppressedColorTags`, and
+`mergedAnnotation` as JSON. It also reports `annotationMetrics` with Python
+code points, UTF-16 code units, UTF-8 bytes, and the UTF-16 hard limit, plus
+`legacyMigration` with the complete current Annotation hash and migration mode.
+Before any Eagle tag or Annotation write, the final merged Annotation must pass
+a hard preflight of at most 20,000 UTF-16 code units. Without `--dry-run`, the
+order is: preflight, create or verify any required legacy backup, add new
+managed tags, read back and verify every desired tag, remove stale managed tags,
+read back again, write the Annotation, and verify it. If preflight or addition
+verification fails, removal is never attempted. Preserve every non-managed
+Eagle tag. Annotation updates continue through the existing local HTTP
+behavior. This mirror does not change the Pattern Layer rules above.
+
+On every successful write, `apply` appends a single
+`## UIBook Mirror Data` JSON block inside the replaceable AI annotation block.
+The JSON is compact (`ensure_ascii=False`, no formatting whitespace). For v2,
+it stores only the input contract fields: schema version, taxonomy snapshot,
+source item ID, image fingerprint, entity type, UI Context, Content Map,
+normalized classification, color weights, confidence, evidence, and unmapped
+terms. Derived fields such as managed prefixes, desired tags by category,
+suppressed color tags, and final managed tags remain in dry-run/apply output
+instead of being duplicated inside Eagle. V1 embedded data remains compatible.
+
+The persistent valid examples used by `self-test` are
+`fixtures/page-v2.json` and `fixtures/section-v2.json`. The script finds them
+beside itself in a candidate checkout or at `../fixtures` when installed under
+the Skill's `scripts/` directory.
 
 List current Eagle folders for classification:
 
@@ -219,7 +341,12 @@ python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py assign-
 
 ## Requirements
 
-- Eagle must be open locally so the MCP endpoint can serve `item_get` and `item_update`.
+- Eagle must be open locally. MCP serves item/tag reads and every verification
+  readback. Incremental tag reconciliation and Annotation writes use Eagle's
+  local `http://127.0.0.1:41595/api/item/update` endpoint because the beta MCP
+  mutation tools can time out without a reliable completion response. Each tag
+  phase re-reads the latest full tag list before updating, preserves all
+  unrelated tags, and is verified through MCP before `apply` continues.
 - Eagle folder tree is read from `http://127.0.0.1:41595/api/folder/list`.
 - Supported windows for scan are `today`, `yesterday`, `last3d`, and `last7d`.
 - The candidate item must satisfy at least one of:
@@ -240,8 +367,9 @@ Supported image formats for conversation analysis:
 - Keep the existing `- 同步于 ...` lines untouched.
 - Keep all manual notes untouched.
 - Always move the AI analysis block to the bottom.
-- If an older AI block exists, replace only that block.
-- Eagle may strip HTML comment markers from annotation. The script therefore treats either the marker-wrapped block or a block starting with `## AI Screen Analysis` / `## AI 页面分析` as replaceable AI content.
+- If an older AI block exists, replace only its bounded content; if its end cannot be proven, fail closed for manual review.
+- Eagle may strip HTML comment markers from annotation. Marker-wrapped blocks remain directly replaceable. A markerless block starting with `## AI Screen Analysis` / `## AI 页面分析` is replaceable when its `## UIBook Mirror Data` fenced JSON provides an exact end boundary.
+- An unbounded markerless legacy block still fails closed by default. The only migration escape hatch is `--legacy-annotation-sha256 <64-lowercase-hex>`, which must exactly match the complete current Annotation. A match preserves only the text before the AI heading and replaces the heading through the end. A non-dry-run migration additionally requires `--legacy-backup-file /absolute/path`; the script exclusively creates that file with the complete original Annotation before any Eagle write. If the backup already exists, identical content is accepted for retry and different content fails closed. Dry-run never creates the backup.
 
 The block format is documented in [references/output-format.md](references/output-format.md).
 
@@ -287,7 +415,7 @@ The dynamic Pattern Learning System is documented in [references/pattern-learnin
 - Use `layout_variant` only as a modifier for placement details. Do not put layout into `Similarity Signature`.
 - Put concrete screenshot subjects, such as dashboard mockups, avatar grids, photos, diagrams, and logo arrays, in `Evidence` or `Visual Memory Cues`; do not promote them into the similarity signature.
 - Use `none-visible` for `interaction_implication` when no carousel, tabs, chat flow, command input, onboarding choice, progress state, or before-after behavior is visible.
-- Write `Discovery Note` as search intent guidance, not as an effectiveness argument.
+- Write `Discovery Note` as search intent guidance, not as an effectiveness argument. Because Eagle annotation is full-text searchable, write `avoid_when` as the positive applicability boundary of this signature; never enumerate missing taxonomy values, excluded styles, or absent search concepts.
 - Treat low-confidence pattern output as research-only; it is not a formal UIBook pattern candidate.
 - When an item has no Eagle folder, fetch the current full folder tree first and classify against existing folders only.
 - If an item already has any folder, treat that folder state as locked and user-owned in the default flow, but do not treat the item as fully processed until the AI analysis block is written or refreshed.
@@ -320,4 +448,9 @@ The dynamic Pattern Learning System is documented in [references/pattern-learnin
 - Skip unsupported or missing local image files during scan review.
 - If `127.0.0.1:41595/api/folder/list` is unavailable, stop and report the blocker instead of falling back to a partial MCP folder tree.
 - Use `apply --dry-run` to preview the merged annotation before writing back.
+- Never call `apply` without both `--mirror-file` and `--taxonomy-file`, and
+  never treat `hasAiAnalysis=true` alone as completion. Completion requires
+  `uibookPreparationComplete=true` after a live rescan.
+- If `apply` reports an unbounded markerless legacy AI block, use the reported complete Annotation SHA-256 only after confirming that replacing the AI heading through the end is intended. First run dry-run with `--legacy-annotation-sha256`; for the real apply, repeat the same hash and add `--legacy-backup-file`. Do not use this parameter for bounded or marker-wrapped blocks.
+- If the final merged Annotation exceeds 20,000 UTF-16 code units, do not write tags or Annotation. Reduce the human analysis or validated embedded payload while keeping the required v2 contract intact, then rerun dry-run.
 - If `apply` fails, do not regenerate the block; fix the write path and retry with the same block.

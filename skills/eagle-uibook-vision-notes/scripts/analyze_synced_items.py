@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 import queue
 import re
 import sys
+import tempfile
 import threading
 import time
 import urllib.request
@@ -16,13 +19,80 @@ from typing import Any
 
 MCP_BASE_URL = "http://127.0.0.1:41596"
 FOLDER_API_URL = "http://127.0.0.1:41595/api/folder/list"
+ITEM_UPDATE_API_URL = "http://127.0.0.1:41595/api/item/update"
 DEFAULT_SUCCESS_TAG = "已同步UIBook"
 BLOCK_START = "<!-- UIBOOK_AI_ANALYSIS_START -->"
 BLOCK_END = "<!-- UIBOOK_AI_ANALYSIS_END -->"
 AI_HEADING_EN = "## AI Screen Analysis"
 AI_HEADING_ZH = "## AI 页面分析"
+MIRROR_DATA_HEADING = "## UIBook Mirror Data"
+ANNOTATION_UTF16_HARD_LIMIT = 20_000
+SHA256_HEX_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 SUPPORTED_EXTS = {"jpg", "jpeg", "png", "webp", "gif", "avif"}
 WINDOW_CHOICES = ("today", "yesterday", "last3d", "last7d")
+UIBOOK_SCHEMA_V1 = 1
+UIBOOK_SCHEMA_V2 = 2
+V1_MANAGED_UIBOOK_TAG_PREFIXES = (
+    "uibook:page:",
+    "uibook:section:",
+    "uibook:contains-section:",
+    "uibook:style:",
+)
+V2_ONLY_UIBOOK_TAG_PREFIXES = (
+    "uibook:layout:",
+    "uibook:elements:",
+    "uibook:industry:",
+    "uibook:typography:",
+    "uibook:colors:",
+)
+V2_MANAGED_UIBOOK_TAG_PREFIXES = (
+    *V1_MANAGED_UIBOOK_TAG_PREFIXES,
+    *V2_ONLY_UIBOOK_TAG_PREFIXES,
+)
+PUBLIC_TAXONOMY_CATEGORIES = (
+    "page_type",
+    "section_type",
+    "industry",
+    "layout",
+    "elements",
+    "style",
+    "colors",
+    "typography",
+)
+V2_CLASSIFICATION_FIELDS = (
+    "pageType",
+    "sectionTypes",
+    "containedSectionTypes",
+    "industries",
+    "layouts",
+    "elements",
+    "styles",
+    "colors",
+    "typography",
+)
+V2_MAPPED_LIST_FIELDS = (
+    "sectionTypes",
+    "containedSectionTypes",
+    "industries",
+    "layouts",
+    "elements",
+    "styles",
+    "colors",
+    "typography",
+)
+NEUTRAL_COLOR_VALUES = {"white", "black", "gray"}
+MAX_SECTION_TYPES = 2
+MAX_INDUSTRIES = 3
+MAX_LAYOUTS = 3
+MAX_ELEMENTS = 20
+MAX_WEBSITE_STYLES = 6
+MAX_SECTION_STYLES = 4
+MAX_COLORS = 8
+MAX_TYPOGRAPHY = 2
+MIN_COLOR_MIRROR_PERCENTAGE = 1.0
+MIN_NEUTRAL_COLOR_TAG_PERCENTAGE = 15.0
+MIN_CHROMATIC_COLOR_TAG_PERCENTAGE = 3.0
+MIRROR_ENTITY_TYPES = {"website", "section"}
 TAG_AUDIT_READ_ONLY_TOOLS = {"tag_count", "tag_get", "tag_group_get", "item_count", "item_get"}
 TAG_AUDIT_FORBIDDEN_TOOLS = (
     "tag_update",
@@ -244,6 +314,48 @@ class MCPClient:
 
         if isinstance(result, Exception):
             raise result
+        return result
+
+    def update_item_fields(
+        self,
+        item_id: str,
+        fields: dict[str, Any],
+    ) -> dict[str, Any]:
+        payload = json.dumps(
+            {
+                "id": item_id,
+                **fields,
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            ITEM_UPDATE_API_URL,
+            data=payload,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(
+                request,
+                timeout=self.timeout,
+            ) as response:
+                result = json.loads(
+                    response.read().decode("utf-8")
+                )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Eagle item HTTP update failed for {item_id}: {exc}"
+            ) from exc
+        if (
+            not isinstance(result, dict)
+            or result.get("status") != "success"
+        ):
+            raise RuntimeError(
+                "Eagle item HTTP update returned an unexpected response "
+                f"for {item_id}: {result!r}"
+            )
         return result
 
     def _read_events(self) -> None:
@@ -1957,17 +2069,213 @@ def discover_candidates(
     return candidates
 
 
-def merge_annotation(existing: str, new_block: str) -> str:
+def annotation_sha256(annotation: Any) -> str:
+    return hashlib.sha256(
+        str(annotation or "").encode("utf-8")
+    ).hexdigest()
+
+
+def normalize_legacy_annotation_sha256(value: Any) -> str | None:
+    if value is None:
+        return None
+    digest = str(value).strip()
+    if not SHA256_HEX_PATTERN.fullmatch(digest):
+        raise RuntimeError(
+            "--legacy-annotation-sha256 must be exactly 64 lowercase "
+            "hexadecimal characters"
+        )
+    return digest
+
+
+def annotation_metrics(annotation: Any) -> dict[str, int]:
+    text = str(annotation or "")
+    return {
+        "codePoints": len(text),
+        "utf16CodeUnits": len(text.encode("utf-16-le")) // 2,
+        "utf8Bytes": len(text.encode("utf-8")),
+        "limitUtf16CodeUnits": ANNOTATION_UTF16_HARD_LIMIT,
+    }
+
+
+def preflight_annotation(annotation: Any) -> dict[str, int]:
+    metrics = annotation_metrics(annotation)
+    if (
+        metrics["utf16CodeUnits"]
+        > metrics["limitUtf16CodeUnits"]
+    ):
+        raise RuntimeError(
+            "Merged Eagle annotation exceeds the hard preflight limit "
+            f"({metrics['utf16CodeUnits']} UTF-16 code units > "
+            f"{metrics['limitUtf16CodeUnits']}); no Eagle tags or "
+            "annotation were written"
+        )
+    return metrics
+
+
+def merge_annotation_with_info(
+    existing: str,
+    new_block: str,
+    legacy_annotation_sha256: str | None = None,
+) -> tuple[str, dict[str, Any]]:
     text = str(existing or "")
-    pattern = re.compile(
+    expected_legacy_hash = normalize_legacy_annotation_sha256(
+        legacy_annotation_sha256
+    )
+    current_hash = annotation_sha256(text)
+    migration_info: dict[str, Any] = {
+        "requested": expected_legacy_hash is not None,
+        "performed": False,
+        "mode": "not-required",
+        "currentAnnotationSha256": current_hash,
+        "currentAnnotationLength": annotation_metrics(text),
+    }
+    marker_pattern = re.compile(
         rf"\n*{re.escape(BLOCK_START)}.*?{re.escape(BLOCK_END)}\n*",
         re.DOTALL,
     )
-    text = re.sub(pattern, "\n", text).strip()
-    text = re.sub(r"\n*(## AI Screen Analysis|## AI 页面分析)\n.*$", "\n", text, flags=re.DOTALL).strip()
+    start_count = text.count(BLOCK_START)
+    end_count = text.count(BLOCK_END)
+    if start_count or end_count:
+        if start_count != end_count:
+            raise RuntimeError(
+                "Refusing to replace an AI block with unmatched analysis markers"
+            )
+        text, replacement_count = marker_pattern.subn("\n", text)
+        if replacement_count != start_count:
+            raise RuntimeError(
+                "Refusing to replace an AI block whose analysis markers could "
+                "not be paired safely"
+            )
+        if expected_legacy_hash is not None:
+            raise RuntimeError(
+                "--legacy-annotation-sha256 is only valid for an "
+                "unbounded markerless legacy AI block"
+            )
+        migration_info["mode"] = "marker-wrapped"
+        text = text.strip()
+        if text:
+            return (
+                f"{text}\n\n{new_block.strip()}".strip(),
+                migration_info,
+            )
+        return new_block.strip(), migration_info
+
+    heading_match = re.search(
+        r"(?m)^## (?:AI Screen Analysis|AI 页面分析)[ \t]*$",
+        text,
+    )
+    if heading_match:
+        mirror_boundary = re.compile(
+            rf"(?ms)^{re.escape(MIRROR_DATA_HEADING)}[ \t]*\n+"
+            r"[ \t]*```json[ \t]*\n.*?^[ \t]*```[ \t]*(?:\n|$)"
+        ).search(text, heading_match.end())
+        if not mirror_boundary:
+            if expected_legacy_hash is None:
+                raise RuntimeError(
+                    "Refusing to replace a markerless legacy AI block "
+                    "because it has no bounded UIBook Mirror Data JSON "
+                    "section; manual notes after the AI block cannot be "
+                    "distinguished safely. Current complete annotation "
+                    f"SHA-256: {current_hash}. To explicitly replace from "
+                    "the AI heading to the end, rerun with "
+                    f"--legacy-annotation-sha256 {current_hash}"
+                )
+            if expected_legacy_hash != current_hash:
+                raise RuntimeError(
+                    "--legacy-annotation-sha256 does not exactly match "
+                    "the current complete Eagle annotation "
+                    f"({expected_legacy_hash} != {current_hash})"
+                )
+            prefix = text[: heading_match.start()].rstrip()
+            migration_info.update(
+                {
+                    "performed": True,
+                    "mode": "exact-sha256-replace-heading-to-end",
+                    "preservedPrefixCodePoints": len(prefix),
+                }
+            )
+            if prefix:
+                return (
+                    f"{prefix}\n\n{new_block.strip()}".strip(),
+                    migration_info,
+                )
+            return new_block.strip(), migration_info
+        if expected_legacy_hash is not None:
+            raise RuntimeError(
+                "--legacy-annotation-sha256 is only valid for an "
+                "unbounded markerless legacy AI block"
+            )
+        migration_info["mode"] = "markerless-bounded"
+        prefix = text[: heading_match.start()].rstrip()
+        suffix = text[mirror_boundary.end() :].lstrip()
+        text = "\n\n".join(
+            part
+            for part in (prefix, suffix)
+            if part
+        ).strip()
+    elif expected_legacy_hash is not None:
+        raise RuntimeError(
+            "--legacy-annotation-sha256 is only valid for an "
+            "unbounded markerless legacy AI block"
+        )
+    else:
+        migration_info["mode"] = "append"
+
     if text:
-        return f"{text}\n\n{new_block.strip()}".strip()
-    return new_block.strip()
+        return (
+            f"{text}\n\n{new_block.strip()}".strip(),
+            migration_info,
+        )
+    return new_block.strip(), migration_info
+
+
+def merge_annotation(
+    existing: str,
+    new_block: str,
+    legacy_annotation_sha256: str | None = None,
+) -> str:
+    merged, _ = merge_annotation_with_info(
+        existing,
+        new_block,
+        legacy_annotation_sha256,
+    )
+    return merged
+
+
+def save_legacy_annotation_backup(
+    annotation: Any,
+    backup_file: str,
+) -> dict[str, Any]:
+    text = str(annotation or "")
+    path = Path(backup_file).expanduser().resolve()
+    created = False
+    try:
+        with path.open(
+            "x",
+            encoding="utf-8",
+            newline="",
+        ) as handle:
+            handle.write(text)
+        created = True
+    except FileExistsError:
+        with path.open(
+            "r",
+            encoding="utf-8",
+            newline="",
+        ) as handle:
+            existing = handle.read()
+        if existing != text:
+            raise RuntimeError(
+                "Legacy annotation backup already exists with different "
+                f"content: {path}"
+            )
+    return {
+        "path": str(path),
+        "created": created,
+        "verified": True,
+        "sha256": annotation_sha256(text),
+        "length": annotation_metrics(text),
+    }
 
 
 def read_analysis_block(args: argparse.Namespace) -> str:
@@ -1994,17 +2302,1510 @@ def has_ai_analysis(annotation: Any) -> bool:
     )
 
 
-def update_annotation(client: MCPClient, item_id: str, annotation: str) -> None:
-    client.call_tool(
-        "item_update",
+def extract_embedded_mirror_data(annotation: Any) -> tuple[dict[str, Any] | None, str | None]:
+    text = str(annotation or "")
+    pattern = re.compile(
+        rf"(?ms)^{re.escape(MIRROR_DATA_HEADING)}[ \t]*\n+"
+        r"[ \t]*```json[ \t]*\n(?P<payload>.*?)^[ \t]*```[ \t]*(?:\n|$)"
+    )
+    matches = list(pattern.finditer(text))
+    if not matches:
+        return None, "missing_v2_mirror"
+    if len(matches) != 1:
+        return None, "multiple_mirror_blocks"
+    try:
+        payload = json.loads(
+            matches[0].group("payload"),
+            parse_constant=reject_nonfinite_json_constant,
+        )
+    except (json.JSONDecodeError, ValueError):
+        return None, "invalid_mirror_json"
+    if not isinstance(payload, dict):
+        return None, "invalid_mirror_root"
+    return payload, None
+
+
+def expected_v2_managed_tags(mirror: dict[str, Any], item_id: str) -> list[str]:
+    if mirror.get("schemaVersion") != UIBOOK_SCHEMA_V2:
+        raise RuntimeError("schema_v2_required")
+    if str(mirror.get("sourceItemId") or "").strip() != item_id:
+        raise RuntimeError("mirror_item_mismatch")
+
+    entity_type = str(mirror.get("entityType") or "").strip()
+    if entity_type not in MIRROR_ENTITY_TYPES:
+        raise RuntimeError("invalid_mirror_entity_type")
+    classification = mirror.get("classification")
+    if not isinstance(classification, dict) or set(classification) != set(
+        V2_CLASSIFICATION_FIELDS
+    ):
+        raise RuntimeError("invalid_v2_classification")
+
+    def string_list(field: str) -> list[str]:
+        values = classification.get(field)
+        if not isinstance(values, list) or any(
+            not isinstance(value, str) or not value.strip()
+            for value in values
+        ):
+            raise RuntimeError(f"invalid_v2_{field}")
+        return [value.strip() for value in values]
+
+    page_type = classification.get("pageType")
+    section_types = string_list("sectionTypes")
+    contained_section_types = string_list("containedSectionTypes")
+    industries = string_list("industries")
+    layouts = string_list("layouts")
+    elements = string_list("elements")
+    colors = string_list("colors")
+    typography = string_list("typography")
+
+    if entity_type == "website":
+        if not isinstance(page_type, str) or not page_type.strip():
+            raise RuntimeError("invalid_v2_page_type")
+        if section_types or layouts:
+            raise RuntimeError("invalid_v2_website_boundaries")
+    else:
+        if page_type is not None or not section_types or contained_section_types:
+            raise RuntimeError("invalid_v2_section_boundaries")
+
+    tags: set[str] = set()
+    if isinstance(page_type, str) and page_type.strip():
+        tags.add(f"uibook:page:{page_type.strip()}")
+    tags.update(f"uibook:section:{value}" for value in section_types)
+    tags.update(
+        f"uibook:contains-section:{value}"
+        for value in contained_section_types
+    )
+    tags.update(f"uibook:industry:{value}" for value in industries)
+    tags.update(f"uibook:layout:{value}" for value in layouts)
+    tags.update(f"uibook:elements:{value}" for value in elements)
+    tags.update(f"uibook:typography:{value}" for value in typography)
+
+    styles = classification.get("styles")
+    if not isinstance(styles, list):
+        raise RuntimeError("invalid_v2_styles")
+    for style in styles:
+        if not isinstance(style, dict) or set(style) != {"dimension", "value"}:
+            raise RuntimeError("invalid_v2_styles")
+        dimension = str(style.get("dimension") or "").strip()
+        value = str(style.get("value") or "").strip()
+        if not dimension or not value:
+            raise RuntimeError("invalid_v2_styles")
+        tags.add(f"uibook:style:{dimension}:{value}")
+
+    color_weights = mirror.get("colorWeights")
+    if not isinstance(color_weights, dict) or set(color_weights) != set(colors):
+        raise RuntimeError("invalid_v2_color_weights")
+    for color in colors:
+        percentage = color_weights[color]
+        if isinstance(percentage, bool) or not isinstance(percentage, (int, float)):
+            raise RuntimeError("invalid_v2_color_weights")
+        percentage = float(percentage)
+        if not math.isfinite(percentage):
+            raise RuntimeError("invalid_v2_color_weights")
+        threshold = (
+            MIN_NEUTRAL_COLOR_TAG_PERCENTAGE
+            if color.casefold() in NEUTRAL_COLOR_VALUES
+            else MIN_CHROMATIC_COLOR_TAG_PERCENTAGE
+        )
+        if percentage >= threshold:
+            tags.add(f"uibook:colors:{color}")
+    return sorted(tags)
+
+
+def inspect_uibook_preparation(item: dict[str, Any]) -> dict[str, Any]:
+    has_analysis = has_ai_analysis(item.get("annotation"))
+    mirror, issue = extract_embedded_mirror_data(item.get("annotation"))
+    expected_tags: list[str] = []
+    schema_version = mirror.get("schemaVersion") if mirror else None
+    if mirror is not None:
+        try:
+            expected_tags = expected_v2_managed_tags(
+                mirror,
+                str(item.get("id") or "").strip(),
+            )
+        except RuntimeError as exc:
+            issue = str(exc)
+
+    current_managed_tags = sorted(
+        tag
+        for tag in item_tag_names(item)
+        if is_managed_uibook_tag(tag, V2_MANAGED_UIBOOK_TAG_PREFIXES)
+    )
+    missing_tags = sorted(set(expected_tags) - set(current_managed_tags))
+    stale_tags = sorted(set(current_managed_tags) - set(expected_tags))
+    has_v2_mirror = mirror is not None and issue is None
+    has_uibook_tags = (
+        has_v2_mirror
+        and bool(expected_tags)
+        and not missing_tags
+        and not stale_tags
+    )
+    complete = has_analysis and has_v2_mirror and has_uibook_tags
+    if not has_analysis:
+        issue = "missing_ai_analysis"
+    elif has_v2_mirror and not has_uibook_tags:
+        issue = "uibook_tags_out_of_sync"
+
+    return {
+        "hasAiAnalysis": has_analysis,
+        "hasV2Mirror": has_v2_mirror,
+        "mirrorSchemaVersion": schema_version,
+        "hasUibookTags": has_uibook_tags,
+        "uibookPreparationComplete": complete,
+        "uibookPreparationIssue": None if complete else issue,
+        "expectedUibookTags": expected_tags,
+        "currentManagedUibookTags": current_managed_tags,
+        "missingUibookTags": missing_tags,
+        "staleUibookTags": stale_tags,
+    }
+
+
+def reject_nonfinite_json_constant(value: str) -> Any:
+    raise ValueError(f"non-finite number {value}")
+
+
+def read_json_document(path_value: str, label: str) -> Any:
+    path = Path(path_value).expanduser().resolve()
+    if not path.is_file():
+        raise RuntimeError(f"{label} file not found: {path}")
+    try:
+        return json.loads(
+            path.read_text("utf-8"),
+            parse_constant=reject_nonfinite_json_constant,
+        )
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise RuntimeError(f"{label} file is not valid JSON: {path}: {exc}") from exc
+
+
+def taxonomy_option_rows(payload: Any) -> list[dict[str, Any]]:
+    candidate = payload
+    if isinstance(payload, dict):
+        for key in ("categories", "configOptions", "config_options", "options", "data"):
+            value = payload.get(key)
+            if isinstance(value, (list, dict)):
+                candidate = value
+                break
+
+    rows: list[dict[str, Any]] = []
+    if isinstance(candidate, list):
+        for row in candidate:
+            if isinstance(row, dict):
+                rows.append(dict(row))
+    elif isinstance(candidate, dict):
+        for category, entries in candidate.items():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if isinstance(entry, str):
+                    rows.append({"category": category, "value": entry})
+                elif isinstance(entry, dict):
+                    row = dict(entry)
+                    row.setdefault("category", category)
+                    rows.append(row)
+
+    normalized = []
+    for row in rows:
+        category = str(row.get("category") or "").strip()
+        value = str(row.get("value") or "").strip()
+        if category not in PUBLIC_TAXONOMY_CATEGORIES or not value:
+            continue
+        normalized.append(
+            {
+                "category": category,
+                "value": value,
+                "dimension": (
+                    str(row.get("dimension") or "").strip()
+                    if category == "style"
+                    else ""
+                ),
+            }
+        )
+    if not normalized:
+        raise RuntimeError(
+            "Taxonomy file has no usable public UIBook config_options"
+        )
+    return normalized
+
+
+def taxonomy_content_hash(payload: Any) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    categories = payload.get("categories")
+    if not isinstance(categories, dict):
+        return None
+    canonical = {
+        "schemaVersion": payload.get("schemaVersion", 1),
+        "categories": categories,
+    }
+    serialized = json.dumps(
+        canonical,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(serialized).hexdigest()}"
+
+
+def taxonomy_rows_hash(rows: list[dict[str, Any]]) -> str:
+    canonical_rows = sorted(
         {
-            "items": [
+            (
+                str(row["category"]),
+                str(row["value"]),
+                str(row.get("dimension") or ""),
+            )
+            for row in rows
+        }
+    )
+    serialized = json.dumps(
+        canonical_rows,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"sha256:{hashlib.sha256(serialized).hexdigest()}"
+
+
+def get_taxonomy_snapshot(payload: Any, rows: list[dict[str, Any]]) -> str:
+    computed = taxonomy_content_hash(payload) or taxonomy_rows_hash(rows)
+    if isinstance(payload, dict):
+        for key in ("taxonomySnapshot", "snapshotHash", "snapshot", "version"):
+            value = str(payload.get(key) or "").strip()
+            if value:
+                if value != computed:
+                    raise RuntimeError(
+                        "Taxonomy snapshot hash does not match taxonomy contents "
+                        f"({value!r} != {computed!r})"
+                    )
+                return value
+
+    return computed
+
+
+def validate_tag_component(value: str, field: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        raise RuntimeError(f"{field} must not be empty")
+    if any(character in text for character in ("\r", "\n", ":")):
+        raise RuntimeError(f"{field} contains a reserved tag character: {text!r}")
+    return text
+
+
+def build_taxonomy_lookups(
+    rows: list[dict[str, Any]],
+) -> tuple[dict[str, str], dict[str, str], dict[tuple[str, str], tuple[str, str]]]:
+    pages: dict[str, str] = {}
+    sections: dict[str, str] = {}
+    styles: dict[tuple[str, str], tuple[str, str]] = {}
+
+    for row in rows:
+        category = str(row["category"])
+        value = validate_tag_component(str(row["value"]), f"{category}.value")
+        value_key = value.casefold()
+        if category == "page_type":
+            pages.setdefault(value_key, value)
+            continue
+        if category == "section_type":
+            sections.setdefault(value_key, value)
+            continue
+        if category != "style":
+            continue
+
+        dimension = validate_tag_component(
+            str(row.get("dimension") or ""),
+            "style.dimension",
+        )
+        key = (dimension.casefold(), value_key)
+        existing = styles.get(key)
+        canonical = (dimension, value)
+        if existing and existing != canonical:
+            raise RuntimeError(
+                f"Conflicting style taxonomy entries for {dimension}/{value}"
+            )
+        styles[key] = canonical
+
+    return pages, sections, styles
+
+
+def build_category_taxonomy_lookups(
+    rows: list[dict[str, Any]],
+) -> tuple[
+    dict[str, dict[str, str]],
+    dict[str, tuple[str, str]],
+]:
+    category_lookups: dict[str, dict[str, str]] = {
+        category: {}
+        for category in PUBLIC_TAXONOMY_CATEGORIES
+    }
+    style_by_value: dict[str, tuple[str, str]] = {}
+
+    for row in rows:
+        category = str(row["category"])
+        value = validate_tag_component(
+            str(row["value"]),
+            f"{category}.value",
+        )
+        value_key = value.casefold()
+        existing = category_lookups[category].get(value_key)
+        if existing and existing != value:
+            raise RuntimeError(
+                f"Conflicting {category} taxonomy entries for {value!r}"
+            )
+        category_lookups[category][value_key] = value
+        if category != "style":
+            continue
+
+        dimension = validate_tag_component(
+            str(row.get("dimension") or ""),
+            "style.dimension",
+        )
+        canonical_style = (dimension, value)
+        existing_style = style_by_value.get(value_key)
+        if existing_style and existing_style != canonical_style:
+            raise RuntimeError(
+                f"Style value {value!r} maps to multiple dimensions"
+            )
+        style_by_value[value_key] = canonical_style
+
+    missing = [
+        category
+        for category, lookup in category_lookups.items()
+        if not lookup
+    ]
+    if missing:
+        raise RuntimeError(
+            "Taxonomy snapshot is missing required public categories: "
+            + ", ".join(missing)
+        )
+    return category_lookups, style_by_value
+
+
+def mirror_string_list(
+    classification: dict[str, Any],
+    field: str,
+) -> list[str]:
+    value = classification.get(field, [])
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise RuntimeError(f"classification.{field} must be an array of strings")
+    return [item.strip() for item in value if item.strip()]
+
+
+def canonical_taxonomy_value(
+    lookup: dict[str, str],
+    value: str,
+    field: str,
+) -> str:
+    canonical = lookup.get(value.casefold())
+    if canonical is None:
+        raise RuntimeError(
+            f"{field} is not present in the supplied UIBook taxonomy: {value!r}"
+        )
+    return canonical
+
+
+def require_taggable_confidence(value: Any, field: str) -> str:
+    confidence = str(value or "").strip().casefold()
+    if confidence not in {"high", "medium"}:
+        raise RuntimeError(
+            f"{field} must be 'high' or 'medium' to create an official tag"
+        )
+    return confidence
+
+
+def validate_mirror_v1_payload(
+    mirror: Any,
+    taxonomy: Any,
+) -> dict[str, Any]:
+    if not isinstance(mirror, dict):
+        raise RuntimeError("Mirror file root must be a JSON object")
+
+    rows = taxonomy_option_rows(taxonomy)
+    taxonomy_snapshot = get_taxonomy_snapshot(taxonomy, rows)
+    mirror_snapshot = str(mirror.get("taxonomySnapshot") or "").strip()
+    if not mirror_snapshot:
+        raise RuntimeError("mirror.taxonomySnapshot is required")
+    if mirror_snapshot != taxonomy_snapshot:
+        raise RuntimeError(
+            "Mirror taxonomySnapshot does not match the supplied taxonomy file "
+            f"({mirror_snapshot!r} != {taxonomy_snapshot!r})"
+        )
+
+    entity_type = str(mirror.get("entityType") or "").strip()
+    if entity_type not in MIRROR_ENTITY_TYPES:
+        raise RuntimeError(
+            "mirror.entityType must be exactly 'website' or 'section'"
+        )
+    source_item_id = str(mirror.get("sourceItemId") or "").strip()
+    if not source_item_id:
+        raise RuntimeError("mirror.sourceItemId is required")
+    image_fingerprint = str(mirror.get("imageFingerprint") or "").strip()
+    if not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", image_fingerprint):
+        raise RuntimeError(
+            "mirror.imageFingerprint must use sha256:<64 hexadecimal characters>"
+        )
+
+    ui_context = mirror.get("uiContext")
+    if not isinstance(ui_context, str) or not ui_context.strip():
+        raise RuntimeError("mirror.uiContext must be a non-empty string")
+    content_map = mirror.get("contentMap")
+    if not isinstance(content_map, list):
+        raise RuntimeError("mirror.contentMap must be an array")
+    confidence = mirror.get("confidence")
+    if not isinstance(confidence, dict):
+        raise RuntimeError("mirror.confidence must be an object")
+    evidence = mirror.get("evidence")
+    if not isinstance(evidence, dict):
+        raise RuntimeError("mirror.evidence must be an object")
+    unmapped = mirror.get("unmapped")
+    if not isinstance(unmapped, list):
+        raise RuntimeError("mirror.unmapped must be an array")
+
+    classification = mirror.get("classification")
+    if not isinstance(classification, dict):
+        raise RuntimeError("mirror.classification must be an object")
+
+    page_type_value = classification.get("pageType")
+    if page_type_value is not None and not isinstance(page_type_value, str):
+        raise RuntimeError("classification.pageType must be a string or null")
+    page_type = str(page_type_value or "").strip()
+    section_types = mirror_string_list(classification, "sectionTypes")
+    contained_section_types = mirror_string_list(
+        classification,
+        "containedSectionTypes",
+    )
+    styles_value = classification.get("styles", [])
+    if not isinstance(styles_value, list):
+        raise RuntimeError("classification.styles must be an array")
+
+    if entity_type == "website" and section_types:
+        raise RuntimeError(
+            "Website mirrors must use containedSectionTypes, not sectionTypes"
+        )
+    if entity_type == "section" and (page_type or contained_section_types):
+        raise RuntimeError(
+            "Section mirrors cannot set pageType or containedSectionTypes"
+        )
+    if entity_type == "website" and not page_type:
+        raise RuntimeError("Website mirrors require classification.pageType")
+    if entity_type == "section" and not section_types:
+        raise RuntimeError(
+            "Section mirrors require at least one classification.sectionTypes value"
+        )
+    if len(section_types) > 2:
+        raise RuntimeError("classification.sectionTypes may contain at most 2 values")
+    style_limit = 6 if entity_type == "website" else 4
+    if len(styles_value) > style_limit:
+        raise RuntimeError(
+            f"{entity_type} mirrors may contain at most {style_limit} styles"
+        )
+    if entity_type == "website":
+        require_taggable_confidence(
+            confidence.get("pageType"),
+            "confidence.pageType",
+        )
+        if contained_section_types:
+            require_taggable_confidence(
+                confidence.get("containedSectionTypes"),
+                "confidence.containedSectionTypes",
+            )
+    else:
+        require_taggable_confidence(
+            confidence.get("sectionTypes"),
+            "confidence.sectionTypes",
+        )
+
+    pages, sections, styles = build_taxonomy_lookups(rows)
+    desired_tags: set[str] = set()
+    normalized_page_type: str | None = None
+    normalized_section_types: list[str] = []
+    normalized_contained_section_types: list[str] = []
+    normalized_styles: list[dict[str, str]] = []
+
+    if page_type:
+        normalized_page_type = canonical_taxonomy_value(
+            pages,
+            page_type,
+            "classification.pageType",
+        )
+        desired_tags.add(f"uibook:page:{normalized_page_type}")
+
+    for value in section_types:
+        canonical = canonical_taxonomy_value(
+            sections,
+            value,
+            "classification.sectionTypes",
+        )
+        normalized_section_types.append(canonical)
+        desired_tags.add(f"uibook:section:{canonical}")
+
+    for value in contained_section_types:
+        canonical = canonical_taxonomy_value(
+            sections,
+            value,
+            "classification.containedSectionTypes",
+        )
+        normalized_contained_section_types.append(canonical)
+        desired_tags.add(f"uibook:contains-section:{canonical}")
+
+    for index, style in enumerate(styles_value):
+        if not isinstance(style, dict):
+            raise RuntimeError(
+                f"classification.styles[{index}] must be an object"
+            )
+        dimension = str(style.get("dimension") or "").strip()
+        value = str(style.get("value") or "").strip()
+        if not dimension or not value:
+            raise RuntimeError(
+                f"classification.styles[{index}] needs dimension and value"
+            )
+        require_taggable_confidence(
+            style.get("confidence"),
+            f"classification.styles[{index}].confidence",
+        )
+        canonical = styles.get((dimension.casefold(), value.casefold()))
+        if canonical is None:
+            raise RuntimeError(
+                "classification.styles"
+                f"[{index}] is not present in the supplied UIBook taxonomy: "
+                f"{dimension!r}/{value!r}"
+            )
+        canonical_dimension, canonical_value = canonical
+        normalized_styles.append(
+            {
+                "dimension": canonical_dimension,
+                "value": canonical_value,
+            }
+        )
+        desired_tags.add(
+            f"uibook:style:{canonical_dimension}:{canonical_value}"
+        )
+
+    normalized_classification = {
+        "pageType": normalized_page_type,
+        "sectionTypes": sorted(set(normalized_section_types)),
+        "containedSectionTypes": sorted(
+            set(normalized_contained_section_types)
+        ),
+        "styles": [
+            {"dimension": dimension, "value": value}
+            for dimension, value in sorted(
                 {
-                    "id": item_id,
-                    "annotation": annotation,
+                    (style["dimension"], style["value"])
+                    for style in normalized_styles
                 }
+            )
+        ],
+    }
+    desired_by_category = {
+        "pageType": (
+            [f"uibook:page:{normalized_page_type}"]
+            if normalized_page_type
+            else []
+        ),
+        "sectionTypes": [
+            f"uibook:section:{value}"
+            for value in normalized_classification["sectionTypes"]
+        ],
+        "containedSectionTypes": [
+            f"uibook:contains-section:{value}"
+            for value in normalized_classification["containedSectionTypes"]
+        ],
+        "styles": [
+            f"uibook:style:{style['dimension']}:{style['value']}"
+            for style in normalized_classification["styles"]
+        ],
+    }
+    mirror_data = {
+        "schemaVersion": UIBOOK_SCHEMA_V1,
+        "taxonomySnapshot": taxonomy_snapshot,
+        "sourceItemId": source_item_id,
+        "imageFingerprint": image_fingerprint,
+        "entityType": entity_type,
+        "uiContext": ui_context.strip(),
+        "contentMap": content_map,
+        "classification": normalized_classification,
+        "confidence": confidence,
+        "evidence": evidence,
+        "unmapped": unmapped,
+        "managedPrefixes": list(V1_MANAGED_UIBOOK_TAG_PREFIXES),
+        "desiredByCategory": desired_by_category,
+        "suppressedColorTags": [],
+        "managedTags": sorted(desired_tags),
+    }
+
+    return {
+        "schemaVersion": UIBOOK_SCHEMA_V1,
+        "taxonomySnapshot": taxonomy_snapshot,
+        "sourceItemId": source_item_id,
+        "imageFingerprint": image_fingerprint,
+        "entityType": entity_type,
+        "desiredTags": sorted(desired_tags),
+        "managedPrefixes": list(V1_MANAGED_UIBOOK_TAG_PREFIXES),
+        "desiredByCategory": desired_by_category,
+        "suppressedColorTags": [],
+        "unmapped": unmapped,
+        "normalizedClassification": normalized_classification,
+        "mirrorData": mirror_data,
+    }
+
+
+def require_exact_object_keys(
+    value: Any,
+    expected_keys: set[str],
+    field: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeError(f"{field} must be an object")
+    actual_keys = set(value)
+    missing = sorted(expected_keys - actual_keys)
+    unexpected = sorted(actual_keys - expected_keys)
+    if missing or unexpected:
+        raise RuntimeError(
+            f"{field} keys do not match schema v2: "
+            f"missing={missing}, unexpected={unexpected}"
+        )
+    return value
+
+
+def require_required_object_keys(
+    value: Any,
+    required_keys: set[str],
+    field: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise RuntimeError(f"{field} must be an object")
+    missing = sorted(required_keys - set(value))
+    if missing:
+        raise RuntimeError(
+            f"{field} is missing required schema v2 keys: {missing}"
+        )
+    return value
+
+
+def require_unique_string_list(
+    value: Any,
+    field: str,
+) -> list[str]:
+    if not isinstance(value, list):
+        raise RuntimeError(f"{field} must be an array of strings")
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise RuntimeError(
+                f"{field}[{index}] must be a non-empty string"
+            )
+        text = item.strip()
+        key = text.casefold()
+        if key in seen:
+            raise RuntimeError(f"{field} contains duplicate value {text!r}")
+        seen.add(key)
+        normalized.append(text)
+    return normalized
+
+
+def require_evidence_list(
+    value: Any,
+    field: str,
+    *,
+    allow_empty: bool = False,
+) -> list[str]:
+    if not isinstance(value, list):
+        raise RuntimeError(f"{field} must be an array of evidence strings")
+    evidence = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise RuntimeError(
+                f"{field}[{index}] must be a non-empty evidence string"
+            )
+        evidence.append(item.strip())
+    if not evidence and not allow_empty:
+        raise RuntimeError(f"{field} must contain at least one evidence string")
+    return evidence
+
+
+def canonicalize_category_values(
+    values: list[str],
+    lookup: dict[str, str],
+    field: str,
+) -> list[str]:
+    return [
+        canonical_taxonomy_value(lookup, value, field)
+        for value in values
+    ]
+
+
+def validate_v2_value_metadata(
+    field: str,
+    canonical_keys: list[str],
+    confidence: dict[str, Any],
+    evidence: dict[str, Any],
+) -> tuple[dict[str, str], dict[str, list[str]]]:
+    confidence_map = require_exact_object_keys(
+        confidence.get(field),
+        set(canonical_keys),
+        f"confidence.{field}",
+    )
+    evidence_map = require_exact_object_keys(
+        evidence.get(field),
+        set(canonical_keys),
+        f"evidence.{field}",
+    )
+    normalized_confidence: dict[str, str] = {}
+    normalized_evidence: dict[str, list[str]] = {}
+    for key in canonical_keys:
+        try:
+            normalized_confidence[key] = require_taggable_confidence(
+                confidence_map[key],
+                f"confidence.{field}[{key!r}]",
+            )
+        except RuntimeError as exc:
+            raise RuntimeError(
+                f"{exc}; low-confidence values belong only in unmapped"
+            ) from exc
+        normalized_evidence[key] = require_evidence_list(
+            evidence_map[key],
+            f"evidence.{field}[{key!r}]",
+        )
+    return normalized_confidence, normalized_evidence
+
+
+def validate_v2_unmapped(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        raise RuntimeError("mirror.unmapped must be an array")
+    normalized = []
+    required = {"category", "term", "confidence", "reason", "evidence"}
+    for index, entry in enumerate(value):
+        item = require_exact_object_keys(
+            entry,
+            required,
+            f"unmapped[{index}]",
+        )
+        category = str(item.get("category") or "").strip()
+        if not category:
+            raise RuntimeError(f"unmapped[{index}].category is required")
+        term = str(item.get("term") or "").strip()
+        if not term:
+            raise RuntimeError(f"unmapped[{index}].term is required")
+        confidence = str(item.get("confidence") or "").strip().casefold()
+        if confidence != "low":
+            raise RuntimeError(
+                f"unmapped[{index}].confidence must be exactly 'low'"
+            )
+        reason = str(item.get("reason") or "").strip()
+        if not reason:
+            raise RuntimeError(f"unmapped[{index}].reason is required")
+        entry_evidence = require_evidence_list(
+            item.get("evidence"),
+            f"unmapped[{index}].evidence",
+            allow_empty=True,
+        )
+        normalized.append(
+            {
+                "category": category,
+                "term": term,
+                "confidence": "low",
+                "reason": reason,
+                "evidence": entry_evidence,
+            }
+        )
+    return normalized
+
+
+def validate_mirror_v2_payload(
+    mirror: Any,
+    taxonomy: Any,
+) -> dict[str, Any]:
+    if not isinstance(mirror, dict):
+        raise RuntimeError("Mirror file root must be a JSON object")
+
+    rows = taxonomy_option_rows(taxonomy)
+    taxonomy_snapshot = get_taxonomy_snapshot(taxonomy, rows)
+    category_lookups, style_by_value = build_category_taxonomy_lookups(rows)
+    mirror_snapshot = str(mirror.get("taxonomySnapshot") or "").strip()
+    if not mirror_snapshot:
+        raise RuntimeError("mirror.taxonomySnapshot is required")
+    if mirror_snapshot != taxonomy_snapshot:
+        raise RuntimeError(
+            "Mirror taxonomySnapshot does not match the supplied taxonomy file "
+            f"({mirror_snapshot!r} != {taxonomy_snapshot!r})"
+        )
+
+    source_item_id = str(mirror.get("sourceItemId") or "").strip()
+    if not source_item_id:
+        raise RuntimeError("mirror.sourceItemId is required")
+    image_fingerprint = str(mirror.get("imageFingerprint") or "").strip()
+    if not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", image_fingerprint):
+        raise RuntimeError(
+            "mirror.imageFingerprint must use sha256:<64 hexadecimal characters>"
+        )
+    entity_type = str(mirror.get("entityType") or "").strip()
+    if entity_type not in MIRROR_ENTITY_TYPES:
+        raise RuntimeError(
+            "mirror.entityType must be exactly 'website' or 'section'"
+        )
+    ui_context = mirror.get("uiContext")
+    if not isinstance(ui_context, str) or not ui_context.strip():
+        raise RuntimeError("mirror.uiContext must be a non-empty string")
+    content_map = mirror.get("contentMap")
+    if not isinstance(content_map, list) or not content_map:
+        raise RuntimeError("mirror.contentMap must be a non-empty array")
+
+    classification = require_exact_object_keys(
+        mirror.get("classification"),
+        set(V2_CLASSIFICATION_FIELDS),
+        "mirror.classification",
+    )
+    confidence_fields = {
+        "contentCoverage",
+        "pageType",
+        *V2_MAPPED_LIST_FIELDS,
+    }
+    confidence = require_exact_object_keys(
+        mirror.get("confidence"),
+        confidence_fields,
+        "mirror.confidence",
+    )
+    evidence_fields = {
+        "pageType",
+        *V2_MAPPED_LIST_FIELDS,
+    }
+    evidence = require_required_object_keys(
+        mirror.get("evidence"),
+        evidence_fields,
+        "mirror.evidence",
+    )
+    content_coverage_confidence = require_taggable_confidence(
+        confidence.get("contentCoverage"),
+        "confidence.contentCoverage",
+    )
+    unmapped = validate_v2_unmapped(mirror.get("unmapped"))
+
+    page_type_value = classification["pageType"]
+    if page_type_value is not None and (
+        not isinstance(page_type_value, str) or not page_type_value.strip()
+    ):
+        raise RuntimeError(
+            "classification.pageType must be a non-empty string or null"
+        )
+    page_type = str(page_type_value or "").strip()
+    raw_values = {
+        field: require_unique_string_list(
+            classification[field],
+            f"classification.{field}",
+        )
+        for field in (
+            "sectionTypes",
+            "containedSectionTypes",
+            "industries",
+            "layouts",
+            "elements",
+            "colors",
+            "typography",
+        )
+    }
+
+    raw_styles = classification["styles"]
+    if not isinstance(raw_styles, list):
+        raise RuntimeError("classification.styles must be an array")
+    normalized_styles: list[dict[str, str]] = []
+    style_keys_seen: set[str] = set()
+    for index, style in enumerate(raw_styles):
+        item = require_exact_object_keys(
+            style,
+            {"dimension", "value"},
+            f"classification.styles[{index}]",
+        )
+        dimension = str(item.get("dimension") or "").strip()
+        value = str(item.get("value") or "").strip()
+        if not dimension or not value:
+            raise RuntimeError(
+                f"classification.styles[{index}] needs dimension and value"
+            )
+        canonical = style_by_value.get(value.casefold())
+        if canonical is None:
+            raise RuntimeError(
+                "classification.styles"
+                f"[{index}] is not present in the style taxonomy: {value!r}"
+            )
+        canonical_dimension, canonical_value = canonical
+        if dimension.casefold() != canonical_dimension.casefold():
+            raise RuntimeError(
+                "classification.styles"
+                f"[{index}].dimension does not match taxonomy "
+                f"({dimension!r} != {canonical_dimension!r})"
+            )
+        style_key = f"{canonical_dimension}:{canonical_value}"
+        if style_key.casefold() in style_keys_seen:
+            raise RuntimeError(
+                f"classification.styles contains duplicate {style_key!r}"
+            )
+        style_keys_seen.add(style_key.casefold())
+        normalized_styles.append(
+            {
+                "dimension": canonical_dimension,
+                "value": canonical_value,
+            }
+        )
+
+    if entity_type == "website":
+        if not page_type:
+            raise RuntimeError(
+                "Website schema v2 mirrors require classification.pageType"
+            )
+        if raw_values["sectionTypes"]:
+            raise RuntimeError(
+                "Website schema v2 mirrors require sectionTypes=[]"
+            )
+        if raw_values["layouts"]:
+            raise RuntimeError(
+                "Website schema v2 mirrors require layouts=[]"
+            )
+    else:
+        if page_type:
+            raise RuntimeError(
+                "Section schema v2 mirrors require pageType=null"
+            )
+        if raw_values["containedSectionTypes"]:
+            raise RuntimeError(
+                "Section schema v2 mirrors require containedSectionTypes=[]"
+            )
+        if not raw_values["sectionTypes"]:
+            raise RuntimeError(
+                "Section schema v2 mirrors require 1-2 sectionTypes"
+            )
+
+    if len(raw_values["sectionTypes"]) > MAX_SECTION_TYPES:
+        raise RuntimeError(
+            f"classification.sectionTypes may contain at most {MAX_SECTION_TYPES} values"
+        )
+    if len(raw_values["containedSectionTypes"]) > len(
+        category_lookups["section_type"]
+    ):
+        raise RuntimeError(
+            "classification.containedSectionTypes exceeds the section_type taxonomy"
+        )
+    caps = {
+        "industries": MAX_INDUSTRIES,
+        "layouts": MAX_LAYOUTS,
+        "elements": MAX_ELEMENTS,
+        "colors": MAX_COLORS,
+        "typography": MAX_TYPOGRAPHY,
+    }
+    for field, cap in caps.items():
+        if len(raw_values[field]) > cap:
+            raise RuntimeError(
+                f"classification.{field} may contain at most {cap} values"
+            )
+    style_limit = (
+        MAX_WEBSITE_STYLES
+        if entity_type == "website"
+        else MAX_SECTION_STYLES
+    )
+    if len(normalized_styles) > style_limit:
+        raise RuntimeError(
+            f"{entity_type} mirrors may contain at most {style_limit} styles"
+        )
+
+    normalized_page_type = (
+        canonical_taxonomy_value(
+            category_lookups["page_type"],
+            page_type,
+            "classification.pageType",
+        )
+        if page_type
+        else None
+    )
+    normalized_classification: dict[str, Any] = {
+        "pageType": normalized_page_type,
+        "sectionTypes": canonicalize_category_values(
+            raw_values["sectionTypes"],
+            category_lookups["section_type"],
+            "classification.sectionTypes",
+        ),
+        "containedSectionTypes": canonicalize_category_values(
+            raw_values["containedSectionTypes"],
+            category_lookups["section_type"],
+            "classification.containedSectionTypes",
+        ),
+        "industries": canonicalize_category_values(
+            raw_values["industries"],
+            category_lookups["industry"],
+            "classification.industries",
+        ),
+        "layouts": canonicalize_category_values(
+            raw_values["layouts"],
+            category_lookups["layout"],
+            "classification.layouts",
+        ),
+        "elements": canonicalize_category_values(
+            raw_values["elements"],
+            category_lookups["elements"],
+            "classification.elements",
+        ),
+        "styles": normalized_styles,
+        "colors": canonicalize_category_values(
+            raw_values["colors"],
+            category_lookups["colors"],
+            "classification.colors",
+        ),
+        "typography": canonicalize_category_values(
+            raw_values["typography"],
+            category_lookups["typography"],
+            "classification.typography",
+        ),
+    }
+
+    if normalized_page_type:
+        normalized_page_confidence = require_taggable_confidence(
+            confidence.get("pageType"),
+            "confidence.pageType",
+        )
+        normalized_page_evidence = require_evidence_list(
+            evidence.get("pageType"),
+            "evidence.pageType",
+        )
+    else:
+        if confidence.get("pageType") is not None:
+            raise RuntimeError(
+                "confidence.pageType must be null when pageType is null"
+            )
+        normalized_page_confidence = None
+        normalized_page_evidence = require_evidence_list(
+            evidence.get("pageType"),
+            "evidence.pageType",
+            allow_empty=True,
+        )
+        if normalized_page_evidence:
+            raise RuntimeError(
+                "evidence.pageType must be [] when pageType is null"
+            )
+
+    metadata_keys = {
+        "sectionTypes": normalized_classification["sectionTypes"],
+        "containedSectionTypes": normalized_classification[
+            "containedSectionTypes"
+        ],
+        "industries": normalized_classification["industries"],
+        "layouts": normalized_classification["layouts"],
+        "elements": normalized_classification["elements"],
+        "styles": [
+            f"{style['dimension']}:{style['value']}"
+            for style in normalized_styles
+        ],
+        "colors": normalized_classification["colors"],
+        "typography": normalized_classification["typography"],
+    }
+    normalized_confidence: dict[str, Any] = {
+        "contentCoverage": content_coverage_confidence,
+        "pageType": normalized_page_confidence,
+    }
+    normalized_evidence: dict[str, Any] = {
+        key: value
+        for key, value in evidence.items()
+        if key not in evidence_fields
+    }
+    normalized_evidence.update({
+        "pageType": normalized_page_evidence,
+    })
+    for field, keys in metadata_keys.items():
+        field_confidence, field_evidence = validate_v2_value_metadata(
+            field,
+            keys,
+            confidence,
+            evidence,
+        )
+        normalized_confidence[field] = field_confidence
+        normalized_evidence[field] = field_evidence
+
+    raw_color_weights = require_exact_object_keys(
+        mirror.get("colorWeights"),
+        set(normalized_classification["colors"]),
+        "mirror.colorWeights",
+    )
+    normalized_color_weights: dict[str, float | int] = {}
+    for color in normalized_classification["colors"]:
+        percentage = raw_color_weights[color]
+        if isinstance(percentage, bool) or not isinstance(
+            percentage,
+            (int, float),
+        ):
+            raise RuntimeError(
+                f"colorWeights[{color!r}] must be a number"
+            )
+        numeric_percentage = float(percentage)
+        if (
+            not math.isfinite(numeric_percentage)
+            or numeric_percentage < MIN_COLOR_MIRROR_PERCENTAGE
+            or numeric_percentage > 100
+        ):
+            raise RuntimeError(
+                f"colorWeights[{color!r}] must be between "
+                f"{MIN_COLOR_MIRROR_PERCENTAGE:g} and 100"
+            )
+        normalized_color_weights[color] = (
+            int(numeric_percentage)
+            if numeric_percentage.is_integer()
+            else numeric_percentage
+        )
+
+    ordered_colors = sorted(
+        normalized_classification["colors"],
+        key=lambda color: (
+            -float(normalized_color_weights[color]),
+            color,
+        ),
+    )
+    normalized_classification["colors"] = ordered_colors
+    normalized_color_weights = {
+        color: normalized_color_weights[color]
+        for color in ordered_colors
+    }
+
+    desired_by_category: dict[str, list[str]] = {
+        field: []
+        for field in V2_CLASSIFICATION_FIELDS
+    }
+    if normalized_page_type:
+        desired_by_category["pageType"] = [
+            f"uibook:page:{normalized_page_type}"
+        ]
+    desired_by_category["sectionTypes"] = [
+        f"uibook:section:{value}"
+        for value in normalized_classification["sectionTypes"]
+    ]
+    desired_by_category["containedSectionTypes"] = [
+        f"uibook:contains-section:{value}"
+        for value in normalized_classification["containedSectionTypes"]
+    ]
+    desired_by_category["industries"] = [
+        f"uibook:industry:{value}"
+        for value in normalized_classification["industries"]
+    ]
+    desired_by_category["layouts"] = [
+        f"uibook:layout:{value}"
+        for value in normalized_classification["layouts"]
+    ]
+    desired_by_category["elements"] = [
+        f"uibook:elements:{value}"
+        for value in normalized_classification["elements"]
+    ]
+    desired_by_category["styles"] = [
+        f"uibook:style:{style['dimension']}:{style['value']}"
+        for style in normalized_styles
+    ]
+    desired_by_category["typography"] = [
+        f"uibook:typography:{value}"
+        for value in normalized_classification["typography"]
+    ]
+
+    suppressed_color_tags = []
+    for color in ordered_colors:
+        tag = f"uibook:colors:{color}"
+        percentage = float(normalized_color_weights[color])
+        threshold = (
+            MIN_NEUTRAL_COLOR_TAG_PERCENTAGE
+            if color.casefold() in NEUTRAL_COLOR_VALUES
+            else MIN_CHROMATIC_COLOR_TAG_PERCENTAGE
+        )
+        if percentage >= threshold:
+            desired_by_category["colors"].append(tag)
+        else:
+            suppressed_color_tags.append(tag)
+
+    desired_tags = sorted(
+        {
+            tag
+            for tags in desired_by_category.values()
+            for tag in tags
+        }
+    )
+    mirror_data = {
+        "schemaVersion": UIBOOK_SCHEMA_V2,
+        "taxonomySnapshot": taxonomy_snapshot,
+        "sourceItemId": source_item_id,
+        "imageFingerprint": image_fingerprint,
+        "entityType": entity_type,
+        "uiContext": ui_context.strip(),
+        "contentMap": content_map,
+        "classification": normalized_classification,
+        "colorWeights": normalized_color_weights,
+        "confidence": normalized_confidence,
+        "evidence": normalized_evidence,
+        "unmapped": unmapped,
+    }
+    return {
+        "schemaVersion": UIBOOK_SCHEMA_V2,
+        "taxonomySnapshot": taxonomy_snapshot,
+        "sourceItemId": source_item_id,
+        "imageFingerprint": image_fingerprint,
+        "entityType": entity_type,
+        "desiredTags": desired_tags,
+        "managedPrefixes": list(V2_MANAGED_UIBOOK_TAG_PREFIXES),
+        "desiredByCategory": desired_by_category,
+        "suppressedColorTags": suppressed_color_tags,
+        "unmapped": unmapped,
+        "normalizedClassification": normalized_classification,
+        "mirrorData": mirror_data,
+    }
+
+
+def validate_mirror_payload(
+    mirror: Any,
+    taxonomy: Any,
+) -> dict[str, Any]:
+    if not isinstance(mirror, dict):
+        raise RuntimeError("Mirror file root must be a JSON object")
+    raw_schema_version = mirror.get("schemaVersion", UIBOOK_SCHEMA_V1)
+    if isinstance(raw_schema_version, bool) or not isinstance(
+        raw_schema_version,
+        int,
+    ):
+        raise RuntimeError("mirror.schemaVersion must be integer 1 or 2")
+    if raw_schema_version == UIBOOK_SCHEMA_V1:
+        return validate_mirror_v1_payload(mirror, taxonomy)
+    if raw_schema_version == UIBOOK_SCHEMA_V2:
+        return validate_mirror_v2_payload(mirror, taxonomy)
+    raise RuntimeError("mirror.schemaVersion must be integer 1 or 2")
+
+
+def attach_mirror_data(block: str, mirror_data: dict[str, Any]) -> str:
+    text = str(block or "").strip()
+    section_pattern = re.compile(
+        rf"\n*{re.escape(MIRROR_DATA_HEADING)}\n+\s*```json\n.*?\n```\n*",
+        re.DOTALL,
+    )
+    text = re.sub(section_pattern, "\n", text).strip()
+    machine_section = (
+        f"{MIRROR_DATA_HEADING}\n\n"
+        "```json\n"
+        f"{json.dumps(mirror_data, ensure_ascii=False, separators=(',', ':'))}\n"
+        "```"
+    )
+    if BLOCK_END in text:
+        return text.replace(
+            BLOCK_END,
+            f"{machine_section}\n{BLOCK_END}",
+            1,
+        )
+    return f"{text}\n\n{machine_section}".strip()
+
+
+def item_tag_names(item: dict[str, Any]) -> list[str]:
+    tags = item.get("tags")
+    if not isinstance(tags, list):
+        return []
+    names = []
+    seen = set()
+    for tag in tags:
+        if isinstance(tag, str):
+            name = tag.strip()
+        elif isinstance(tag, dict):
+            name = str(tag.get("name") or "").strip()
+        else:
+            name = ""
+        if name and name not in seen:
+            seen.add(name)
+            names.append(name)
+    return names
+
+
+def is_managed_uibook_tag(
+    tag: str,
+    managed_prefixes: list[str] | tuple[str, ...],
+) -> bool:
+    return any(tag.startswith(prefix) for prefix in managed_prefixes)
+
+
+def ensure_schema_tag_compatibility(
+    schema_version: int,
+    current_tags: list[str],
+) -> None:
+    if schema_version != UIBOOK_SCHEMA_V1:
+        return
+    v2_only_tags = sorted(
+        tag
+        for tag in current_tags
+        if is_managed_uibook_tag(
+            tag,
+            V2_ONLY_UIBOOK_TAG_PREFIXES,
+        )
+    )
+    if v2_only_tags:
+        raise RuntimeError(
+            "Schema v1 refuses to run because the Eagle item already has "
+            f"schema v2-only managed tags: {v2_only_tags}"
+        )
+
+
+def build_uibook_tag_diff(
+    current_tags: list[str],
+    desired_tags: list[str],
+    managed_prefixes: list[str] | tuple[str, ...],
+) -> dict[str, list[str]]:
+    current = list(dict.fromkeys(tag for tag in current_tags if tag))
+    desired = sorted(set(desired_tags))
+    current_set = set(current)
+    desired_set = set(desired)
+    to_add = sorted(desired_set - current_set)
+    to_remove = sorted(
+        tag
+        for tag in current
+        if is_managed_uibook_tag(tag, managed_prefixes)
+        and tag not in desired_set
+    )
+    to_remove_set = set(to_remove)
+    preserved = [tag for tag in current if tag not in to_remove_set]
+    return {
+        "desired": desired,
+        "toAdd": to_add,
+        "toRemove": to_remove,
+        "preserved": preserved,
+    }
+
+
+def add_item_tags(
+    client: MCPClient,
+    item_id: str,
+    tags: list[str],
+) -> None:
+    if not tags:
+        return
+    current = get_item_by_id(client, item_id)
+    combined = list(
+        dict.fromkeys(
+            [
+                *item_tag_names(current),
+                *tags,
             ]
-        },
+        )
+    )
+    client.update_item_fields(item_id, {"tags": combined})
+
+
+def remove_item_tags(
+    client: MCPClient,
+    item_id: str,
+    tags: list[str],
+) -> None:
+    if not tags:
+        return
+    removed = set(tags)
+    current = get_item_by_id(client, item_id)
+    remaining = [
+        tag
+        for tag in item_tag_names(current)
+        if tag not in removed
+    ]
+    client.update_item_fields(item_id, {"tags": remaining})
+
+
+def verify_managed_uibook_tags(
+    item: dict[str, Any],
+    desired_tags: list[str],
+    managed_prefixes: list[str] | tuple[str, ...],
+) -> None:
+    actual_tags = set(item_tag_names(item))
+    desired_set = set(desired_tags)
+    missing = sorted(desired_set - actual_tags)
+    stale = sorted(
+        tag
+        for tag in actual_tags
+        if is_managed_uibook_tag(tag, managed_prefixes)
+        and tag not in desired_set
+    )
+    if missing or stale:
+        raise RuntimeError(
+            "Eagle tag verification failed: "
+            f"missing={missing}, stale={stale}"
+        )
+
+
+def verify_desired_uibook_tags(
+    item: dict[str, Any],
+    desired_tags: list[str],
+) -> None:
+    actual_tags = set(item_tag_names(item))
+    missing = sorted(set(desired_tags) - actual_tags)
+    if missing:
+        raise RuntimeError(
+            f"Eagle tag-add verification failed before removal: missing={missing}"
+        )
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(1024 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return f"sha256:{digest.hexdigest()}"
+
+
+def verify_mirror_item_binding(
+    item: dict[str, Any],
+    item_id: str,
+    mirror_result: dict[str, Any],
+) -> None:
+    source_item_id = str(mirror_result["sourceItemId"])
+    if source_item_id != item_id:
+        raise RuntimeError(
+            "Mirror sourceItemId does not match --item-id "
+            f"({source_item_id!r} != {item_id!r})"
+        )
+    actual_item_id = str(item.get("id") or "").strip()
+    if actual_item_id and actual_item_id != item_id:
+        raise RuntimeError(
+            "Eagle item response id does not match --item-id "
+            f"({actual_item_id!r} != {item_id!r})"
+        )
+    file_path = Path(str(item.get("filePath") or "")).expanduser()
+    if not file_path.is_file():
+        raise RuntimeError(
+            f"Cannot verify mirror image fingerprint; file missing: {file_path}"
+        )
+    actual_fingerprint = sha256_file(file_path)
+    expected_fingerprint = str(mirror_result["imageFingerprint"])
+    if actual_fingerprint.casefold() != expected_fingerprint.casefold():
+        raise RuntimeError(
+            "Mirror imageFingerprint does not match the current Eagle image "
+            f"({expected_fingerprint!r} != {actual_fingerprint!r})"
+        )
+
+
+def reconcile_managed_uibook_tags(
+    client: MCPClient,
+    item_id: str,
+    desired_tags: list[str],
+    to_add: list[str],
+    to_remove: list[str],
+    managed_prefixes: list[str] | tuple[str, ...],
+) -> None:
+    add_item_tags(client, item_id, to_add)
+    after_add = get_item_by_id(client, item_id)
+    verify_desired_uibook_tags(after_add, desired_tags)
+
+    remove_item_tags(client, item_id, to_remove)
+    after_remove = get_item_by_id(client, item_id)
+    verify_managed_uibook_tags(
+        after_remove,
+        desired_tags,
+        managed_prefixes,
+    )
+
+
+def normalize_annotation_for_verification(value: Any) -> str:
+    text = str(value or "")
+    text = text.replace(BLOCK_START, "").replace(BLOCK_END, "")
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def update_annotation(client: MCPClient, item_id: str, annotation: str) -> None:
+    client.update_item_fields(
+        item_id,
+        {"annotation": annotation},
     )
 
 
@@ -2062,10 +3863,20 @@ def render_candidate(
     folder_paths = [folder["path"] for folder in folder_meta]
     suggestion = choose_suggested_folder(item, flattened_folders)
     folder_action, folder_action_needed = get_folder_action(folder_paths, suggestion)
-    has_analysis = has_ai_analysis(item.get("annotation"))
-    analysis_action = "refresh_analysis" if has_analysis else "write_analysis"
-    analysis_action_needed = not has_analysis
-    candidate_complete = has_analysis and not folder_action_needed
+    preparation = inspect_uibook_preparation(item)
+    if not preparation["hasAiAnalysis"]:
+        analysis_action = "write_analysis"
+    elif not preparation["hasV2Mirror"]:
+        analysis_action = "upgrade_to_v2"
+    elif not preparation["hasUibookTags"]:
+        analysis_action = "repair_uibook_tags"
+    else:
+        analysis_action = "none"
+    analysis_action_needed = not preparation["uibookPreparationComplete"]
+    candidate_complete = (
+        preparation["uibookPreparationComplete"]
+        and not folder_action_needed
+    )
     return {
         "id": item.get("id"),
         "name": item.get("name"),
@@ -2094,7 +3905,7 @@ def render_candidate(
         "requiresVisualFolderReview": suggestion.get("requiresVisualFolderReview"),
         "folderAction": folder_action,
         "folderActionNeeded": folder_action_needed,
-        "hasAiAnalysis": has_analysis,
+        **preparation,
         "analysisAction": analysis_action,
         "analysisActionNeeded": analysis_action_needed,
         "candidateComplete": candidate_complete,
@@ -2389,19 +4200,1107 @@ def cmd_suggest_folder(args: argparse.Namespace) -> int:
         client.close()
 
 
+def cmd_self_test(_args: argparse.Namespace) -> int:
+    def expect_runtime_error(
+        callback: Any,
+        expected_text: str,
+    ) -> None:
+        try:
+            callback()
+        except RuntimeError as exc:
+            assert expected_text in str(exc), str(exc)
+        else:
+            raise AssertionError(
+                f"Expected RuntimeError containing {expected_text!r}"
+            )
+
+    script_path = Path(__file__).resolve()
+    fixture_directories = (
+        script_path.parent / "fixtures",
+        script_path.parent.parent / "fixtures",
+    )
+
+    def read_fixture(name: str) -> dict[str, Any]:
+        for directory in fixture_directories:
+            path = directory / name
+            if path.is_file():
+                payload = read_json_document(
+                    str(path),
+                    f"Self-test fixture {name}",
+                )
+                if not isinstance(payload, dict):
+                    raise RuntimeError(
+                        f"Self-test fixture {name} must be a JSON object"
+                    )
+                return payload
+        searched = ", ".join(
+            str(directory / name)
+            for directory in fixture_directories
+        )
+        raise RuntimeError(
+            f"Self-test fixture {name} not found; searched: {searched}"
+        )
+
+    taxonomy = {
+        "schemaVersion": 1,
+        "categories": {
+            "page_type": [
+                {"value": "Homepage", "dimension": None},
+                {"value": "Pricing", "dimension": None},
+            ],
+            "section_type": [
+                {"value": "Features", "dimension": None},
+                {"value": "Testimonials", "dimension": None},
+                {"value": "FAQ", "dimension": None},
+            ],
+            "industry": [
+                {"value": "SaaS", "dimension": None},
+                {"value": "Finance", "dimension": None},
+                {"value": "Technology", "dimension": None},
+                {"value": "Marketing", "dimension": None},
+            ],
+            "layout": [
+                {"value": "Grid", "dimension": None},
+                {"value": "Split", "dimension": None},
+                {"value": "Centered", "dimension": None},
+                {"value": "Bento", "dimension": None},
+            ],
+            "elements": [
+                {"value": "Grid", "dimension": None},
+                {"value": "Illustration", "dimension": None},
+                {"value": "Card", "dimension": None},
+            ],
+            "style": [
+                {"value": "Illustration", "dimension": "surface"},
+                {"value": "Playful", "dimension": "mood"},
+                {"value": "Minimal", "dimension": "generic"},
+                {"value": "Bold", "dimension": "mood"},
+                {"value": "Professional", "dimension": "generic"},
+                {"value": "Animation", "dimension": "motion"},
+                {"value": "Dark Mode", "dimension": "theme"},
+            ],
+            "colors": [
+                {"value": "White", "dimension": None},
+                {"value": "Black", "dimension": None},
+                {"value": "Gray", "dimension": None},
+                {"value": "Blue", "dimension": None},
+                {"value": "Purple", "dimension": None},
+                {"value": "Red", "dimension": None},
+                {"value": "Green", "dimension": None},
+                {"value": "Yellow", "dimension": None},
+                {"value": "Orange", "dimension": None},
+            ],
+            "typography": [
+                {"value": "Sans-serif", "dimension": None},
+                {"value": "Serif", "dimension": None},
+                {"value": "Monospace", "dimension": None},
+            ],
+        },
+    }
+    taxonomy["snapshotHash"] = taxonomy_content_hash(taxonomy)
+    assert isinstance(taxonomy["snapshotHash"], str)
+    fingerprint = (
+        "sha256:"
+        "e3b0c44298fc1c149afbf4c8996fb924"
+        "27ae41e4649b934ca495991b7852b855"
+    )
+
+    page_mirror = {
+        "schemaVersion": UIBOOK_SCHEMA_V2,
+        "taxonomySnapshot": taxonomy["snapshotHash"],
+        "sourceItemId": "ITEM",
+        "imageFingerprint": fingerprint,
+        "entityType": "website",
+        "uiContext": "A SaaS homepage with illustrated feature flows.",
+        "contentMap": [
+            {"region": "hero", "evidence": "Primary headline and CTA"},
+            {"region": "features", "evidence": "Illustrated feature cards"},
+        ],
+        "classification": {
+            "pageType": "Homepage",
+            "sectionTypes": [],
+            "containedSectionTypes": ["Features"],
+            "industries": ["SaaS"],
+            "layouts": [],
+            "elements": ["Grid", "Illustration"],
+            "styles": [
+                {"dimension": "surface", "value": "Illustration"},
+                {"dimension": "mood", "value": "Playful"},
+            ],
+            "colors": ["White", "Blue", "Purple"],
+            "typography": ["Sans-serif"],
+        },
+        "colorWeights": {
+            "White": 10,
+            "Blue": 4,
+            "Purple": 2,
+        },
+        "confidence": {
+            "contentCoverage": "high",
+            "pageType": "high",
+            "sectionTypes": {},
+            "containedSectionTypes": {"Features": "high"},
+            "industries": {"SaaS": "high"},
+            "layouts": {},
+            "elements": {
+                "Grid": "medium",
+                "Illustration": "high",
+            },
+            "styles": {
+                "surface:Illustration": "high",
+                "mood:Playful": "medium",
+            },
+            "colors": {
+                "White": "high",
+                "Blue": "high",
+                "Purple": "medium",
+            },
+            "typography": {"Sans-serif": "high"},
+        },
+        "evidence": {
+            "pageType": ["Navigation, page-level hero, and footer are visible."],
+            "sectionTypes": {},
+            "containedSectionTypes": {
+                "Features": ["Parallel capability cards appear mid-page."]
+            },
+            "industries": {
+                "SaaS": ["The product UI and copy describe a software service."]
+            },
+            "layouts": {},
+            "elements": {
+                "Grid": ["Feature cards use repeated grid cells."],
+                "Illustration": ["Custom vector scenes appear beside copy."],
+            },
+            "styles": {
+                "surface:Illustration": [
+                    "Illustration is the primary visual material."
+                ],
+                "mood:Playful": ["Rounded forms and lively artwork are visible."],
+            },
+            "colors": {
+                "White": ["White covers major page surfaces."],
+                "Blue": ["Blue appears on primary actions and accents."],
+                "Purple": ["Purple appears as a small illustration accent."],
+            },
+            "typography": {
+                "Sans-serif": ["Headings and body copy use sans-serif forms."]
+            },
+        },
+        "unmapped": [
+            {
+                "category": "styles",
+                "term": "Soft organic",
+                "confidence": "low",
+                "reason": "No exact UIBook style option matches.",
+                "evidence": ["Several blobs have soft organic contours."],
+            }
+        ],
+    }
+    page_mirror = read_fixture("page-v2.json")
+    assert page_mirror["taxonomySnapshot"] == taxonomy["snapshotHash"]
+    assert page_mirror["imageFingerprint"] == fingerprint
+    page_result = validate_mirror_payload(page_mirror, taxonomy)
+    assert page_result["schemaVersion"] == UIBOOK_SCHEMA_V2
+    assert page_result["managedPrefixes"] == list(
+        V2_MANAGED_UIBOOK_TAG_PREFIXES
+    )
+    assert "uibook:elements:Grid" in page_result["desiredTags"]
+    assert "uibook:elements:Illustration" in page_result["desiredTags"]
+    assert (
+        "uibook:style:surface:Illustration"
+        in page_result["desiredTags"]
+    )
+    assert "uibook:colors:Blue" in page_result["desiredTags"]
+    assert "uibook:colors:White" not in page_result["desiredTags"]
+    assert "uibook:colors:Purple" not in page_result["desiredTags"]
+    assert page_result["suppressedColorTags"] == [
+        "uibook:colors:White",
+        "uibook:colors:Purple",
+    ]
+    assert page_result["desiredByCategory"]["layouts"] == []
+
+    annotation_only_status = inspect_uibook_preparation(
+        {
+            "id": "ITEM",
+            "annotation": f"{AI_HEADING_EN}\n\nLegacy note only.",
+            "tags": [],
+        }
+    )
+    assert not annotation_only_status["uibookPreparationComplete"]
+    assert annotation_only_status["uibookPreparationIssue"] == "missing_v2_mirror"
+
+    complete_annotation = attach_mirror_data(
+        f"{BLOCK_START}\n{AI_HEADING_EN}\n{BLOCK_END}",
+        page_result["mirrorData"],
+    )
+    complete_status = inspect_uibook_preparation(
+        {
+            "id": "ITEM",
+            "annotation": complete_annotation,
+            "tags": page_result["desiredTags"],
+        }
+    )
+    assert complete_status["uibookPreparationComplete"]
+    assert complete_status["hasV2Mirror"]
+    assert complete_status["hasUibookTags"]
+
+    missing_tag_status = inspect_uibook_preparation(
+        {
+            "id": "ITEM",
+            "annotation": complete_annotation,
+            "tags": page_result["desiredTags"][1:],
+        }
+    )
+    assert not missing_tag_status["uibookPreparationComplete"]
+    assert missing_tag_status["uibookPreparationIssue"] == "uibook_tags_out_of_sync"
+
+    v1_mirror = json.loads(json.dumps(page_result["mirrorData"]))
+    v1_mirror["schemaVersion"] = UIBOOK_SCHEMA_V1
+    v1_status = inspect_uibook_preparation(
+        {
+            "id": "ITEM",
+            "annotation": attach_mirror_data(
+                f"{AI_HEADING_EN}\n",
+                v1_mirror,
+            ),
+            "tags": page_result["desiredTags"],
+        }
+    )
+    assert not v1_status["uibookPreparationComplete"]
+    assert v1_status["uibookPreparationIssue"] == "schema_v2_required"
+
+    section_mirror = json.loads(json.dumps(page_mirror))
+    section_mirror["entityType"] = "section"
+    section_mirror["classification"] = {
+        "pageType": None,
+        "sectionTypes": ["Features"],
+        "containedSectionTypes": [],
+        "industries": ["SaaS"],
+        "layouts": ["Grid"],
+        "elements": ["Grid", "Illustration"],
+        "styles": [
+            {"dimension": "surface", "value": "Illustration"},
+        ],
+        "colors": ["White", "Blue"],
+        "typography": ["Sans-serif"],
+    }
+    section_mirror["colorWeights"] = {"White": 15, "Blue": 3}
+    section_mirror["confidence"] = {
+        "contentCoverage": "high",
+        "pageType": None,
+        "sectionTypes": {"Features": "high"},
+        "containedSectionTypes": {},
+        "industries": {"SaaS": "high"},
+        "layouts": {"Grid": "high"},
+        "elements": {"Grid": "high", "Illustration": "high"},
+        "styles": {"surface:Illustration": "high"},
+        "colors": {"White": "high", "Blue": "high"},
+        "typography": {"Sans-serif": "high"},
+    }
+    section_mirror["evidence"] = {
+        "pageType": [],
+        "sectionTypes": {
+            "Features": ["Several parallel product capabilities are visible."]
+        },
+        "containedSectionTypes": {},
+        "industries": {
+            "SaaS": ["The section presents a software product."]
+        },
+        "layouts": {"Grid": ["Content is arranged in repeated cells."]},
+        "elements": {
+            "Grid": ["The visible component is a card grid."],
+            "Illustration": ["Each card includes an illustration."],
+        },
+        "styles": {
+            "surface:Illustration": [
+                "Illustrations dominate the visual material."
+            ]
+        },
+        "colors": {
+            "White": ["White covers the section background."],
+            "Blue": ["Blue accents cover visible controls."],
+        },
+        "typography": {
+            "Sans-serif": ["Visible headings use sans-serif letterforms."]
+        },
+    }
+    section_mirror = read_fixture("section-v2.json")
+    assert section_mirror["taxonomySnapshot"] == taxonomy["snapshotHash"]
+    assert section_mirror["imageFingerprint"] == fingerprint
+    section_result = validate_mirror_payload(section_mirror, taxonomy)
+    assert "uibook:section:Features" in section_result["desiredTags"]
+    assert "uibook:layout:Grid" in section_result["desiredTags"]
+    assert "uibook:elements:Grid" in section_result["desiredTags"]
+    assert "uibook:colors:White" in section_result["desiredTags"]
+    assert "uibook:colors:Blue" in section_result["desiredTags"]
+
+    missing_field = json.loads(json.dumps(page_mirror))
+    del missing_field["classification"]["typography"]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(missing_field, taxonomy),
+        "keys do not match schema v2",
+    )
+
+    missing_evidence = json.loads(json.dumps(page_mirror))
+    del missing_evidence["evidence"]["elements"]["Grid"]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(missing_evidence, taxonomy),
+        "evidence.elements keys do not match",
+    )
+
+    low_confidence = json.loads(json.dumps(page_mirror))
+    low_confidence["confidence"]["elements"]["Grid"] = "low"
+    expect_runtime_error(
+        lambda: validate_mirror_payload(low_confidence, taxonomy),
+        "low-confidence values belong only in unmapped",
+    )
+
+    invented_value = json.loads(json.dumps(page_mirror))
+    invented_value["classification"]["elements"][0] = "Invented"
+    expect_runtime_error(
+        lambda: validate_mirror_payload(invented_value, taxonomy),
+        "classification.elements is not present",
+    )
+
+    entity_overreach = json.loads(json.dumps(page_mirror))
+    entity_overreach["classification"]["layouts"] = ["Grid"]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(entity_overreach, taxonomy),
+        "require layouts=[]",
+    )
+
+    cardinality = json.loads(json.dumps(page_mirror))
+    cardinality["classification"]["elements"] = [
+        f"Element {index}"
+        for index in range(MAX_ELEMENTS + 1)
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(cardinality, taxonomy),
+        f"at most {MAX_ELEMENTS} values",
+    )
+
+    too_many_styles = json.loads(json.dumps(page_mirror))
+    too_many_styles["classification"]["styles"] = [
+        {"dimension": "surface", "value": "Illustration"},
+        {"dimension": "mood", "value": "Playful"},
+        {"dimension": "generic", "value": "Minimal"},
+        {"dimension": "mood", "value": "Bold"},
+        {"dimension": "generic", "value": "Professional"},
+        {"dimension": "motion", "value": "Animation"},
+        {"dimension": "theme", "value": "Dark Mode"},
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(too_many_styles, taxonomy),
+        f"at most {MAX_WEBSITE_STYLES} styles",
+    )
+
+    too_many_section_types = json.loads(json.dumps(section_mirror))
+    too_many_section_types["classification"]["sectionTypes"] = [
+        "Features",
+        "Testimonials",
+        "FAQ",
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(
+            too_many_section_types,
+            taxonomy,
+        ),
+        f"at most {MAX_SECTION_TYPES} values",
+    )
+
+    too_many_industries = json.loads(json.dumps(page_mirror))
+    too_many_industries["classification"]["industries"] = [
+        "SaaS",
+        "Finance",
+        "Technology",
+        "Marketing",
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(too_many_industries, taxonomy),
+        f"at most {MAX_INDUSTRIES} values",
+    )
+
+    too_many_layouts = json.loads(json.dumps(section_mirror))
+    too_many_layouts["classification"]["layouts"] = [
+        "Grid",
+        "Split",
+        "Centered",
+        "Bento",
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(too_many_layouts, taxonomy),
+        f"at most {MAX_LAYOUTS} values",
+    )
+
+    too_many_colors = json.loads(json.dumps(page_mirror))
+    too_many_colors["classification"]["colors"] = [
+        "White",
+        "Black",
+        "Gray",
+        "Blue",
+        "Purple",
+        "Red",
+        "Green",
+        "Yellow",
+        "Orange",
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(too_many_colors, taxonomy),
+        f"at most {MAX_COLORS} values",
+    )
+
+    too_many_typography = json.loads(json.dumps(page_mirror))
+    too_many_typography["classification"]["typography"] = [
+        "Sans-serif",
+        "Serif",
+        "Monospace",
+    ]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(too_many_typography, taxonomy),
+        f"at most {MAX_TYPOGRAPHY} values",
+    )
+
+    low_coverage_color = json.loads(json.dumps(page_mirror))
+    low_coverage_color["colorWeights"]["Purple"] = 0.5
+    expect_runtime_error(
+        lambda: validate_mirror_payload(low_coverage_color, taxonomy),
+        "must be between 1 and 100",
+    )
+
+    non_finite_color = json.loads(json.dumps(page_mirror))
+    non_finite_color["colorWeights"]["Blue"] = float("nan")
+    expect_runtime_error(
+        lambda: validate_mirror_payload(non_finite_color, taxonomy),
+        "must be between 1 and 100",
+    )
+
+    wrong_style_dimension = json.loads(json.dumps(page_mirror))
+    wrong_style_dimension["classification"]["styles"][0][
+        "dimension"
+    ] = "mood"
+    expect_runtime_error(
+        lambda: validate_mirror_payload(
+            wrong_style_dimension,
+            taxonomy,
+        ),
+        "dimension does not match taxonomy",
+    )
+
+    wrong_category = json.loads(json.dumps(section_mirror))
+    wrong_category["classification"]["layouts"] = ["Card"]
+    expect_runtime_error(
+        lambda: validate_mirror_payload(wrong_category, taxonomy),
+        "classification.layouts is not present",
+    )
+
+    v1_mirror = {
+        "schemaVersion": UIBOOK_SCHEMA_V1,
+        "taxonomySnapshot": taxonomy["snapshotHash"],
+        "sourceItemId": "ITEM",
+        "imageFingerprint": fingerprint,
+        "entityType": "website",
+        "uiContext": "A legacy v1 homepage mirror.",
+        "contentMap": [{"region": "hero"}],
+        "classification": {
+            "pageType": "Homepage",
+            "sectionTypes": [],
+            "containedSectionTypes": ["Features"],
+            "styles": [
+                {
+                    "dimension": "mood",
+                    "value": "Playful",
+                    "confidence": "high",
+                }
+            ],
+        },
+        "confidence": {
+            "pageType": "high",
+            "containedSectionTypes": "high",
+        },
+        "evidence": {
+            "pageType": ["A full page frame is visible."]
+        },
+        "unmapped": [],
+    }
+    v1_result = validate_mirror_payload(v1_mirror, taxonomy)
+    assert v1_result["managedPrefixes"] == list(
+        V1_MANAGED_UIBOOK_TAG_PREFIXES
+    )
+    assert all(
+        not is_managed_uibook_tag(
+            tag,
+            V2_ONLY_UIBOOK_TAG_PREFIXES,
+        )
+        for tag in v1_result["desiredTags"]
+    )
+    expect_runtime_error(
+        lambda: ensure_schema_tag_compatibility(
+            UIBOOK_SCHEMA_V1,
+            ["manual-tag", "uibook:industry:SaaS"],
+        ),
+        "schema v2-only managed tags",
+    )
+    ensure_schema_tag_compatibility(
+        UIBOOK_SCHEMA_V1,
+        ["manual-tag", "uibook:page:Homepage"],
+    )
+
+    current_tags = [
+        "manual-tag",
+        "已同步UIBook",
+        "uibook:page:Pricing",
+        "uibook:layout:Split",
+        "uibook:industry:Finance",
+    ]
+    tag_diff = build_uibook_tag_diff(
+        current_tags,
+        page_result["desiredTags"],
+        page_result["managedPrefixes"],
+    )
+    assert "manual-tag" in tag_diff["preserved"]
+    assert "已同步UIBook" in tag_diff["preserved"]
+    assert "uibook:layout:Split" in tag_diff["toRemove"]
+    assert "uibook:industry:Finance" in tag_diff["toRemove"]
+
+    attached = attach_mirror_data(
+        f"{BLOCK_START}\n## AI Screen Analysis\nConcrete analysis\n{BLOCK_END}",
+        page_result["mirrorData"],
+    )
+    assert attached.count(MIRROR_DATA_HEADING) == 1
+    compact_mirror_json = json.dumps(
+        page_result["mirrorData"],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    assert f"```json\n{compact_mirror_json}\n```" in attached
+    assert '"schemaVersion":2' in attached
+    assert set(page_result["mirrorData"]) == {
+        "schemaVersion",
+        "taxonomySnapshot",
+        "sourceItemId",
+        "imageFingerprint",
+        "entityType",
+        "uiContext",
+        "contentMap",
+        "classification",
+        "colorWeights",
+        "confidence",
+        "evidence",
+        "unmapped",
+    }
+    assert not {
+        "managedPrefixes",
+        "desiredByCategory",
+        "suppressedColorTags",
+        "managedTags",
+    } & set(page_result["mirrorData"])
+
+    unicode_metrics = annotation_metrics("A😀")
+    assert unicode_metrics == {
+        "codePoints": 2,
+        "utf16CodeUnits": 3,
+        "utf8Bytes": 5,
+        "limitUtf16CodeUnits": ANNOTATION_UTF16_HARD_LIMIT,
+    }
+    exact_limit_metrics = preflight_annotation(
+        "😀" * (ANNOTATION_UTF16_HARD_LIMIT // 2)
+    )
+    assert (
+        exact_limit_metrics["utf16CodeUnits"]
+        == ANNOTATION_UTF16_HARD_LIMIT
+    )
+    expect_runtime_error(
+        lambda: preflight_annotation(
+            "😀" * ((ANNOTATION_UTF16_HARD_LIMIT // 2) + 1)
+        ),
+        "no Eagle tags or annotation were written",
+    )
+
+    replacement_block = (
+        f"{BLOCK_START}\n"
+        "## AI Screen Analysis\n"
+        "Replacement analysis\n"
+        f"{BLOCK_END}"
+    )
+    marker_wrapped_existing = (
+        "Manual before\n\n"
+        f"{BLOCK_START}\n"
+        "## AI Screen Analysis\n"
+        "Old analysis\n\n"
+        "## UIBook Mirror Data\n\n"
+        "```json\n"
+        '{"schemaVersion": 2}\n'
+        "```\n"
+        f"{BLOCK_END}\n\n"
+        "Manual after"
+    )
+    marker_wrapped_merged = merge_annotation(
+        marker_wrapped_existing,
+        replacement_block,
+    )
+    assert "Manual before" in marker_wrapped_merged
+    assert "Manual after" in marker_wrapped_merged
+    assert "Old analysis" not in marker_wrapped_merged
+    assert marker_wrapped_merged.count(MIRROR_DATA_HEADING) == 0
+
+    expect_runtime_error(
+        lambda: merge_annotation(
+            (
+                "Manual before\n\n"
+                f"{BLOCK_START}\n"
+                "## AI Screen Analysis\n"
+                "Old analysis"
+            ),
+            replacement_block,
+        ),
+        "unmatched analysis markers",
+    )
+
+    markerless_bounded_existing = (
+        "Manual before\n\n"
+        "## AI Screen Analysis\n"
+        "Old analysis\n\n"
+        "## UIBook Mirror Data\n\n"
+        "```json\n"
+        '{"schemaVersion": 1}\n'
+        "```\n\n"
+        "Manual after"
+    )
+    markerless_bounded_merged = merge_annotation(
+        markerless_bounded_existing,
+        replacement_block,
+    )
+    assert "Manual before" in markerless_bounded_merged
+    assert "Manual after" in markerless_bounded_merged
+    assert "Old analysis" not in markerless_bounded_merged
+
+    expect_runtime_error(
+        lambda: merge_annotation(
+            "Manual before\n\n## AI Screen Analysis\nOld analysis\n\nManual after",
+            replacement_block,
+        ),
+        "no bounded UIBook Mirror Data",
+    )
+
+    unbounded_legacy = (
+        "Manual prefix\n\n"
+        "## AI Screen Analysis\n"
+        "Old unbounded analysis\n\n"
+        "Potentially ambiguous trailing text"
+    )
+    legacy_digest = annotation_sha256(unbounded_legacy)
+    exact_legacy_merged, exact_legacy_info = (
+        merge_annotation_with_info(
+            unbounded_legacy,
+            replacement_block,
+            legacy_digest,
+        )
+    )
+    assert exact_legacy_info["performed"] is True
+    assert (
+        exact_legacy_info["mode"]
+        == "exact-sha256-replace-heading-to-end"
+    )
+    assert "Manual prefix" in exact_legacy_merged
+    assert "Old unbounded analysis" not in exact_legacy_merged
+    assert "Potentially ambiguous trailing text" not in exact_legacy_merged
+    expect_runtime_error(
+        lambda: merge_annotation(
+            unbounded_legacy,
+            replacement_block,
+            "0" * 64,
+        ),
+        "does not exactly match",
+    )
+    expect_runtime_error(
+        lambda: merge_annotation(
+            unbounded_legacy,
+            replacement_block,
+            legacy_digest.upper(),
+        ),
+        "64 lowercase hexadecimal",
+    )
+    expect_runtime_error(
+        lambda: merge_annotation(
+            markerless_bounded_existing,
+            replacement_block,
+            annotation_sha256(markerless_bounded_existing),
+        ),
+        "only valid for an unbounded markerless legacy AI block",
+    )
+
+    with tempfile.TemporaryDirectory(
+        prefix="eagle-uibook-v2-selftest-"
+    ) as temporary_directory:
+        temporary_path = Path(temporary_directory)
+        empty_image = temporary_path / "empty-image.png"
+        empty_image.touch()
+        binding_item = {
+            "id": "ITEM",
+            "filePath": str(empty_image),
+            "tags": current_tags,
+        }
+        verify_mirror_item_binding(
+            binding_item,
+            "ITEM",
+            page_result,
+        )
+
+        backup_path = temporary_path / "legacy-annotation.md"
+        created_backup = save_legacy_annotation_backup(
+            unbounded_legacy,
+            str(backup_path),
+        )
+        assert created_backup["created"] is True
+        assert created_backup["sha256"] == legacy_digest
+        with backup_path.open(
+            "r",
+            encoding="utf-8",
+            newline="",
+        ) as backup_handle:
+            assert backup_handle.read() == unbounded_legacy
+        reused_backup = save_legacy_annotation_backup(
+            unbounded_legacy,
+            str(backup_path),
+        )
+        assert reused_backup["created"] is False
+        expect_runtime_error(
+            lambda: save_legacy_annotation_backup(
+                f"{unbounded_legacy}\nchanged",
+                str(backup_path),
+            ),
+            "already exists with different content",
+        )
+
+    class RecordingClient:
+        def __init__(self, apply_adds: bool = True) -> None:
+            self.calls: list[tuple[str, dict[str, Any]]] = []
+            self.apply_adds = apply_adds
+            self.tags = list(current_tags)
+
+        def update_item_fields(
+            self,
+            item_id: str,
+            fields: dict[str, Any],
+        ) -> dict[str, Any]:
+            self.calls.append(
+                (
+                    "item_update_http",
+                    {
+                        "id": item_id,
+                        **fields,
+                    },
+                )
+            )
+            if self.apply_adds and isinstance(
+                fields.get("tags"),
+                list,
+            ):
+                self.tags = [
+                    str(tag)
+                    for tag in fields["tags"]
+                ]
+            return {"status": "success"}
+
+        def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+            self.calls.append((name, arguments))
+            if name == "item_get":
+                payload = {
+                    "data": [
+                        {
+                            "id": "ITEM",
+                            "filePath": str(script_path),
+                            "tags": list(self.tags),
+                        }
+                    ]
+                }
+                return {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(payload),
+                        }
+                    ]
+                }
+            return {}
+
+    recording_client = RecordingClient()
+    reconcile_managed_uibook_tags(
+        recording_client,
+        "ITEM",
+        page_result["desiredTags"],
+        tag_diff["toAdd"],
+        tag_diff["toRemove"],
+        page_result["managedPrefixes"],
+    )
+    assert [name for name, _ in recording_client.calls] == [
+        "item_get",
+        "item_update_http",
+        "item_get",
+        "item_get",
+        "item_update_http",
+        "item_get",
+    ]
+
+    failed_add_client = RecordingClient(apply_adds=False)
+    expect_runtime_error(
+        lambda: reconcile_managed_uibook_tags(
+            failed_add_client,
+            "ITEM",
+            page_result["desiredTags"],
+            tag_diff["toAdd"],
+            tag_diff["toRemove"],
+            page_result["managedPrefixes"],
+        ),
+        "before removal",
+    )
+    assert [
+        name
+        for name, _ in failed_add_client.calls
+    ].count("item_update_http") == 1
+
+    tampered_taxonomy = json.loads(json.dumps(taxonomy))
+    tampered_taxonomy["categories"]["page_type"][0]["value"] = "Changed"
+    expect_runtime_error(
+        lambda: validate_mirror_payload(
+            page_mirror,
+            tampered_taxonomy,
+        ),
+        "does not match taxonomy contents",
+    )
+
+    flat_taxonomy = {
+        "configOptions": [
+            {
+                **option,
+                "category": category,
+            }
+            for category, options in taxonomy["categories"].items()
+            for option in options
+        ]
+    }
+    flat_rows = taxonomy_option_rows(flat_taxonomy)
+    flat_taxonomy["snapshotHash"] = taxonomy_rows_hash(flat_rows)
+    flat_mirror = json.loads(json.dumps(page_mirror))
+    flat_mirror["taxonomySnapshot"] = flat_taxonomy["snapshotHash"]
+    validate_mirror_payload(flat_mirror, flat_taxonomy)
+
+    forged_flat_taxonomy = json.loads(json.dumps(flat_taxonomy))
+    forged_flat_taxonomy["snapshotHash"] = f"sha256:{'0' * 64}"
+    expect_runtime_error(
+        lambda: validate_mirror_payload(
+            flat_mirror,
+            forged_flat_taxonomy,
+        ),
+        "does not match taxonomy contents",
+    )
+
+    mixed_taxonomy = json.loads(json.dumps(taxonomy))
+    mixed_taxonomy["configOptions"] = [
+        {
+            "category": "page_type",
+            "value": "Forged Page",
+            "dimension": None,
+        }
+    ]
+    mixed_result = validate_mirror_payload(page_mirror, mixed_taxonomy)
+    assert (
+        mixed_result["normalizedClassification"]["pageType"]
+        == "Homepage"
+    )
+
+    print(
+        json.dumps(
+            {
+                "status": "passed",
+                "checks": [
+                    "valid schema v2 Page",
+                    "valid schema v2 Section",
+                    "category-specific Grid and Illustration matching",
+                    "required schema v2 fields",
+                    "per-value confidence and evidence",
+                    "low-confidence unmapped-only gate",
+                    "invented taxonomy rejection",
+                    "Page and Section entity boundaries",
+                    "UIBook cardinality caps",
+                    "style dimension derivation and validation",
+                    "color mirror and tag thresholds",
+                    "schema v1 compatibility",
+                    "schema v1 fail-closed over v2-only tags",
+                    "schema-specific diff and verification",
+                    "verified add-before-remove ordering",
+                    "persistent v2 Page and Section fixtures",
+                    "compact v2 embedded mirror contract",
+                    "schema v2 and managed tags required for scan completion",
+                    "annotation-only and schema v1 completion rejection",
+                    "UTF-16 annotation hard preflight",
+                    "annotation mirror data and item binding",
+                    "marker and markerless manual-note preservation",
+                    "unbounded markerless annotation fail-closed",
+                    "exact-hash legacy migration and exclusive backup",
+                    "taxonomy snapshot integrity",
+                    "flat and mixed taxonomy source integrity",
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
 def cmd_apply(args: argparse.Namespace) -> int:
     repo = Path(args.repo).expanduser().resolve()
     _ = get_success_tag(repo)
+    if (
+        args.legacy_backup_file
+        and not args.legacy_annotation_sha256
+    ):
+        raise RuntimeError(
+            "--legacy-backup-file requires "
+            "--legacy-annotation-sha256"
+        )
+    if not args.mirror_file or not args.taxonomy_file:
+        raise RuntimeError(
+            "UIBook preparation requires both --mirror-file and "
+            "--taxonomy-file; annotation-only apply is disabled"
+        )
     block = read_analysis_block(args)
+    mirror = read_json_document(args.mirror_file, "Mirror")
+    taxonomy = read_json_document(args.taxonomy_file, "Taxonomy")
+    mirror_result = validate_mirror_payload(mirror, taxonomy)
+    if mirror_result["schemaVersion"] != UIBOOK_SCHEMA_V2:
+        raise RuntimeError(
+            "UIBook preparation requires schemaVersion 2; schema v1 apply "
+            "is disabled"
+        )
+    block = attach_mirror_data(block, mirror_result["mirrorData"])
+
     client = MCPClient(timeout=args.timeout)
     try:
         item = get_item_by_id(client, args.item_id)
-        merged = merge_annotation(str(item.get("annotation") or ""), block)
+        verify_mirror_item_binding(
+            item,
+            args.item_id,
+            mirror_result,
+        )
+        current_annotation = str(item.get("annotation") or "")
+        merged, legacy_migration = merge_annotation_with_info(
+            current_annotation,
+            block,
+            args.legacy_annotation_sha256,
+        )
+        annotation_preflight = preflight_annotation(merged)
+        legacy_migration["backupRequiredOnApply"] = bool(
+            legacy_migration["performed"]
+        )
+        legacy_migration["backupFileProvided"] = bool(
+            args.legacy_backup_file
+        )
+        if (
+            args.legacy_backup_file
+            and not legacy_migration["performed"]
+        ):
+            raise RuntimeError(
+                "--legacy-backup-file is only valid when an unbounded "
+                "markerless legacy annotation is migrated with an exact "
+                "SHA-256 match"
+            )
+        if (
+            legacy_migration["performed"]
+            and not args.dry_run
+            and not args.legacy_backup_file
+        ):
+            raise RuntimeError(
+                "Applying an exact-hash markerless legacy migration "
+                "requires --legacy-backup-file before any Eagle write"
+            )
+        tag_diff = build_uibook_tag_diff(
+            item_tag_names(item),
+            mirror_result["desiredTags"],
+            mirror_result["managedPrefixes"],
+        )
         if args.dry_run:
-            print(merged)
+            json.dump(
+                {
+                    "itemId": args.item_id,
+                    "schemaVersion": mirror_result["schemaVersion"],
+                    "taxonomySnapshot": mirror_result["taxonomySnapshot"],
+                    "entityType": mirror_result["entityType"],
+                    "managedPrefixes": mirror_result["managedPrefixes"],
+                    "desiredByCategory": mirror_result[
+                        "desiredByCategory"
+                    ],
+                    **tag_diff,
+                    "unmapped": mirror_result["unmapped"],
+                    "suppressedColorTags": mirror_result[
+                        "suppressedColorTags"
+                    ],
+                    "normalizedClassification": mirror_result[
+                        "normalizedClassification"
+                    ],
+                    "annotationMetrics": annotation_preflight,
+                    "legacyMigration": legacy_migration,
+                    "mergedAnnotation": merged,
+                },
+                sys.stdout,
+                ensure_ascii=False,
+                indent=2,
+            )
+            sys.stdout.write("\n")
             return 0
+
+        legacy_backup: dict[str, Any] | None = None
+        if legacy_migration["performed"]:
+            legacy_backup = save_legacy_annotation_backup(
+                current_annotation,
+                args.legacy_backup_file,
+            )
+
+        reconcile_managed_uibook_tags(
+            client,
+            args.item_id,
+            mirror_result["desiredTags"],
+            tag_diff["toAdd"],
+            tag_diff["toRemove"],
+            mirror_result["managedPrefixes"],
+        )
+
         update_annotation(client, args.item_id, merged)
-        print(f"[updated] {args.item_id}")
+        verified_item = get_item_by_id(client, args.item_id)
+        if normalize_annotation_for_verification(
+            verified_item.get("annotation")
+        ) != normalize_annotation_for_verification(merged):
+            raise RuntimeError("Eagle annotation verification failed after item_update")
+        verify_managed_uibook_tags(
+            verified_item,
+            mirror_result["desiredTags"],
+            mirror_result["managedPrefixes"],
+        )
+        json.dump(
+            {
+                "status": "updated-and-verified",
+                "itemId": args.item_id,
+                "schemaVersion": mirror_result["schemaVersion"],
+                "taxonomySnapshot": mirror_result["taxonomySnapshot"],
+                "managedPrefixes": mirror_result["managedPrefixes"],
+                "desiredByCategory": mirror_result[
+                    "desiredByCategory"
+                ],
+                **tag_diff,
+                "unmapped": mirror_result["unmapped"],
+                "suppressedColorTags": mirror_result[
+                    "suppressedColorTags"
+                ],
+                "annotationMetrics": annotation_preflight,
+                "legacyMigration": legacy_migration,
+                "legacyBackup": legacy_backup,
+            },
+            sys.stdout,
+            ensure_ascii=False,
+            indent=2,
+        )
+        sys.stdout.write("\n")
         return 0
     finally:
         client.close()
@@ -2448,13 +5347,20 @@ def build_parser() -> argparse.ArgumentParser:
     suggest_cmd.add_argument("--timeout", type=float, default=60.0, help="Timeout in seconds")
     suggest_cmd.set_defaults(func=cmd_suggest_folder)
 
-    apply_cmd = subparsers.add_parser("apply", help="Write a ready-made AI analysis block back to Eagle annotation")
+    apply_cmd = subparsers.add_parser("apply", help="Validate and write a complete schema-v2 UIBook analysis, managed tags, and Eagle annotation")
     apply_cmd.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
     apply_cmd.add_argument("--item-id", required=True, help="Eagle item ID to update")
     apply_cmd.add_argument("--analysis-file", help="Path to a markdown file containing the complete analysis block")
-    apply_cmd.add_argument("--dry-run", action="store_true", help="Print the merged annotation without writing")
+    apply_cmd.add_argument("--mirror-file", required=True, help="Required schema-v2 UIBook mirror JSON with uiContext, contentMap, and taxonomy classifications")
+    apply_cmd.add_argument("--taxonomy-file", required=True, help="Required read-only eight-category UIBook config_options snapshot used to validate mirror classifications")
+    apply_cmd.add_argument("--legacy-annotation-sha256", help="Exact lowercase SHA-256 of the complete current annotation; permits replacing an otherwise unbounded markerless legacy AI block from its heading to the end")
+    apply_cmd.add_argument("--legacy-backup-file", help="Required for a non-dry-run exact-hash legacy migration; saves the complete current annotation with exclusive creation before any Eagle write")
+    apply_cmd.add_argument("--dry-run", action="store_true", help="Print schema-specific managed prefixes, tag diff, suppressed colors, and merged annotation without writing")
     apply_cmd.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     apply_cmd.set_defaults(func=cmd_apply)
+
+    self_test = subparsers.add_parser("self-test", help="Run pure local checks for UIBook mirror validation and tag reconciliation")
+    self_test.set_defaults(func=cmd_self_test)
 
     assign_cmd = subparsers.add_parser("assign-folder", help="Add an Eagle item to an existing folder after conversation-based classification")
     assign_cmd.add_argument("--item-id", required=True, help="Eagle item ID to update")

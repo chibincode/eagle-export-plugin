@@ -1,5 +1,13 @@
 # Output Format
 
+## Completion Contract
+
+This format exists to prepare Eagle evidence for UIBook. A result is complete
+only when the bounded AI block contains valid schema-v2 `UIBook Mirror Data`
+and the Eagle item has the exact managed tags derived from that mirror. A
+human-readable analysis block without both persisted outputs is incomplete and
+must remain in `needsAnalysis`.
+
 This skill writes a single replaceable AI analysis block to the bottom of Eagle `annotation`.
 
 ## Block Markers
@@ -16,7 +24,11 @@ If a previous block already exists, replace only the content inside these marker
 
 Important:
 - Eagle may strip HTML comment markers after write-back.
-- Treat the heading `## AI Screen Analysis` or `## AI 页面分析` as the durable block boundary when markers are missing.
+- A markerless legacy block is replaceable only when its fenced
+  `## UIBook Mirror Data` JSON proves the exact end boundary.
+- If the machine block is missing, truncated, or unclosed, fail closed. A
+  one-time migration is allowed only with an exact SHA-256 match of the complete
+  current annotation and a local backup written before any Eagle mutation.
 
 ## Markdown Layout
 
@@ -35,6 +47,14 @@ Recommended block layout:
 
 ### Overview
 ...
+
+### UI Context
+...
+
+### Content Map
+1. **Region — top:** ...
+2. **Region — middle:** ...
+3. **Region — bottom:** ...
 
 ### Visible Text
 - ...
@@ -63,6 +83,14 @@ Recommended block layout:
 
 ### 页面概述
 ...
+
+### UI Context
+...
+
+### 内容地图
+1. **区域 — 顶部：** ...
+2. **区域 — 中部：** ...
+3. **区域 — 底部：** ...
 
 ### 可见文字
 - ...
@@ -114,6 +142,16 @@ Recommended block layout:
 ### Confidence
 - pattern_confidence:
 - reason:
+
+## UIBook Mirror Data
+
+The compact line below illustrates field shape only. Use the validator-complete
+examples in `../fixtures/page-v2.json` and `../fixtures/section-v2.json`; formal
+values require populated per-value confidence and evidence.
+
+```json
+{"schemaVersion":2,"taxonomySnapshot":"sha256:...","sourceItemId":"...","imageFingerprint":"sha256:...","entityType":"website","uiContext":"...","contentMap":[],"classification":{"pageType":"Homepage","sectionTypes":[],"containedSectionTypes":[],"layouts":[],"elements":[],"styles":[],"industries":[],"typography":[],"colors":[]},"colorWeights":{},"confidence":{},"evidence":{},"unmapped":[]}
+```
 <!-- UIBOOK_AI_ANALYSIS_END -->
 ```
 
@@ -122,6 +160,8 @@ Recommended block layout:
 - Always write the English version first.
 - Always append a full Chinese version after the English version.
 - Do not mix English and Chinese within the same section.
+- Always include a concrete `UI Context` and a top-to-bottom `Content Map` in
+  both language passes.
 - Keep all sync lines and manual notes outside this block.
 - Replace only the block between the markers.
 - `Visible Text` or `可见文字` should preserve reading order as much as possible.
@@ -135,6 +175,16 @@ Recommended block layout:
 - The Chinese version should be a faithful translation/adaptation of the English version, not a second different analysis.
 - For section-level screenshots, include `## UIBook Pattern Layer` after the Chinese pass using the exact field names shown in the template.
 - For long page screenshots, write the normal bilingual analysis only. Do not force one combined Pattern Layer across multiple visible sections.
+- For long screenshots, inspect the full overview plus ordered 10%–20%
+  overlapping vertical slices and record separate top, middle, and true-bottom
+  evidence.
+- When a validated mirror is attached, serialize its JSON compactly. Keep the
+  final merged Eagle annotation at or below 20,000 UTF-16 code units; perform
+  this preflight before adding or removing any tag.
+- If the annotation must be shortened, preserve in this order: UI Context,
+  complete top-to-bottom Content Map, visible retrieval phrases, concrete
+  layout/components/colors/memory cues, bilingual parity, then supporting
+  prose. Never drop machine classification, per-value confidence, or evidence.
 - Decide `message_intent` before `content_style`. `content_style` is a material strategy, not the final pattern.
 - Do not claim conversion, performance, or design effectiveness unless the screenshot itself contains supporting data.
 - Keep `similarity_signature` stable and compact: `section_type / message_intent / structure_pattern`.

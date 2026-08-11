@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "taxonomySnapshot": "sha256:f48d7020a806d299e9db3f6787cebc5d19dffbe0fce7366ddc8022c6209b6141",
+  "sourceItemId": "ITEM",
+  "imageFingerprint": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "entityType": "website",
+  "uiContext": "A SaaS homepage with illustrated feature flows.",
+  "contentMap": [
+    {
+      "region": "hero",
+      "evidence": "Primary headline and CTA"
+    },
+    {
+      "region": "features",
+      "evidence": "Illustrated feature cards"
+    }
+  ],
+  "classification": {
+    "pageType": "Homepage",
+    "sectionTypes": [],
+    "containedSectionTypes": [
+      "Features"
+    ],
+    "industries": [
+      "SaaS"
+    ],
+    "layouts": [],
+    "elements": [
+      "Grid",
+      "Illustration"
+    ],
+    "styles": [
+      {
+        "dimension": "surface",
+        "value": "Illustration"
+      },
+      {
+        "dimension": "mood",
+        "value": "Playful"
+      }
+    ],
+    "colors": [
+      "White",
+      "Blue",
+      "Purple"
+    ],
+    "typography": [
+      "Sans-serif"
+    ]
+  },
+  "colorWeights": {
+    "White": 10,
+    "Blue": 4,
+    "Purple": 2
+  },
+  "confidence": {
+    "contentCoverage": "high",
+    "pageType": "high",
+    "sectionTypes": {},
+    "containedSectionTypes": {
+      "Features": "high"
+    },
+    "industries": {
+      "SaaS": "high"
+    },
+    "layouts": {},
+    "elements": {
+      "Grid": "medium",
+      "Illustration": "high"
+    },
+    "styles": {
+      "surface:Illustration": "high",
+      "mood:Playful": "medium"
+    },
+    "colors": {
+      "White": "high",
+      "Blue": "high",
+      "Purple": "medium"
+    },
+    "typography": {
+      "Sans-serif": "high"
+    }
+  },
+  "evidence": {
+    "pageType": [
+      "Navigation, page-level hero, and footer are visible."
+    ],
+    "sectionTypes": {},
+    "containedSectionTypes": {
+      "Features": [
+        "Parallel capability cards appear mid-page."
+      ]
+    },
+    "industries": {
+      "SaaS": [
+        "The product UI and copy describe a software service."
+      ]
+    },
+    "layouts": {},
+    "elements": {
+      "Grid": [
+        "Feature cards use repeated grid cells."
+      ],
+      "Illustration": [
+        "Custom vector scenes appear beside copy."
+      ]
+    },
+    "styles": {
+      "surface:Illustration": [
+        "Illustration is the primary visual material."
+      ],
+      "mood:Playful": [
+        "Rounded forms and lively artwork are visible."
+      ]
+    },
+    "colors": {
+      "White": [
+        "White covers major page surfaces."
+      ],
+      "Blue": [
+        "Blue appears on primary actions and accents."
+      ],
+      "Purple": [
+        "Purple appears as a small illustration accent."
+      ]
+    },
+    "typography": {
+      "Sans-serif": [
+        "Headings and body copy use sans-serif forms."
+      ]
+    }
+  },
+  "unmapped": [
+    {
+      "category": "styles",
+      "term": "Soft organic",
+      "confidence": "low",
+      "reason": "No exact UIBook style option matches.",
+      "evidence": [
+        "Several blobs have soft organic contours."
+      ]
+    }
+  ]
+}

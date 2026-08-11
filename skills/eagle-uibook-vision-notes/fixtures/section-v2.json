@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 2,
+  "taxonomySnapshot": "sha256:f48d7020a806d299e9db3f6787cebc5d19dffbe0fce7366ddc8022c6209b6141",
+  "sourceItemId": "ITEM",
+  "imageFingerprint": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "entityType": "section",
+  "uiContext": "A SaaS feature section with an illustrated grid.",
+  "contentMap": [
+    {
+      "region": "features",
+      "evidence": "Parallel illustrated capability cells"
+    }
+  ],
+  "classification": {
+    "pageType": null,
+    "sectionTypes": [
+      "Features"
+    ],
+    "containedSectionTypes": [],
+    "industries": [
+      "SaaS"
+    ],
+    "layouts": [
+      "Grid"
+    ],
+    "elements": [
+      "Grid",
+      "Illustration"
+    ],
+    "styles": [
+      {
+        "dimension": "surface",
+        "value": "Illustration"
+      }
+    ],
+    "colors": [
+      "White",
+      "Blue"
+    ],
+    "typography": [
+      "Sans-serif"
+    ]
+  },
+  "colorWeights": {
+    "White": 15,
+    "Blue": 3
+  },
+  "confidence": {
+    "contentCoverage": "high",
+    "pageType": null,
+    "sectionTypes": {
+      "Features": "high"
+    },
+    "containedSectionTypes": {},
+    "industries": {
+      "SaaS": "high"
+    },
+    "layouts": {
+      "Grid": "high"
+    },
+    "elements": {
+      "Grid": "high",
+      "Illustration": "high"
+    },
+    "styles": {
+      "surface:Illustration": "high"
+    },
+    "colors": {
+      "White": "high",
+      "Blue": "high"
+    },
+    "typography": {
+      "Sans-serif": "high"
+    }
+  },
+  "evidence": {
+    "pageType": [],
+    "sectionTypes": {
+      "Features": [
+        "Several parallel product capabilities are visible."
+      ]
+    },
+    "containedSectionTypes": {},
+    "industries": {
+      "SaaS": [
+        "The section presents a software product."
+      ]
+    },
+    "layouts": {
+      "Grid": [
+        "Content is arranged in repeated cells."
+      ]
+    },
+    "elements": {
+      "Grid": [
+        "The visible component is a card grid."
+      ],
+      "Illustration": [
+        "Each card includes an illustration."
+      ]
+    },
+    "styles": {
+      "surface:Illustration": [
+        "Illustrations dominate the visual material."
+      ]
+    },
+    "colors": {
+      "White": [
+        "White covers the section background."
+      ],
+      "Blue": [
+        "Blue accents cover visible controls."
+      ]
+    },
+    "typography": {
+      "Sans-serif": [
+        "Visible headings use sans-serif letterforms."
+      ]
+    }
+  },
+  "unmapped": []
+}
