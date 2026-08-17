@@ -24,6 +24,7 @@ Default output is bilingual and non-interleaved:
 - English analysis first
 - Chinese analysis second
 - Do not alternate languages section by section
+- Append a validated `## UIBook Mirror Data` v3 JSON block after the human-readable analysis. Use the exact contract in [mirror-data-v3.md](mirror-data-v3.md).
 
 Recommended block layout:
 
@@ -84,6 +85,12 @@ Recommended block layout:
 - analyzedAt: 2026-04-16T13:05:00+08:00
 - source: Eagle local image
 - model: gpt-4.1-mini
+
+## UIBook Mirror Data
+
+```json
+{"schemaVersion":3,"sourceItemId":"...","imageFingerprint":"sha256:...","entityType":"section","analysisModel":"gpt-5.6-sol","analyzedAt":"...","taxonomySnapshot":"sha256:...","policyVersion":"2026-08-17.1","uiContext":{"en":"...","zh":"..."},"contentMap":[],"contentCoverage":"single_screen","classification":{"pageType":null,"sectionTypes":["Hero"],"containedSectionTypes":[],"industries":[],"layouts":[],"elements":[],"styles":[],"colors":[],"typography":[]},"colorWeights":{},"confidence":{},"evidence":{},"unmapped":[],"validation":{"status":"valid","issues":[]}}
+```
 <!-- UIBOOK_AI_ANALYSIS_END -->
 ```
 
@@ -103,6 +110,8 @@ Recommended block layout:
 - If there are no people, describe the strongest non-text visual anchor instead, such as charts, device frames, 3D objects, illustrations, gradients, patterns, or decorative motifs.
 - Keep `Color Palette` / `配色信息` focused on color usage only; do not hide subject or photography details there.
 - The Chinese version should be a faithful translation/adaptation of the English version, not a second different analysis.
+- Never invent a model name. `analysisModel` must identify the model actually used for visual inspection.
+- Fetch the live UIBook taxonomy and run the pure contract validator before Apply. Do not write v3 when validation contains an error.
 
 ## Quality Gate
 

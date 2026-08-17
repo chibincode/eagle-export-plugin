@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import queue
 import re
@@ -21,6 +22,7 @@ BLOCK_START = "<!-- UIBOOK_AI_ANALYSIS_START -->"
 BLOCK_END = "<!-- UIBOOK_AI_ANALYSIS_END -->"
 AI_HEADING_EN = "## AI Screen Analysis"
 AI_HEADING_ZH = "## AI 页面分析"
+MIRROR_HEADING = "## UIBook Mirror Data"
 SUPPORTED_EXTS = {"jpg", "jpeg", "png", "webp", "gif", "avif"}
 WINDOW_CHOICES = ("today", "yesterday", "last3d", "last7d")
 TAG_AUDIT_READ_ONLY_TOOLS = {"tag_count", "tag_get", "tag_group_get", "item_count", "item_get"}
@@ -1892,6 +1894,32 @@ def get_items_by_ids(client: MCPClient, ids: list[str]) -> list[dict[str, Any]]:
     return items
 
 
+def list_items_with_annotation(client: MCPClient, annotation_filter: str) -> list[dict[str, Any]]:
+    page_size = 250
+    offset = 0
+    items: list[dict[str, Any]] = []
+    while True:
+        result = client.call_tool(
+            "item_get",
+            {
+                "annotation": annotation_filter,
+                "fullDetails": True,
+                "limit": page_size,
+                "offset": offset,
+            },
+        )
+        payload = parse_mcp_text_payload(result)
+        batch = payload.get("data") if isinstance(payload, dict) else []
+        if not isinstance(batch, list) or not batch:
+            break
+        items.extend(batch)
+        total_count = payload.get("totalCount") if isinstance(payload, dict) else None
+        offset += len(batch)
+        if len(batch) < page_size or (isinstance(total_count, int) and offset >= total_count):
+            break
+    return items
+
+
 def get_item_by_id(client: MCPClient, item_id: str) -> dict[str, Any]:
     result = client.call_tool(
         "item_get",
@@ -2407,6 +2435,99 @@ def cmd_apply(args: argparse.Namespace) -> int:
         client.close()
 
 
+def load_uibook_contract_module():
+    module_path = Path(__file__).resolve().with_name("uibook_contract.py")
+    if not module_path.is_file():
+        raise FileNotFoundError(f"UIBook contract module not found: {module_path}")
+    spec = importlib.util.spec_from_file_location("eagle_uibook_contract", module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load UIBook contract module: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def cmd_analysis_audit(args: argparse.Namespace) -> int:
+    """Audit stored Mirror Data without calling a model or changing Eagle."""
+    repo = Path(args.repo).expanduser().resolve()
+    contract = load_uibook_contract_module()
+    env_path = contract.resolve_uibook_env(
+        repo=repo,
+        explicit=Path(args.uibook_env).expanduser() if args.uibook_env else None,
+    )
+    taxonomy = None
+    taxonomy_error = None
+    if env_path:
+        try:
+            taxonomy = contract.fetch_taxonomy(env_path, timeout=args.taxonomy_timeout)
+        except Exception as error:
+            taxonomy_error = f"{type(error).__name__}: {error}"
+    else:
+        taxonomy_error = "UIBook .env not found"
+
+    client = MCPClient(timeout=args.timeout)
+    try:
+        if args.item_ids:
+            items = get_items_by_ids(client, args.item_ids)
+        else:
+            items = list_items_with_annotation(client, MIRROR_HEADING)
+    finally:
+        client.close()
+
+    records = []
+    status_counts = {"valid": 0, "needs_review": 0, "invalid": 0}
+    issue_counts: dict[str, int] = {}
+    for item in items:
+        annotation = str(item.get("annotation") or "")
+        mirror = contract.extract_mirror_data(annotation)
+        if not mirror:
+            continue
+        audit = contract.audit_mirror_data(mirror, taxonomy)
+        validation = audit["validation"]
+        status = validation["status"]
+        status_counts[status] = status_counts.get(status, 0) + 1
+        for issue in validation["issues"]:
+            issue_counts[issue["code"]] = issue_counts.get(issue["code"], 0) + 1
+        records.append(
+            {
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "schemaVersion": mirror.get("schemaVersion", 2),
+                "sourceAnalysisFingerprint": contract.mirror_fingerprint(mirror),
+                "validation": validation,
+                "suggested": audit["suggested"],
+            }
+        )
+
+    payload = {
+        "mode": "read_only",
+        "modelCalls": 0,
+        "itemCount": len(records),
+        "statusCounts": status_counts,
+        "issueCounts": dict(sorted(issue_counts.items(), key=lambda pair: (-pair[1], pair[0]))),
+        "taxonomySnapshot": (taxonomy or {}).get("snapshot"),
+        "policyVersion": contract.POLICY_VERSION,
+        "taxonomyEnv": str(env_path) if env_path else None,
+        "taxonomyError": taxonomy_error,
+        "records": records,
+    }
+    if args.json:
+        json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
+        sys.stdout.write("\n")
+    else:
+        print(f"Mode: {payload['mode']} (model calls: 0)")
+        print(f"Items: {payload['itemCount']}")
+        print(f"Policy: {payload['policyVersion']}")
+        print(f"Taxonomy: {payload['taxonomySnapshot'] or payload['taxonomyError']}")
+        print(
+            "Status: "
+            + ", ".join(f"{key}={value}" for key, value in status_counts.items())
+        )
+        for code, count in payload["issueCounts"].items():
+            print(f"- {code}: {count}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Scan recent Eagle image items and recent UIBook-synced items, then apply a conversation-generated AI analysis block."
@@ -2435,6 +2556,18 @@ def build_parser() -> argparse.ArgumentParser:
     tag_audit.add_argument("--sample-size", type=int, default=10, help="Number of untagged item samples to include")
     tag_audit.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     tag_audit.set_defaults(func=cmd_tag_audit)
+
+    analysis_audit = subparsers.add_parser(
+        "analysis-audit",
+        help="Audit stored UIBook Mirror Data without model calls or Eagle writes",
+    )
+    analysis_audit.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
+    analysis_audit.add_argument("--item-id", action="append", dest="item_ids", help="Audit only this Eagle item id (repeatable)")
+    analysis_audit.add_argument("--uibook-env", help="Path to the UIBook .env used for read-only taxonomy access")
+    analysis_audit.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
+    analysis_audit.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
+    analysis_audit.add_argument("--taxonomy-timeout", type=float, default=15.0, help="UIBook taxonomy request timeout in seconds")
+    analysis_audit.set_defaults(func=cmd_analysis_audit)
 
     folders = subparsers.add_parser("folders", help="List Eagle folders for AI-assisted folder assignment")
     folders.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")

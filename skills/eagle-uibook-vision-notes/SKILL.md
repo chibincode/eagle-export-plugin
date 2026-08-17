@@ -41,12 +41,13 @@ Default conversation behavior:
 6. Ask for the scan window if the user did not already specify it.
 7. Use the scan command to get candidate item IDs and local image paths.
 8. Let the current Codex conversation inspect the chosen screenshot and draft the analysis block.
-9. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
-10. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
-11. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
-12. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
-13. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
-14. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
+9. Fetch the live UIBook taxonomy, create `UIBook Mirror Data` v3, and run the pure contract validator. This step must not call another model.
+10. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
+11. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
+12. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
+13. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
+14. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
+15. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
 
 ## Default Processing Order
 
@@ -224,6 +225,8 @@ Supported image formats for conversation analysis:
 
 The block format is documented in [references/output-format.md](references/output-format.md).
 
+The machine-readable analysis contract is documented in [references/mirror-data-v3.md](references/mirror-data-v3.md).
+
 ## Conversation Rules
 
 - Use the scan output to identify the exact item ID and image path.
@@ -287,3 +290,17 @@ The block format is documented in [references/output-format.md](references/outpu
 - If `127.0.0.1:41595/api/folder/list` is unavailable, stop and report the blocker instead of falling back to a partial MCP folder tree.
 - Use `apply --dry-run` to preview the merged annotation before writing back.
 - If `apply` fails, do not regenerate the block; fix the write path and retry with the same block.
+- If live taxonomy cannot be loaded, do not guess a v3 taxonomy snapshot. Stop before Apply.
+- If v3 validation contains an error, do not write the block. Resolve the issue from the existing visual evidence first.
+
+## Read-only Analysis Audit
+
+Audit every stored `UIBook Mirror Data` block without model calls or writes:
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py analysis-audit --repo "$PWD" --json
+```
+
+The audit reads v2 and v3, fetches current public UIBook taxonomy values, and
+returns deterministic issues plus a suggested normalized result. It never
+rewrites historical annotations.
