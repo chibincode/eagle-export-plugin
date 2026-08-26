@@ -7,6 +7,27 @@ description: Find recent Eagle image items and recent UIBook-synced screenshots 
 
 Use this skill when analysis must come from the current conversation, not from a separate API-driven script.
 
+## Release Identity And Device Checks
+
+The Skill release is defined by [skill-manifest.json](skill-manifest.json) and
+[CHANGELOG.md](CHANGELOG.md). It is not the same thing as the Mirror or Review
+schema version: matching schema versions alone do not prove that two Macs use
+the same analysis behavior.
+
+Use these read-only checks when installing, updating, or diagnosing a second
+device:
+
+```bash
+python3 scripts/release.py version
+python3 scripts/release.py doctor --source /path/to/eagle-export-plugin/skills/eagle-uibook-vision-notes
+```
+
+`doctor` verifies the local package checksums first, then compares the source
+copy when `--source` is supplied. Treat `outdated`, `incompatible`, or an
+integrity failure as a stop condition before running a new analysis. GitHub
+`main` is the canonical source; `~/.codex/skills/eagle-uibook-vision-notes` is
+only an installed copy.
+
 ## First Question
 
 Before running `scan`, first get the current counts for each time window, then ask which time window to use unless the user already specified one.
