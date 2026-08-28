@@ -1,7 +1,7 @@
 {
   "name": "eagle-uibook-vision-notes",
-  "version": "0.4.0",
-  "releasedAt": "2026-08-26",
+  "version": "0.5.0",
+  "releasedAt": "2026-08-28",
   "source": {
     "repository": "https://github.com/chibincode/eagle-export-plugin",
     "ref": "main"
@@ -9,14 +9,14 @@
   "compatibility": {
     "mirrorSchemaVersion": 3,
     "reviewSchemaVersion": 1,
-    "policyVersion": "2026-08-17.1"
+    "policyVersion": "2026-08-28.1"
   },
   "integrity": {
     "algorithm": "sha256",
     "files": {
-      "scripts/analyze_synced_items.py": "0ea42a58a7751f2bfc9b608e96f98f638fad504f4cfa92df97062002aa7f37b0",
+      "scripts/analyze_synced_items.py": "7b1a14350d8aa4df609e4c8f2056cfe3ea0f4c3d2c2deb49a8d0d9a718b08645",
       "scripts/release.py": "6f821b78fe8bdc7f51636a5ac5d8d7b0051d258e64695cacd52c21ecaa48a1c5",
-      "scripts/uibook_contract.py": "d1c0aa166f0a613a4d9909e684860968aa51fb4388104b118fe8dc1b0931c4a8"
+      "scripts/uibook_contract.py": "8e1a6e5af590efc37a0d5fb8371ae95d1d2b074b6f8e33ef46c540e34b3e8bb5"
     }
   }
 }

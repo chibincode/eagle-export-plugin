@@ -25,6 +25,8 @@ Default output is bilingual and non-interleaved:
 - Chinese analysis second
 - Do not alternate languages section by section
 - Append a validated `## UIBook Mirror Data` v3 JSON block after the human-readable analysis. Use the exact contract in [mirror-data-v3.md](mirror-data-v3.md).
+- Draft `uiContext`, `contentMap`, and `contentCoverage` before taxonomy
+  classification, following [local-analysis-parity.md](local-analysis-parity.md).
 
 Recommended block layout:
 
@@ -110,6 +112,10 @@ Recommended block layout:
 - If there are no people, describe the strongest non-text visual anchor instead, such as charts, device frames, 3D objects, illustrations, gradients, patterns, or decorative motifs.
 - Keep `Color Palette` / `配色信息` focused on color usage only; do not hide subject or photography details there.
 - The Chinese version should be a faithful translation/adaptation of the English version, not a second different analysis.
+- `uiContext` is a bilingual visual-search corpus, not a shortened Overview and
+  not a prose rendering of classification tags. Usually target 100-220 English
+  words plus a faithful Chinese paragraph; use fewer only when the screenshot
+  genuinely contains less inspectable evidence.
 - Never invent a model name. `analysisModel` must identify the model actually used for visual inspection.
 - Fetch the live UIBook taxonomy and run the pure contract validator before Apply. Do not write v3 when validation contains an error.
 

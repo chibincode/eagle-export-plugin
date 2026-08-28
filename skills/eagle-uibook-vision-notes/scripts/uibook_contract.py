@@ -23,7 +23,13 @@ from typing import Any
 
 MIRROR_SCHEMA_VERSION = 3
 REVIEW_SCHEMA_VERSION = 1
-POLICY_VERSION = "2026-08-17.1"
+POLICY_VERSION = "2026-08-28.1"
+LOCAL_ANALYSIS_PROFILE = "uibook-local-parity"
+LOCAL_ANALYSIS_PROFILE_VERSION = "2026-08-28.1"
+UI_CONTEXT_RECOMMENDED_MIN_ENGLISH_WORDS = 100
+UI_CONTEXT_RECOMMENDED_MAX_ENGLISH_WORDS = 220
+UI_CONTEXT_WARNING_MIN_ENGLISH_WORDS = 60
+UI_CONTEXT_WARNING_MIN_CHINESE_CHARS = 80
 
 MIRROR_HEADING = "## UIBook Mirror Data"
 REVIEW_HEADING = "## UIBook Human Review"
@@ -332,6 +338,77 @@ def fetch_taxonomy(env_path: Path, timeout: float = 15.0) -> dict[str, Any]:
     return build_taxonomy(rows)
 
 
+def ui_context_quality(value: Any) -> dict[str, Any]:
+    context = _split_legacy_context(value)
+    english_words = re.findall(r"\b[\w'-]+\b", context["en"], flags=re.UNICODE)
+    chinese_chars = re.findall(r"[\u3400-\u9fff]", context["zh"])
+    return {
+        "englishWordCount": len(english_words),
+        "chineseCharacterCount": len(chinese_chars),
+        "recommendedEnglishWords": {
+            "minimum": UI_CONTEXT_RECOMMENDED_MIN_ENGLISH_WORDS,
+            "maximum": UI_CONTEXT_RECOMMENDED_MAX_ENGLISH_WORDS,
+        },
+        "isThin": (
+            len(english_words) < UI_CONTEXT_WARNING_MIN_ENGLISH_WORDS
+            or len(chinese_chars) < UI_CONTEXT_WARNING_MIN_CHINESE_CHARS
+        ),
+    }
+
+
+def build_local_analysis_context(taxonomy: dict[str, Any], entity_type: str) -> dict[str, Any]:
+    normalized_type = "website" if str(entity_type).lower() in {"website", "page"} else "section"
+    categories = (
+        ("page_type", "section_type", "industry", "elements", "style", "colors", "typography")
+        if normalized_type == "website"
+        else ("section_type", "layout", "elements", "style", "colors", "industry", "typography")
+    )
+    blocklists = ("page_type_blocklist", "element_blocklist", "style_blocklist")
+    by_category = taxonomy.get("byCategory", {}) if isinstance(taxonomy, dict) else {}
+    return {
+        "analysisMode": "eagle_local",
+        "profile": LOCAL_ANALYSIS_PROFILE,
+        "profileVersion": LOCAL_ANALYSIS_PROFILE_VERSION,
+        "policyVersion": POLICY_VERSION,
+        "entityType": normalized_type,
+        "pipeline": [
+            {
+                "stage": "search_corpus",
+                "outputs": ["uiContext", "contentMap", "contentCoverage", "visibleText"],
+            },
+            {
+                "stage": "uibook_classification",
+                "inputs": ["screenshot", "uiContext", "url", "publicTaxonomy"],
+                "outputs": ["classification", "colorWeights", "confidence", "evidence", "unmapped"],
+            },
+            {"stage": "pure_validation", "modelCalls": 0},
+        ],
+        "uiContextContract": {
+            "purpose": "bilingual_visual_search_corpus",
+            "recommendedEnglishWords": {
+                "minimum": UI_CONTEXT_RECOMMENDED_MIN_ENGLISH_WORDS,
+                "maximum": UI_CONTEXT_RECOMMENDED_MAX_ENGLISH_WORDS,
+            },
+            "requiredEvidence": [
+                "artifact_type_and_ui_purpose",
+                "spatial_structure_in_reading_order",
+                "concrete_components_and_content",
+                "distinctive_visual_subjects_and_placement",
+            ],
+        },
+        "contentMapLimit": CONTENT_MAP_LIMITS[normalized_type],
+        "taxonomySnapshot": taxonomy.get("snapshot") or "",
+        "taxonomy": {category: by_category.get(category, []) for category in (*categories, *blocklists)},
+        "cloudOnlyInputs": {
+            "prompt_templates": "not_read_by_local_public_key_mode",
+            "tag_rules": "not_read_by_local_public_key_mode",
+            "tag_corrections": "not_read_by_local_public_key_mode",
+        },
+        "parityScope": "ocr_context_rules_and_public_taxonomy",
+        "legacyCloudSync": "unchanged",
+    }
+
+
 def _confidence_score(value: Any) -> float:
     if isinstance(value, (int, float)):
         return float(value)
@@ -406,10 +483,24 @@ def audit_mirror_data(mirror: dict[str, Any], taxonomy: dict[str, Any] | None = 
         }
         for field, value in required_values.items():
             if not value:
-                issues.append(_issue("missing_required_field", "error", field, f"Mirror Data v3 requires {field}."))
+                issues.append(
+                    _issue(
+                        "missing_required_field",
+                        "error",
+                        field,
+                        f"Mirror Data v{MIRROR_SCHEMA_VERSION} requires {field}.",
+                    )
+                )
         for field in ("confidence", "evidence", "validation"):
             if field not in mirror or not isinstance(mirror.get(field), dict):
-                issues.append(_issue("missing_required_field", "error", field, f"Mirror Data v3 requires an object at {field}."))
+                issues.append(
+                    _issue(
+                        "missing_required_field",
+                        "error",
+                        field,
+                        f"Mirror Data v{MIRROR_SCHEMA_VERSION} requires an object at {field}.",
+                    )
+                )
         for index, entry in enumerate(normalized["contentMap"], start=1):
             for field in ("region", "position", "summaryEn", "summaryZh"):
                 if not entry.get(field):
@@ -430,6 +521,31 @@ def audit_mirror_data(mirror: dict[str, Any], taxonomy: dict[str, Any] | None = 
                 issues.append(_issue("invalid_color_weights", "error", "colorWeights", "Color weights must be non-negative numbers."))
             elif weights and abs(sum(float(weight) for weight in weights) - 100.0) > 1.0:
                 issues.append(_issue("color_weight_total", "warning", "colorWeights", "Color weights should total approximately 100."))
+
+    context_quality = ui_context_quality(normalized["uiContext"])
+    if normalized["uiContext"]["en"] and normalized["uiContext"]["zh"] and context_quality["isThin"]:
+        issues.append(
+            _issue(
+                "thin_ui_context",
+                "warning",
+                "uiContext",
+                "UI Context is thinner than the local UIBook-parity search-corpus profile.",
+                englishWordCount=context_quality["englishWordCount"],
+                chineseCharacterCount=context_quality["chineseCharacterCount"],
+                recommendedEnglishWords=context_quality["recommendedEnglishWords"],
+            )
+        )
+    if normalized.get("policyVersion") and normalized["policyVersion"] != POLICY_VERSION:
+        issues.append(
+            _issue(
+                "stale_policy_version",
+                "warning",
+                "policyVersion",
+                "The analysis was produced with a different local analysis policy.",
+                stored=normalized["policyVersion"],
+                current=POLICY_VERSION,
+            )
+        )
 
     if taxonomy:
         current_snapshot = taxonomy.get("snapshot") or ""

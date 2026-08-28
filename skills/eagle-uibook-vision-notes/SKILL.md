@@ -7,6 +7,23 @@ description: Find recent Eagle image items and recent UIBook-synced screenshots 
 
 Use this skill when analysis must come from the current conversation, not from a separate API-driven script.
 
+## Two-Mode Boundary
+
+This Skill owns the experimental Eagle-local analysis mode. It does not
+replace, modify, or disable the existing Eagle to Lovable cloud-analysis sync
+mode. Keep both modes available for parallel comparison.
+
+- `Lovable cloud analysis`: the existing sync path remains the control mode and
+  continues to run its own OCR and image-analysis functions.
+- `Eagle local analysis`: the current Codex conversation analyzes the image,
+  writes Mirror Data to Eagle, and supports local human review. A future direct
+  sync may consume that reviewed result, but this Skill does not enable that
+  sync implicitly.
+
+For every new local analysis, read
+[references/local-analysis-parity.md](references/local-analysis-parity.md). It
+defines the UIBook-aligned stage order and UI Context quality contract.
+
 ## Release Identity And Device Checks
 
 The Skill release is defined by [skill-manifest.json](skill-manifest.json) and
@@ -61,29 +78,40 @@ Default conversation behavior:
    - items whose original local image file was added in that window
 6. Ask for the scan window if the user did not already specify it.
 7. Use the scan command to get candidate item IDs and local image paths.
-8. Let the current Codex conversation inspect the chosen screenshot and draft the analysis block.
-9. Fetch the live UIBook taxonomy, create `UIBook Mirror Data` v3, and run the pure contract validator. This step must not call another model.
-10. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
-11. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
-12. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
-13. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
-14. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
-15. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
+8. Determine whether the candidate is a website/page or a standalone section,
+   then run `analysis-context` for that entity type.
+9. Let the current Codex conversation inspect the screenshot and complete the
+   search-corpus stage first: UI Context, Content Map, Content Coverage, and
+   complete visible text.
+10. Classify the screenshot against the live public UIBook taxonomy returned by
+    `analysis-context`. UI Context is strong supplementary evidence, not a
+    substitute for the screenshot.
+11. Create `UIBook Mirror Data` v3 and run the pure contract validator. This
+    step must not call another model.
+12. Use the apply command to replace only the prior AI block and append the updated block at the bottom of `annotation`.
+13. After scan, automatically evaluate the semantically best existing folder path for each candidate as part of the normal flow, but treat existing folders as locked by default.
+14. Write or refresh the AI analysis block for every processed candidate, including items that already have folders.
+15. If an item is unfiled, assign the suggested folder automatically only when the suggestion is strong enough.
+16. If an item already has any folder, do not auto-change, auto-reassign, or auto-remove that folder in the default flow.
+17. Folder correction for already-filed items is an explicit separate workflow, not part of normal scan/analyze processing.
 
 ## Default Processing Order
 
 Once the user picks a time window, treat the end-to-end flow as:
 
 1. `scan`
-2. inspect the image in this conversation
-3. draft the AI analysis block from observed screenshot evidence only
-4. run the quality gate before writing
-5. `apply` the annotation only if the block passes the quality gate
-6. evaluate the semantically best existing folder path
-7. for unfiled items, inspect the image visually before assigning any folder
-8. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
-9. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
-10. only enter correction mode for already-filed items when the user explicitly asks for folder correction
+2. run `analysis-context` with the candidate entity type
+3. inspect the image in this conversation
+4. draft UI Context, Content Map, Content Coverage, and visible text first
+5. draft UIBook classification from the same evidence and live taxonomy second
+6. draft the remaining human-readable analysis
+7. run the quality gate and pure validator before writing
+8. `apply` the annotation only if the block passes the quality gate
+9. evaluate the semantically best existing folder path
+10. for unfiled items, inspect the image visually before assigning any folder
+11. if `folderAction=review_unfiled`, choose the folder from visual evidence and then run `assign-folder`
+12. if `folderAction=keep_locked`, keep the existing folder unchanged, but still complete annotation writing for that item
+13. only enter correction mode for already-filed items when the user explicitly asks for folder correction
 
 Do not treat folder assignment as a separate follow-up task. It is part of the default completion criteria for each processed candidate.
 
@@ -102,6 +130,8 @@ Hard rules before writing any AI block:
 - Never prioritize completion count over note quality. It is better to process fewer images than to write unreliable notes.
 
 Each finished block must include screenshot-specific evidence:
+- `UI Context`: an information-dense bilingual visual-search corpus following
+  the local parity profile, not a short overview or a prose list of tags.
 - `Overview`: the actual page purpose and the concrete product/page type visible in the image.
 - `Visible Text`: real visible text, not a placeholder saying that navigation, CTA, body copy, or footer links are present.
 - `Layout`: page-specific structure, including actual major regions visible in this screenshot.
@@ -171,6 +201,18 @@ Show counts for the ask step:
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py windows --repo "$PWD"
 python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py windows --repo "$PWD" --only-unfiled
 ```
+
+Load the local UIBook-parity profile and live public taxonomy before drafting:
+
+```bash
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py analysis-context --repo "$PWD" --entity-type website --json
+python3 skills/eagle-uibook-vision-notes/scripts/analyze_synced_items.py analysis-context --repo "$PWD" --entity-type section --json
+```
+
+This read-only command never calls a model, writes Eagle, or changes the legacy
+Lovable cloud-analysis path. UIBook's private dynamic `prompt_templates`,
+`tag_rules`, and `tag_corrections` are intentionally reported as cloud-only
+inputs when the local mode has only a public Supabase key.
 
 Write a prepared AI block back to Eagle:
 
@@ -263,6 +305,10 @@ The machine-readable analysis contract is documented in [references/mirror-data-
 - Do not let a contact sheet be the only evidence for detailed notes unless all required details are clearly readable there.
 - For long screenshots, inspect enough of the original image to identify actual top, middle, and bottom content before writing.
 - Before applying, check that the block names concrete visible text, concrete layout regions, concrete components, concrete colors, and concrete visual memory cues.
+- Do not derive UI Context by shortening Overview. Draft it first as the
+  bilingual search corpus described in the local parity profile.
+- Do not classify before UI Context and Content Map are complete. Classification
+  is the second analysis stage.
 - If the draft could plausibly apply to several different screenshots from the same brand, it is too generic and must be rewritten.
 - If a candidate cannot be analyzed with sufficient specificity in the current run, skip writing for that item and report it instead of writing a generic block.
 - Separate each analysis into three layers before drafting: visible text, UI structure, and visual subject cues.
@@ -312,6 +358,9 @@ The machine-readable analysis contract is documented in [references/mirror-data-
 - Use `apply --dry-run` to preview the merged annotation before writing back.
 - If `apply` fails, do not regenerate the block; fix the write path and retry with the same block.
 - If live taxonomy cannot be loaded, do not guess a v3 taxonomy snapshot. Stop before Apply.
+- If `analysis-context` cannot load the local parity profile and live public
+  taxonomy, stop before drafting a new local analysis. The legacy Lovable cloud
+  sync remains available and unchanged.
 - If v3 validation contains an error, do not write the block. Resolve the issue from the existing visual evidence first.
 
 ## Read-only Analysis Audit

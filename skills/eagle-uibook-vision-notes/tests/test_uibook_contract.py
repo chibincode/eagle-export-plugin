@@ -75,6 +75,38 @@ def mirror(styles, confidence=None):
 
 
 class ContractTests(unittest.TestCase):
+    def test_local_analysis_context_preserves_legacy_cloud_sync_boundary(self):
+        context = contract.build_local_analysis_context(taxonomy(), "page")
+        self.assertEqual(context["analysisMode"], "eagle_local")
+        self.assertEqual(context["entityType"], "website")
+        self.assertEqual(context["pipeline"][0]["outputs"][0], "uiContext")
+        self.assertEqual(context["contentMapLimit"], 8)
+        self.assertEqual(context["legacyCloudSync"], "unchanged")
+        self.assertEqual(
+            context["cloudOnlyInputs"]["tag_corrections"],
+            "not_read_by_local_public_key_mode",
+        )
+
+    def test_thin_context_is_flagged_for_local_parity_review(self):
+        source = mirror([])
+        source["schemaVersion"] = 3
+        source["analysisModel"] = "test-model"
+        source["analyzedAt"] = "2026-08-28T00:00:00+08:00"
+        source["taxonomySnapshot"] = taxonomy()["snapshot"]
+        source["policyVersion"] = contract.POLICY_VERSION
+        source["uiContext"] = {"en": "Short context.", "zh": "很短的上下文。"}
+        source["contentCoverage"] = "single_screen"
+        source["colorWeights"] = {"White": 100}
+        source["validation"] = {}
+        result = contract.audit_mirror_data(source, taxonomy())
+        self.assertIn("thin_ui_context", [issue["code"] for issue in result["validation"]["issues"]])
+
+    def test_stale_analysis_policy_is_reported(self):
+        source = mirror([])
+        source["policyVersion"] = "2026-08-17.1"
+        result = contract.audit_mirror_data(source, taxonomy())
+        self.assertIn("stale_policy_version", [issue["code"] for issue in result["validation"]["issues"]])
+
     def test_v2_context_is_adapted_without_mutating_source(self):
         source = mirror([])
         adapted = contract.adapt_mirror_data(source)

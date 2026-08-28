@@ -3,6 +3,12 @@
 `UIBook Mirror Data` is the machine-readable contract produced from the same
 visual evidence as the human-readable Eagle note. It is not a second analysis.
 
+For new Eagle-local analyses, generate `uiContext`, `contentMap`, and
+`contentCoverage` first according to
+[local-analysis-parity.md](local-analysis-parity.md), then produce
+`classification` from the same screenshot evidence and live public taxonomy.
+The legacy Lovable cloud-analysis sync remains a separate, unchanged mode.
+
 ## Required shape
 
 ```json

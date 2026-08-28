@@ -2447,6 +2447,33 @@ def load_uibook_contract_module():
     return module
 
 
+def cmd_analysis_context(args: argparse.Namespace) -> int:
+    """Load the read-only context required for local UIBook-parity analysis."""
+    repo = Path(args.repo).expanduser().resolve()
+    contract = load_uibook_contract_module()
+    env_path = contract.resolve_uibook_env(
+        repo=repo,
+        explicit=Path(args.uibook_env).expanduser() if args.uibook_env else None,
+    )
+    if not env_path:
+        raise RuntimeError("UIBook .env not found; local parity analysis requires live public taxonomy")
+    taxonomy = contract.fetch_taxonomy(env_path, timeout=args.taxonomy_timeout)
+    payload = contract.build_local_analysis_context(taxonomy, args.entity_type)
+    payload["taxonomyEnv"] = str(env_path)
+    if args.json:
+        json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
+        sys.stdout.write("\n")
+    else:
+        print(f"Mode: {payload['analysisMode']} / {payload['profile']}")
+        print(f"Profile: {payload['profileVersion']}")
+        print(f"Entity: {payload['entityType']}")
+        print(f"Taxonomy: {payload['taxonomySnapshot']}")
+        print(f"Content Map limit: {payload['contentMapLimit']}")
+        print(f"Parity scope: {payload['parityScope']}")
+        print("Legacy cloud sync: unchanged")
+    return 0
+
+
 def cmd_analysis_audit(args: argparse.Namespace) -> int:
     """Audit stored Mirror Data without calling a model or changing Eagle."""
     repo = Path(args.repo).expanduser().resolve()
@@ -2568,6 +2595,22 @@ def build_parser() -> argparse.ArgumentParser:
     analysis_audit.add_argument("--timeout", type=float, default=60.0, help="MCP timeout in seconds")
     analysis_audit.add_argument("--taxonomy-timeout", type=float, default=15.0, help="UIBook taxonomy request timeout in seconds")
     analysis_audit.set_defaults(func=cmd_analysis_audit)
+
+    analysis_context = subparsers.add_parser(
+        "analysis-context",
+        help="Load live public UIBook taxonomy and the local parity analysis profile without model calls or writes",
+    )
+    analysis_context.add_argument("--repo", required=True, help="Path to the eagle-export-plugin repository")
+    analysis_context.add_argument(
+        "--entity-type",
+        required=True,
+        choices=("website", "page", "section"),
+        help="Analyze a complete website/page or a standalone section",
+    )
+    analysis_context.add_argument("--uibook-env", help="Path to the UIBook .env used for read-only taxonomy access")
+    analysis_context.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
+    analysis_context.add_argument("--taxonomy-timeout", type=float, default=15.0, help="UIBook taxonomy request timeout in seconds")
+    analysis_context.set_defaults(func=cmd_analysis_context)
 
     folders = subparsers.add_parser("folders", help="List Eagle folders for AI-assisted folder assignment")
     folders.add_argument("--json", action="store_true", help="Emit JSON instead of plain text")
