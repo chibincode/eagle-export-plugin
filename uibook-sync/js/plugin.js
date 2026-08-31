@@ -2,21 +2,47 @@
 
 const fs = require('fs');
 const path = require('path');
+const localAnalysisApi = globalThis.UIBookLocalAnalysis;
+const syncRecoveryApi = globalThis.UIBookSyncRecovery;
+if (!localAnalysisApi || !syncRecoveryApi) {
+    throw new Error('UIBook page modules failed to load');
+}
+const {
+    PRODUCER_RELEASE,
+    sha256Buffer,
+    validateLocalAnalysis
+} = localAnalysisApi;
+const {
+    buildStatusUrl,
+    createStatusLookupUnsupportedError,
+    createTimeoutError,
+    isStatusLookupUnsupported,
+    isStatusLookupUnsupportedError,
+    isTimeoutError,
+    isTimeoutMessage,
+    normalizeStatusResponse
+} = syncRecoveryApi;
 
 const fsp = fs.promises;
 
 const PLUGIN_ID = 'uibook-sync';
 const MAX_LOGS = 500;
 const LOG_BATCH_SIZE = 100;
-const DEFAULT_TIMEOUT_MS = 60000;
+const CLOUD_SYNC_TIMEOUT_MS = 180000;
+const LOCAL_SYNC_TIMEOUT_MS = 90000;
+const STATUS_TIMEOUT_MS = 15000;
 const DEFAULT_COOLDOWN_MS = 60 * 60 * 1000;
 const DEFAULT_ENDPOINT = 'https://iefgqzcdpuvsjhwtxsyz.supabase.co/functions/v1/eagle-sync';
 const FILE_STABILITY_DELAY_MS = 400;
 const INFLIGHT_TTL_MS = 15 * 60 * 1000;
+const PENDING_RECONCILE_INTERVAL_MS = 30000;
+const PENDING_RETRY_AFTER_MS = 15 * 60 * 1000;
+const PENDING_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 const DEFAULT_CONFIG = {
     endpointUrl: DEFAULT_ENDPOINT,
     syncSecret: '',
+    analysisMode: 'cloud',
     autoEnabled: false,
     intervalMinutes: 5,
     manualAllowedExts: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'],
@@ -37,6 +63,7 @@ const DEFAULT_STATE = {
     cooldowns: {},
     lastAutoScanAt: null,
     inflightItems: {},
+    pendingConfirmations: {},
     syncedItems: {}
 };
 
@@ -45,10 +72,14 @@ let state = normalizeState(DEFAULT_STATE);
 let autoTimerId = null;
 let countdownId = null;
 let selectedWatcherId = null;
+let pendingReconcileTimerId = null;
 let nextAutoRunAt = null;
 let cachedStorageDir = null;
 let syncBatchInProgress = false;
 let autoRunInProgress = false;
+let pendingReconcileInProgress = false;
+let statusLookupCapability = 'unknown';
+let statusLookupEndpoint = '';
 let uiVisible = false;
 let logSearchTerm = '';
 let logVisibleCount = LOG_BATCH_SIZE;
@@ -85,6 +116,7 @@ function normalizeConfig(raw) {
     return {
         endpointUrl: String(merged.endpointUrl || DEFAULT_ENDPOINT).trim() || DEFAULT_ENDPOINT,
         syncSecret: String(merged.syncSecret || '').trim(),
+        analysisMode: merged.analysisMode === 'local_latest' ? 'local_latest' : 'cloud',
         autoEnabled: Boolean(merged.autoEnabled),
         intervalMinutes: clampNumber(merged.intervalMinutes, 1, 120, DEFAULT_CONFIG.intervalMinutes),
         manualAllowedExts: normalizeList(merged.manualAllowedExts, DEFAULT_CONFIG.manualAllowedExts).map(normalizeExt),
@@ -114,6 +146,26 @@ function normalizeInflightItems(value) {
     return normalized;
 }
 
+function normalizePendingConfirmations(value) {
+    if (!value || typeof value !== 'object') return {};
+    const normalized = {};
+    Object.entries(value).forEach(([itemId, entry]) => {
+        if (!itemId || !entry || typeof entry !== 'object') return;
+        normalized[itemId] = {
+            sourceItemId: itemId,
+            itemName: entry.itemName || itemId,
+            entityType: entry.entityType === 'section' ? 'section' : 'website',
+            mode: entry.mode === 'auto' ? 'auto' : 'manual',
+            analysisMode: entry.analysisMode === 'local_latest' ? 'local_latest' : 'cloud',
+            analysisRelease: entry.analysisRelease || null,
+            startedAt: entry.startedAt || new Date().toISOString(),
+            lastCheckedAt: entry.lastCheckedAt || null,
+            checkCount: Math.max(0, Number(entry.checkCount) || 0)
+        };
+    });
+    return normalized;
+}
+
 function normalizeSyncedItems(value) {
     if (!value || typeof value !== 'object') return {};
     const normalized = {};
@@ -122,7 +174,9 @@ function normalizeSyncedItems(value) {
         normalized[itemId] = {
             remoteId: entry.remoteId || null,
             entityType: entry.entityType || null,
-            syncedAt: entry.syncedAt || null
+            syncedAt: entry.syncedAt || null,
+            analysisSource: entry.analysisSource || null,
+            analysisRelease: entry.analysisRelease || null
         };
     });
     return normalized;
@@ -139,6 +193,7 @@ function normalizeState(raw) {
         cooldowns: merged.cooldowns && typeof merged.cooldowns === 'object' ? merged.cooldowns : {},
         lastAutoScanAt: merged.lastAutoScanAt || null,
         inflightItems: normalizeInflightItems(merged.inflightItems),
+        pendingConfirmations: normalizePendingConfirmations(merged.pendingConfirmations),
         syncedItems: normalizeSyncedItems(merged.syncedItems)
     };
 }
@@ -216,6 +271,13 @@ function loadState() {
     }
     pruneCooldowns();
     pruneInflightItems();
+    prunePendingConfirmations();
+    const migratedTimeout = migrateLegacyTimeoutLogs();
+    const alignedTimeoutLog = alignPendingTimeoutLogs();
+    const alignedLegacyLog = alignLegacyCompatibilityLogs();
+    if (migratedTimeout || alignedTimeoutLog || alignedLegacyLog) {
+        saveState();
+    }
     return state;
 }
 
@@ -223,6 +285,7 @@ function saveState() {
     ensureStorageDir();
     pruneCooldowns();
     pruneInflightItems();
+    prunePendingConfirmations();
     fs.writeFileSync(getStatePath(), JSON.stringify(state, null, 2), 'utf8');
 }
 
@@ -245,6 +308,84 @@ function pruneInflightItems() {
             delete state.inflightItems[itemId];
         }
     });
+}
+
+function prunePendingConfirmations() {
+    const now = Date.now();
+    Object.keys(state.pendingConfirmations || {}).forEach(itemId => {
+        const record = state.pendingConfirmations[itemId];
+        const startedAt = record && record.startedAt ? new Date(record.startedAt).getTime() : NaN;
+        if (!record || Number.isNaN(startedAt) || now - startedAt >= PENDING_RETENTION_MS) {
+            delete state.pendingConfirmations[itemId];
+        }
+    });
+}
+
+function migrateLegacyTimeoutLogs() {
+    const now = Date.now();
+    let changed = false;
+    (state.logs || []).forEach(entry => {
+        if (!entry || !entry.itemId || entry.status !== 'error' || !isTimeoutMessage(entry.message)) return;
+        if (state.syncedItems[entry.itemId] || state.pendingConfirmations[entry.itemId]) return;
+        if (!state.cooldowns[entry.itemId]) return;
+        const startedAt = entry.at ? new Date(entry.at).getTime() : NaN;
+        if (Number.isNaN(startedAt) || now - startedAt >= PENDING_RETENTION_MS) return;
+        state.pendingConfirmations[entry.itemId] = {
+            sourceItemId: entry.itemId,
+            itemName: entry.itemName || entry.itemId,
+            entityType: entry.entityType === 'section' ? 'section' : 'website',
+            mode: entry.mode === 'auto' ? 'auto' : 'manual',
+            analysisMode: entry.analysisMode === 'local_latest' ? 'local_latest' : 'cloud',
+            analysisRelease: entry.analysisRelease || null,
+            startedAt: entry.at,
+            lastCheckedAt: null,
+            checkCount: 0
+        };
+        delete state.cooldowns[entry.itemId];
+        changed = true;
+    });
+    return changed;
+}
+
+function alignPendingTimeoutLogs() {
+    let changed = false;
+    (state.logs || []).forEach(entry => {
+        if (!entry || !entry.itemId || entry.status !== 'error' || !isTimeoutMessage(entry.message)) return;
+        if (!state.pendingConfirmations[entry.itemId]) return;
+        entry.status = 'pending_confirmation';
+        if (!String(entry.message || '').includes('已转为云端结果待确认')) {
+            entry.message = `${entry.message}；已转为云端结果待确认`;
+        }
+        changed = true;
+    });
+    return changed;
+}
+
+function resolvePendingTimeoutLogsForLegacyEndpoint(itemId) {
+    let changed = false;
+    (state.logs || []).forEach(entry => {
+        if (!entry || entry.itemId !== itemId || entry.status !== 'pending_confirmation') return;
+        if (!isTimeoutMessage(entry.message)) return;
+        entry.status = 'info';
+        if (!String(entry.message || '').includes('旧版接口兼容已解除')) {
+            entry.message = `${entry.message}；旧版接口兼容已解除，可继续手动同步`;
+        }
+        changed = true;
+    });
+    return changed;
+}
+
+function alignLegacyCompatibilityLogs() {
+    const resolvedIds = new Set(
+        (state.logs || [])
+            .filter(entry => entry && entry.itemId && String(entry.message || '').includes('线上仍是旧版同步接口，已恢复原兼容行为'))
+            .map(entry => entry.itemId)
+    );
+    let changed = false;
+    resolvedIds.forEach(itemId => {
+        if (resolvePendingTimeoutLogsForLegacyEndpoint(itemId)) changed = true;
+    });
+    return changed;
 }
 
 function formatListForInput(values) {
@@ -341,6 +482,11 @@ function getSyncedRecord(itemId) {
     return state.syncedItems[itemId] || null;
 }
 
+function getPendingConfirmation(itemId) {
+    prunePendingConfirmations();
+    return state.pendingConfirmations[itemId] || null;
+}
+
 function markItemInflight(itemId, entityType) {
     state.inflightItems[itemId] = {
         startedAt: new Date().toISOString(),
@@ -356,16 +502,73 @@ function clearItemInflight(itemId) {
     }
 }
 
-function rememberSyncedItem(item, remoteId, entityType, syncedAt) {
+function markPendingConfirmation(item, entityType, mode, startedAt) {
+    const record = {
+        sourceItemId: item.id,
+        itemName: item.name || item.id,
+        entityType,
+        mode: mode === 'auto' ? 'auto' : 'manual',
+        analysisMode: config.analysisMode,
+        analysisRelease: config.analysisMode === 'local_latest' ? PRODUCER_RELEASE : null,
+        startedAt: startedAt || new Date().toISOString(),
+        lastCheckedAt: null,
+        checkCount: 0
+    };
+    state.pendingConfirmations[item.id] = record;
+    delete state.inflightItems[item.id];
+    delete state.cooldowns[item.id];
+    saveState();
+    schedulePendingReconciliation(PENDING_RECONCILE_INTERVAL_MS);
+    return record;
+}
+
+function updatePendingConfirmation(itemId, updates) {
+    const current = state.pendingConfirmations[itemId];
+    if (!current) return null;
+    state.pendingConfirmations[itemId] = {
+        ...current,
+        ...updates
+    };
+    saveState();
+    return state.pendingConfirmations[itemId];
+}
+
+function clearPendingConfirmation(itemId) {
+    if (!state.pendingConfirmations[itemId]) return;
+    delete state.pendingConfirmations[itemId];
+    saveState();
+}
+
+function rememberSyncedItem(item, remoteId, entityType, syncedAt, analysisSource, analysisRelease) {
     state.syncedItems[item.id] = {
         remoteId: remoteId || null,
         entityType: entityType || null,
-        syncedAt: syncedAt || new Date().toISOString()
+        syncedAt: syncedAt || new Date().toISOString(),
+        analysisSource: analysisSource || null,
+        analysisRelease: analysisRelease || null
     };
     if (state.inflightItems[item.id]) {
         delete state.inflightItems[item.id];
     }
+    if (state.pendingConfirmations[item.id]) {
+        delete state.pendingConfirmations[item.id];
+    }
     saveState();
+}
+
+function getPluginVersion() {
+    try {
+        const manifestPath = path.join(eagle.plugin.path, 'manifest.json');
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        return String(manifest.version || '').trim() || '未知';
+    } catch (error) {
+        console.warn('[UIBook Sync] Failed to read plugin version:', error.message);
+        return '未知';
+    }
+}
+
+function renderPluginVersion() {
+    setText('pluginVersion', `v${getPluginVersion()}`);
 }
 
 function maybeBackfillSyncedItem(item) {
@@ -436,6 +639,7 @@ function setButtonLoading(buttonId, loading, label) {
 function updateUiFromConfig() {
     const endpointEl = document.getElementById('endpointUrl');
     const secretEl = document.getElementById('syncSecret');
+    const analysisModeEl = document.getElementById('analysisMode');
     const autoEl = document.getElementById('autoEnabled');
     const intervalEl = document.getElementById('intervalMinutes');
     const requireUrlEl = document.getElementById('requireUrl');
@@ -450,6 +654,7 @@ function updateUiFromConfig() {
 
     if (endpointEl) endpointEl.value = config.endpointUrl;
     if (secretEl) secretEl.value = config.syncSecret;
+    if (analysisModeEl) analysisModeEl.value = config.analysisMode;
     if (autoEl) autoEl.checked = config.autoEnabled;
     if (intervalEl) intervalEl.value = config.intervalMinutes;
     if (requireUrlEl) requireUrlEl.checked = config.requireUrl;
@@ -467,6 +672,7 @@ function updateConfigFromUi() {
     config = normalizeConfig({
         endpointUrl: document.getElementById('endpointUrl').value,
         syncSecret: document.getElementById('syncSecret').value,
+        analysisMode: document.getElementById('analysisMode').value,
         autoEnabled: document.getElementById('autoEnabled').checked,
         intervalMinutes: document.getElementById('intervalMinutes').value,
         requireUrl: document.getElementById('requireUrl').checked,
@@ -486,12 +692,20 @@ function updateConfigFromUi() {
 function renderStatusSummary() {
     const todayLogs = state.logs.filter(entry => entry && entry.at && isSameDay(entry.at));
     const successCount = todayLogs.filter(entry => entry.status === 'success').length;
-    const skippedCount = todayLogs.filter(entry => entry.status === 'skipped' || entry.status === 'duplicate').length;
+    const localSuccessCount = todayLogs.filter(entry => entry.status === 'success' && entry.analysisSource === 'eagle_visual').length;
+    const waitingCount = todayLogs.filter(entry => entry.status === 'waiting_analysis').length
+        + todayLogs.reduce((total, entry) => total + Number(entry.waitingCount || 0), 0);
+    const pendingCount = Object.keys(state.pendingConfirmations || {}).length;
+    const skippedCount = todayLogs.filter(entry => entry.status === 'skipped' || entry.status === 'duplicate').length
+        + todayLogs.reduce((total, entry) => total + Number(entry.skippedCount || 0), 0);
     const errorCount = todayLogs.filter(entry => entry.status === 'error').length;
 
     setText('statusAutoEnabled', config.autoEnabled ? '开启' : '关闭');
     setText('statusNextRun', config.autoEnabled ? formatCountdown(nextAutoRunAt ? nextAutoRunAt - Date.now() : null) : '已暂停');
     setText('statusSuccessCount', String(successCount));
+    setText('statusLocalSuccessCount', String(localSuccessCount));
+    setText('statusWaitingCount', String(waitingCount));
+    setText('statusPendingCount', String(pendingCount));
     setText('statusSkippedCount', String(skippedCount));
     setText('statusErrorCount', String(errorCount));
     setText('statusLastAutoScan', state.lastAutoScanAt ? formatDateTime(state.lastAutoScanAt) : '—');
@@ -600,9 +814,12 @@ function renderLogs() {
             ? `${entry.message || ''}${entry.message ? ' · ' : ''}${entry.remoteId}`
             : (entry.message || '—');
         const modeLabel = entry.mode === 'auto' ? '自动' : '手动';
-        const statusClass = ['success', 'duplicate', 'skipped', 'error'].includes(entry.status) ? entry.status : 'info';
+        const statusClass = ['success', 'duplicate', 'skipped', 'waiting_analysis', 'pending_confirmation', 'error'].includes(entry.status) ? entry.status : 'info';
         const title = getLogTitle(entry);
-        const meta = `${formatDateTime(entry.at)} · ${modeLabel}${entry.entityType ? ` · ${entry.entityType}` : ''}`;
+        const sourceLabel = entry.analysisSource === 'eagle_visual'
+            ? `Eagle Visual${entry.analysisRelease ? ` ${entry.analysisRelease}` : ''}`
+            : entry.analysisSource === 'lovable_ai' ? 'Lovable AI' : '';
+        const meta = `${formatDateTime(entry.at)} · ${modeLabel}${entry.entityType ? ` · ${entry.entityType}` : ''}${sourceLabel ? ` · ${sourceLabel}` : ''}`;
         const itemClass = isSystemLogEntry(entry) ? 'activity-item activity-item--system' : 'activity-item';
         const locateButton = canLocateLogEntry(entry)
             ? `<button type="button" class="lg-secondary activity-locate-button" data-item-id="${escapeHtml(entry.itemId)}">定位</button>`
@@ -632,6 +849,10 @@ function getStatusLabel(status) {
             return '重复';
         case 'skipped':
             return '跳过';
+        case 'waiting_analysis':
+            return '待分析';
+        case 'pending_confirmation':
+            return '待确认';
         case 'error':
             return '失败';
         default:
@@ -890,6 +1111,8 @@ async function inspectSourceImage(filePath, fallbackExt) {
     return {
         ok: true,
         blob,
+        buffer,
+        imageFingerprint: sha256Buffer(buffer),
         snapshot: createFileSnapshot(secondStat, width, height)
     };
 }
@@ -1123,6 +1346,8 @@ function getSkipReason(reason) {
     switch (reason) {
         case 'sync_in_progress':
             return '该素材正在同步中';
+        case 'pending_confirmation':
+            return '云端结果仍在确认中';
         case 'already_synced_local':
             return '该素材已在本机登记为已同步';
         case 'already_synced':
@@ -1174,6 +1399,11 @@ function evaluateEligibility(item, mode, folderMap) {
 
     if (getInflightRecord(item.id)) {
         return { eligible: false, reason: 'sync_in_progress' };
+    }
+
+    const pendingConfirmation = getPendingConfirmation(item.id);
+    if (pendingConfirmation) {
+        return { eligible: false, reason: 'pending_confirmation', pendingConfirmation };
     }
 
     if (getSyncedRecord(item.id)) {
@@ -1288,7 +1518,7 @@ async function fetchWithTimeout(url, options, timeoutMs) {
         });
     } catch (err) {
         if (err.name === 'AbortError') {
-            throw new Error(`请求超时 (${timeoutMs / 1000}s)：${url}`);
+            throw createTimeoutError(timeoutMs, url);
         }
         let host;
         try { host = new URL(url).host; } catch (_) { host = url; }
@@ -1304,6 +1534,181 @@ async function safeParseJson(response) {
     } catch (error) {
         return {};
     }
+}
+
+async function safeParseStatusPayload(response) {
+    try {
+        const text = await response.text();
+        if (!text) return {};
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return { error: text };
+        }
+    } catch (error) {
+        return {};
+    }
+}
+
+async function fetchRemoteSyncStatus(record) {
+    if (statusLookupEndpoint !== config.endpointUrl) {
+        statusLookupEndpoint = config.endpointUrl;
+        statusLookupCapability = 'unknown';
+    }
+    if (statusLookupCapability === 'unsupported') {
+        throw createStatusLookupUnsupportedError(null, '线上仍是旧版同步接口');
+    }
+    const statusUrl = buildStatusUrl(config.endpointUrl, record.sourceItemId, record.entityType);
+    const response = await fetchWithTimeout(statusUrl, {
+        method: 'GET',
+        headers: {
+            Authorization: `Bearer ${config.syncSecret}`
+        }
+    }, STATUS_TIMEOUT_MS);
+    const payload = await safeParseStatusPayload(response);
+    if (isStatusLookupUnsupported(response, payload)) {
+        statusLookupCapability = 'unsupported';
+        throw createStatusLookupUnsupportedError(response.status, payload.error || payload.message || '线上仍是旧版同步接口');
+    }
+    if (!response.ok) {
+        throw new Error(payload.error || `Status lookup failed (${response.status})`);
+    }
+    const normalized = normalizeStatusResponse(payload, record);
+    if (!normalized.ok) {
+        throw new Error(normalized.error);
+    }
+    statusLookupCapability = 'supported';
+    return normalized;
+}
+
+function pendingAgeMs(record) {
+    const startedAt = record && record.startedAt ? new Date(record.startedAt).getTime() : NaN;
+    return Number.isNaN(startedAt) ? PENDING_RETRY_AFTER_MS : Math.max(0, Date.now() - startedAt);
+}
+
+async function reconcilePendingItem(itemId, record) {
+    const current = record || getPendingConfirmation(itemId);
+    if (!current) return { status: 'missing' };
+
+    try {
+        const remote = await fetchRemoteSyncStatus(current);
+        updatePendingConfirmation(itemId, {
+            lastCheckedAt: new Date().toISOString(),
+            checkCount: Number(current.checkCount || 0) + 1
+        });
+
+        if (!remote.found) {
+            if (pendingAgeMs(current) >= PENDING_RETRY_AFTER_MS) {
+                clearPendingConfirmation(itemId);
+                addLog({
+                    itemId,
+                    itemName: current.itemName,
+                    mode: current.mode,
+                    status: 'info',
+                    entityType: current.entityType,
+                    message: '云端在 15 分钟内未找到记录，已允许重新同步'
+                });
+                return { status: 'retry_allowed', itemId };
+            }
+            return { status: 'pending_confirmation', itemId };
+        }
+
+        const item = await eagle.item.getById(itemId);
+        if (!item) {
+            throw new Error(`Eagle item not found: ${itemId}`);
+        }
+        rememberSyncedItem(
+            item,
+            remote.id,
+            current.entityType,
+            new Date().toISOString(),
+            remote.analysisSource,
+            remote.analysisRelease
+        );
+        try {
+            await applySyncSuccessMarker(item, { id: remote.id }, current.entityType);
+        } catch (markerError) {
+            console.warn('[UIBook Sync] Marker write failed after reconciliation:', markerError.message);
+        }
+        clearCooldown(itemId);
+        addLog({
+            itemId,
+            itemName: current.itemName || item.name,
+            mode: current.mode,
+            status: 'success',
+            entityType: current.entityType,
+            message: '云端已完成，超时后确认成功并补写本地状态',
+            remoteId: remote.id,
+            analysisSource: remote.analysisSource,
+            analysisRelease: remote.analysisRelease
+        });
+        return {
+            status: 'success',
+            itemId,
+            remoteId: remote.id,
+            reconciled: true,
+            analysisSource: remote.analysisSource,
+            analysisRelease: remote.analysisRelease
+        };
+    } catch (error) {
+        if (isStatusLookupUnsupportedError(error)) {
+            clearPendingConfirmation(itemId);
+            clearItemInflight(itemId);
+            resolvePendingTimeoutLogsForLegacyEndpoint(itemId);
+            recordCooldown(itemId, '云端处理超时；旧版接口无法确认结果');
+            addLog({
+                itemId,
+                itemName: current.itemName,
+                mode: current.mode,
+                status: 'info',
+                entityType: current.entityType,
+                message: '线上仍是旧版同步接口，已恢复原兼容行为：手动同步可立即重试，自动同步一小时后再试；远端可能已经完成，重试时由服务端去重'
+            });
+            return {
+                status: 'legacy_timeout',
+                itemId,
+                reason: '旧版接口无法确认云端结果'
+            };
+        }
+        updatePendingConfirmation(itemId, {
+            lastCheckedAt: new Date().toISOString(),
+            checkCount: Number(current.checkCount || 0) + 1
+        });
+        console.warn('[UIBook Sync] Pending result reconciliation deferred:', error.message);
+        return { status: 'pending_confirmation', itemId, error: error.message };
+    }
+}
+
+async function reconcilePendingConfirmations(itemIds) {
+    if (pendingReconcileInProgress) return [];
+    const filter = itemIds ? new Set(itemIds) : null;
+    const entries = Object.entries(state.pendingConfirmations || {})
+        .filter(([itemId]) => !filter || filter.has(itemId));
+    if (!entries.length) return [];
+
+    pendingReconcileInProgress = true;
+    try {
+        const results = [];
+        for (const [itemId, record] of entries) {
+            results.push(await reconcilePendingItem(itemId, record));
+        }
+        return results;
+    } finally {
+        pendingReconcileInProgress = false;
+        schedulePendingReconciliation(PENDING_RECONCILE_INTERVAL_MS);
+    }
+}
+
+function schedulePendingReconciliation(delayMs) {
+    if (pendingReconcileTimerId) {
+        clearTimeout(pendingReconcileTimerId);
+        pendingReconcileTimerId = null;
+    }
+    if (!Object.keys(state.pendingConfirmations || {}).length) return;
+    pendingReconcileTimerId = setTimeout(async () => {
+        pendingReconcileTimerId = null;
+        await reconcilePendingConfirmations();
+    }, delayMs || PENDING_RECONCILE_INTERVAL_MS);
 }
 
 async function sendItemToUiBook(item, prepared, inspectedFile) {
@@ -1324,19 +1729,31 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
         url: prepared.cleanedUrl || undefined,
         entityType: prepared.entityType,
         capturedDate: prepared.capturedDate,
-        sourceItemId: item.id
+        sourceItemId: item.id,
+        analysisMode: config.analysisMode
     }));
+    if (prepared.localAnalysis) {
+        formData.append('localAnalysis', JSON.stringify(prepared.localAnalysis));
+    }
 
+    const timeoutMs = config.analysisMode === 'cloud' ? CLOUD_SYNC_TIMEOUT_MS : LOCAL_SYNC_TIMEOUT_MS;
     const response = await fetchWithTimeout(config.endpointUrl, {
         method: 'POST',
         headers: {
             Authorization: `Bearer ${config.syncSecret}`
         },
         body: formData
-    }, DEFAULT_TIMEOUT_MS);
+    }, timeoutMs);
     const result = await safeParseJson(response);
 
     if (!response.ok) {
+        if (config.analysisMode === 'local_latest' && response.status === 422) {
+            return {
+                status: 'waiting_analysis',
+                code: result.code || 'local_analysis_rejected',
+                message: result.error || '本地分析不符合最新版同步要求'
+            };
+        }
         throw new Error(result.error || `Sync failed (${response.status})`);
     }
 
@@ -1344,7 +1761,9 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
         return {
             status: 'duplicate',
             id: result.existingId,
-            message: result.existingUrl || '云端已存在相同素材'
+            message: result.existingUrl || '云端已存在相同素材',
+            analysisSource: result.analysisSource || null,
+            analysisRelease: result.analysisRelease || null
         };
     }
 
@@ -1355,26 +1774,33 @@ async function sendItemToUiBook(item, prepared, inspectedFile) {
     return {
         status: 'success',
         id: result.id,
-        message: result.name || item.name || '同步成功'
+        message: result.name || item.name || '同步成功',
+        analysisSource: result.analysisSource || (config.analysisMode === 'local_latest' ? 'eagle_visual' : 'lovable_ai'),
+        analysisRelease: result.analysisRelease || (config.analysisMode === 'local_latest' ? PRODUCER_RELEASE : null)
     };
 }
 
 async function syncSingleItem(item, mode, folderMap) {
+    if (config.analysisMode === 'local_latest') {
+        const fullItem = await eagle.item.getById(item.id);
+        if (fullItem) item = fullItem;
+    }
     const prepared = evaluateEligibility(item, mode, folderMap);
     if (!prepared.eligible) {
         const reason = formatEligibilityReason(prepared);
+        const status = prepared.reason === 'pending_confirmation' ? 'pending_confirmation' : 'skipped';
         if (mode === 'manual') {
             addLog({
                 itemId: item.id,
                 itemName: item.name,
                 mode,
-                status: 'skipped',
+                status,
                 entityType: null,
                 message: reason
             });
         }
         return {
-            status: 'skipped',
+            status,
             itemId: item.id,
             reason
         };
@@ -1400,11 +1826,69 @@ async function syncSingleItem(item, mode, folderMap) {
         };
     }
 
+    if (config.analysisMode === 'local_latest') {
+        const localCheck = validateLocalAnalysis({
+            annotation: item.annotation,
+            itemId: item.id,
+            entityType: prepared.entityType,
+            imageFingerprint: inspectedFile.imageFingerprint
+        });
+        if (!localCheck.ok) {
+            clearCooldown(item.id);
+            if (mode === 'manual') {
+                addLog({
+                    itemId: item.id,
+                    itemName: item.name,
+                    mode,
+                    status: 'waiting_analysis',
+                    entityType: prepared.entityType,
+                    message: localCheck.message,
+                    reasonCode: localCheck.code
+                });
+            }
+            return {
+                status: 'waiting_analysis',
+                itemId: item.id,
+                reason: localCheck.message,
+                reasonCode: localCheck.code
+            };
+        }
+        prepared.localAnalysis = localCheck.mirror;
+    }
+
     markItemInflight(item.id, prepared.entityType);
 
     try {
         const result = await sendItemToUiBook(item, prepared, inspectedFile);
-        rememberSyncedItem(item, result.id || null, prepared.entityType, new Date().toISOString());
+        if (result.status === 'waiting_analysis') {
+            clearItemInflight(item.id);
+            clearCooldown(item.id);
+            if (mode === 'manual') {
+                addLog({
+                    itemId: item.id,
+                    itemName: item.name,
+                    mode,
+                    status: 'waiting_analysis',
+                    entityType: prepared.entityType,
+                    message: result.message,
+                    reasonCode: result.code
+                });
+            }
+            return {
+                status: 'waiting_analysis',
+                itemId: item.id,
+                reason: result.message,
+                reasonCode: result.code
+            };
+        }
+        rememberSyncedItem(
+            item,
+            result.id || null,
+            prepared.entityType,
+            new Date().toISOString(),
+            result.analysisSource,
+            result.analysisRelease
+        );
         try {
             await applySyncSuccessMarker(item, result, prepared.entityType);
         } catch (markerError) {
@@ -1418,14 +1902,64 @@ async function syncSingleItem(item, mode, folderMap) {
             status: result.status,
             entityType: prepared.entityType,
             message: result.status === 'duplicate' ? '云端已存在，已回写本地同步状态' : '同步成功',
-            remoteId: result.id || null
+            remoteId: result.id || null,
+            analysisSource: result.analysisSource,
+            analysisRelease: result.analysisRelease
         });
         return {
             status: result.status,
             itemId: item.id,
-            remoteId: result.id || null
+            remoteId: result.id || null,
+            analysisSource: result.analysisSource || null,
+            analysisRelease: result.analysisRelease || null
         };
     } catch (error) {
+        if (isTimeoutError(error)) {
+            const inflight = getInflightRecord(item.id);
+            const pending = markPendingConfirmation(
+                item,
+                prepared.entityType,
+                mode,
+                inflight && inflight.startedAt ? inflight.startedAt : new Date().toISOString()
+            );
+            const reconciled = await reconcilePendingItem(item.id, pending);
+            if (reconciled.status === 'success') {
+                return reconciled;
+            }
+            if (reconciled.status === 'legacy_timeout') {
+                const message = `云端处理超过 ${Math.round(error.timeoutMs / 1000)} 秒；线上旧接口无法查询最终结果。已保持原兼容行为，可手动重试，自动同步一小时后再试`;
+                addLog({
+                    itemId: item.id,
+                    itemName: item.name,
+                    mode,
+                    status: 'error',
+                    entityType: prepared.entityType,
+                    message,
+                    analysisSource: config.analysisMode === 'local_latest' ? 'eagle_visual' : 'lovable_ai',
+                    analysisRelease: config.analysisMode === 'local_latest' ? PRODUCER_RELEASE : null
+                });
+                return {
+                    status: 'error',
+                    itemId: item.id,
+                    error: message
+                };
+            }
+            addLog({
+                itemId: item.id,
+                itemName: item.name,
+                mode,
+                status: 'pending_confirmation',
+                entityType: prepared.entityType,
+                message: `云端处理超过 ${Math.round(error.timeoutMs / 1000)} 秒，已转为后台确认；不会立即重传或重复调用 AI`,
+                analysisSource: config.analysisMode === 'local_latest' ? 'eagle_visual' : 'lovable_ai',
+                analysisRelease: config.analysisMode === 'local_latest' ? PRODUCER_RELEASE : null
+            });
+            return {
+                status: 'pending_confirmation',
+                itemId: item.id,
+                reason: error.message
+            };
+        }
         clearItemInflight(item.id);
         recordCooldown(item.id, error.message);
         addLog({
@@ -1493,7 +2027,7 @@ function summarizeResults(results) {
         if (!summary[key]) summary[key] = 0;
         summary[key] += 1;
         return summary;
-    }, { success: 0, skipped: 0, error: 0 });
+    }, { success: 0, waiting_analysis: 0, pending_confirmation: 0, skipped: 0, error: 0 });
 }
 
 async function handleManualSync() {
@@ -1513,15 +2047,29 @@ async function handleManualSync() {
             showToast('请先在 Eagle 中选择素材', 'error');
             return;
         }
+        const reconciliationResults = await reconcilePendingConfirmations(selectedItems.map(item => item.id));
+        const reconciledIds = new Set(
+            reconciliationResults
+                .filter(result => result.status === 'success')
+                .map(result => result.itemId)
+        );
         backfillSyncedItems(selectedItems);
 
-        const results = await processItemsWithConcurrency(selectedItems, 'manual', 2);
+        const syncResults = await processItemsWithConcurrency(
+            selectedItems.filter(item => !reconciledIds.has(item.id)),
+            'manual',
+            2
+        );
+        const results = [
+            ...reconciliationResults.filter(result => result.status === 'success'),
+            ...syncResults
+        ];
         const summary = summarizeResults(results);
         const refreshedIds = results
             .filter(result => result.status === 'success' || result.status === 'duplicate')
             .map(result => result.itemId);
         await refreshItemSelection(refreshedIds);
-        showToast(`完成：成功 ${summary.success}，跳过 ${summary.skipped}，失败 ${summary.error}`, summary.error > 0 ? 'error' : 'success');
+        showToast(`完成：成功 ${summary.success}，待分析 ${summary.waiting_analysis}，待确认 ${summary.pending_confirmation}，跳过 ${summary.skipped}，失败 ${summary.error}`, summary.error > 0 ? 'error' : 'success');
     } catch (error) {
         console.error('[UIBook Sync] Manual sync failed:', error);
         showToast(error.message, 'error');
@@ -1566,6 +2114,12 @@ async function runAutoSync() {
             return;
         }
 
+        const reconciliationResults = await reconcilePendingConfirmations();
+        const reconciledIds = new Set(
+            reconciliationResults
+                .filter(result => result.status === 'success')
+                .map(result => result.itemId)
+        );
         const items = await loadItemsForAutoSync();
         if (!items.length) {
             addLog({
@@ -1576,7 +2130,15 @@ async function runAutoSync() {
             return;
         }
 
-        const results = await processItemsWithConcurrency(items, 'auto', 1);
+        const syncResults = await processItemsWithConcurrency(
+            items.filter(item => !reconciledIds.has(item.id)),
+            'auto',
+            1
+        );
+        const results = [
+            ...reconciliationResults.filter(result => result.status === 'success'),
+            ...syncResults
+        ];
         const summary = summarizeResults(results);
         const refreshedIds = results
             .filter(result => result.status === 'success' || result.status === 'duplicate')
@@ -1586,7 +2148,10 @@ async function runAutoSync() {
             mode: 'auto',
             status: 'info',
             title: '自动扫描汇总',
-            message: `自动扫描完成：成功 ${summary.success}，跳过 ${summary.skipped}，失败 ${summary.error}`
+            message: `自动扫描完成：成功 ${summary.success}，待分析 ${summary.waiting_analysis}，待确认 ${summary.pending_confirmation}，跳过 ${summary.skipped}，失败 ${summary.error}`,
+            waitingCount: summary.waiting_analysis,
+            pendingCount: summary.pending_confirmation,
+            skippedCount: summary.skipped
         });
     } catch (error) {
         console.error('[UIBook Sync] Auto sync failed:', error);
@@ -1602,26 +2167,29 @@ async function runAutoSync() {
 }
 
 eagle.onPluginCreate(async () => {
-    console.log('[UIBook Sync] Plugin created');
+    console.log(`[UIBook Sync] Plugin created v${getPluginVersion()}`);
     loadConfig();
     loadState();
     scheduleAutoSync(true);
+    schedulePendingReconciliation(1000);
 });
 
 eagle.onPluginRun(async () => {
-    console.log('[UIBook Sync] Plugin run');
+    console.log(`[UIBook Sync] Plugin run v${getPluginVersion()}`);
     loadConfig();
     loadState();
+    schedulePendingReconciliation(1000);
 });
 
 eagle.onPluginShow(async () => {
-    console.log('[UIBook Sync] Plugin show');
+    console.log(`[UIBook Sync] Plugin show v${getPluginVersion()}`);
     uiVisible = true;
     logSearchTerm = '';
     logVisibleCount = LOG_BATCH_SIZE;
     loadConfig();
     loadState();
     updateUiFromConfig();
+    renderPluginVersion();
     bindUi();
     const logSearchInput = document.getElementById('logSearchInput');
     if (logSearchInput) logSearchInput.value = '';
@@ -1629,6 +2197,7 @@ eagle.onPluginShow(async () => {
     renderStatusSummary();
     startSelectedWatcher();
     startUiCountdown();
+    schedulePendingReconciliation(1000);
 });
 
 eagle.onPluginHide(() => {

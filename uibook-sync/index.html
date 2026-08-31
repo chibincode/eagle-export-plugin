@@ -184,7 +184,9 @@
         }
 
         .pill.duplicate,
-        .pill.skipped {
+        .pill.skipped,
+        .pill.waiting_analysis,
+        .pill.pending_confirmation {
             background: rgba(245, 158, 11, 0.14);
             color: #b45309;
         }
@@ -221,7 +223,7 @@
 <body>
     <div class="container">
         <h1 class="page-title" data-lg-tip="将 Eagle 素材直接同步到 UIBook 云端，并在本地保留同步状态。">UIBook Sync</h1>
-        <div class="subtitle">支持手动同步当前选中项，以及单主设备自动同步。</div>
+        <div class="subtitle">支持手动同步当前选中项，以及单主设备自动同步。<span id="pluginVersion">v—</span></div>
 
         <div id="selectionInfo" class="info-box" role="status">
             <span id="selectionInfoText">自动同步默认关闭。建议只在常开主设备启用，其他 iCloud 设备保留手动同步。</span>
@@ -244,6 +246,14 @@
 
         <div class="section">
             <div class="section-title" data-lg-tip="自动同步是本地设备开关，默认关闭。">同步设置</div>
+            <div class="field-group" style="margin-bottom: 12px;">
+                <label for="analysisMode">分析来源</label>
+                <select id="analysisMode">
+                    <option value="cloud">Lovable 云端分析</option>
+                    <option value="local_latest">Eagle Visual（仅最新版）</option>
+                </select>
+                <small>Eagle Visual 模式只接受 0.5.0 / Mirror v4；未分析、旧版本、原图变化或校验不通过时会跳过，不上传图片，也不消耗 Lovable AI credit。</small>
+            </div>
             <div class="field-grid">
                 <div class="field-item" onclick="toggleCheckbox('autoEnabled')">
                     <input type="checkbox" id="autoEnabled">
@@ -326,6 +336,18 @@
                     <span id="statusSuccessCount">0</span>
                 </div>
                 <div class="status-card">
+                    <strong>今日本地复用</strong>
+                    <span id="statusLocalSuccessCount">0</span>
+                </div>
+                <div class="status-card">
+                    <strong>今日待最新版分析</strong>
+                    <span id="statusWaitingCount">0</span>
+                </div>
+                <div class="status-card">
+                    <strong>云端结果待确认</strong>
+                    <span id="statusPendingCount">0</span>
+                </div>
+                <div class="status-card">
                     <strong>今日跳过</strong>
                     <span id="statusSkippedCount">0</span>
                 </div>
@@ -353,6 +375,23 @@
     <div class="toast" id="toast"></div>
     <div id="lg-tooltip" role="tooltip"></div>
 
+    <script>
+    window.addEventListener('error', function (event) {
+        var message = event && event.message ? event.message : '未知启动错误';
+        var target = document.getElementById('selectionInfoText');
+        if (target) target.textContent = '插件启动失败：' + message;
+        console.error('[UIBook Sync] Boot failure:', event.error || message);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason;
+        var message = reason && reason.message ? reason.message : String(reason || '未知异步错误');
+        var target = document.getElementById('selectionInfoText');
+        if (target) target.textContent = '插件运行失败：' + message;
+        console.error('[UIBook Sync] Unhandled rejection:', reason);
+    });
+    </script>
+    <script type="text/javascript" src="js/local-analysis.js"></script>
+    <script type="text/javascript" src="js/sync-recovery.js"></script>
     <script type="text/javascript" src="js/plugin.js"></script>
     <script>
     (function () {
